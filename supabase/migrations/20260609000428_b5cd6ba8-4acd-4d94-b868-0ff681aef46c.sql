@@ -1,0 +1,1 @@
+ALTER TABLE public.prestamos ADD COLUMN tasa_tipo text NOT NULL DEFAULT 'anual';

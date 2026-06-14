@@ -1,0 +1,1 @@
+ALTER TABLE public.prestamos ADD COLUMN IF NOT EXISTS dia_pago integer CHECK (dia_pago BETWEEN 1 AND 31);
