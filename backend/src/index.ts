@@ -1,9 +1,16 @@
-import express, { Express } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
+
+// Validate environment
+import { env, validateEnv } from './config/env';
+validateEnv();
+
+import { logger } from './utils/logger';
+import { errorHandler } from './utils/errors';
 
 // Import routes
 import profileRoutes from './routes/profile';
@@ -16,20 +23,34 @@ import investmentsRoutes from './routes/investments';
 import quotesRoutes from './routes/quotes';
 
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+  origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const startTime = Date.now();
+  const userId = (req as any).userId;
+
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    logger.response(req.method, req.path, res.statusCode, duration);
+  });
+
+  logger.request(req.method, req.path, userId);
+  next();
+});
+
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
 });
 
 // API Routes
@@ -41,6 +62,28 @@ app.use('/api/bills', billsRoutes);
 app.use('/api/goals', goalsRoutes);
 app.use('/api/investments', investmentsRoutes);
 app.use('/api/quotes', quotesRoutes);
+
+// 404 handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    error: 'Not found',
+    code: 'NOT_FOUND',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Error handling middleware
+app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+  logger.error(`${req.method} ${req.path}`, error);
+  const { status, body } = errorHandler(error);
+  res.status(status).json(body);
+});
+
+app.listen(PORT, () => {
+  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`📝 Environment: ${env.NODE_ENV}`);
+});
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

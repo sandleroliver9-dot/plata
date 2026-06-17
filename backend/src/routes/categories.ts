@@ -3,6 +3,8 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { CategoriesService } from '../services/categoriesService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { parsePaginationParams } from '../utils/pagination';
+import { errorHandler } from '../utils/errors';
 
 const router = Router();
 
@@ -20,24 +22,27 @@ const categoryUpdateSchema = z.object({
   prioridad: z.string().nullable().optional(),
 });
 
-// GET /api/categories - List all categories for user
+// GET /api/categories - List categories with pagination
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const data = await CategoriesService.list(req.userId!);
-    res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    const { page, limit } = parsePaginationParams(req.query.page, req.query.limit);
+    const data = await CategoriesService.list(req.userId!, page, limit);
+    res.json({ success: true, ...data, timestamp: new Date().toISOString() });
+  } catch (error) {
+    const { status, body } = errorHandler(error);
+    res.status(status).json(body);
   }
 });
 
-// POST /api/categories - Create new category
+// POST /api/categories - Create category
 router.post('/', authenticateToken, validateBody(categoryCreateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const payload = req.body as any;
     const data = await CategoriesService.create(req.userId!, payload);
-    res.status(201).json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(201).json({ success: true, data, timestamp: new Date().toISOString() });
+  } catch (error) {
+    const { status, body } = errorHandler(error);
+    res.status(status).json(body);
   }
 });
 
@@ -47,21 +52,24 @@ router.put('/:id', authenticateToken, validateBody(categoryUpdateSchema), async 
     const { id } = req.params;
     const payload = req.body as any;
     const data = await CategoriesService.update(req.userId!, id, payload);
-    res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.json({ success: true, data, timestamp: new Date().toISOString() });
+  } catch (error) {
+    const { status, body } = errorHandler(error);
+    res.status(status).json(body);
   }
 });
 
-// DELETE /api/categories/:id - Soft delete category
+// DELETE /api/categories/:id - Delete category
 router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     await CategoriesService.softDelete(req.userId!, id);
     res.status(204).send();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    const { status, body } = errorHandler(error);
+    res.status(status).json(body);
   }
 });
 
 export default router;
+

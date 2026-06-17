@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '../config/env';
+import { logger } from '../utils/logger';
+import { getPaginationOffset, createPaginatedResponse } from '../utils/pagination';
+import { PaginatedResponse } from '../types';
 
 const getSupabaseClient = () => {
-  return createClient(
-    process.env.SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  );
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 };
 
 export type CategoryCreate = {
@@ -15,16 +16,38 @@ export type CategoryCreate = {
 };
 
 export const CategoriesService = {
-  async list(userId: string) {
+  async list(userId: string, page: number = 1, limit: number = env.DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<any>> {
     const supabase = getSupabaseClient();
+    const offset = getPaginationOffset(page, limit);
+
+    // Get paginated data
     const { data, error } = await supabase
       .from('categorias')
       .select('*')
       .eq('user_id', userId)
       .eq('activo', true)
-      .order('nombre');
-    if (error) throw error;
-    return data ?? [];
+      .order('nombre')
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      logger.error('Error fetching categories', error);
+      throw error;
+    }
+
+    // Get total count
+    const { count, error: countError } = await supabase
+      .from('categorias')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('activo', true);
+
+    if (countError) {
+      logger.error('Error counting categories', countError);
+      throw countError;
+    }
+
+    logger.debug('Categories fetched', { userId, page, limit, total: count });
+    return createPaginatedResponse(data ?? [], count ?? 0, page, limit);
   },
 
   async create(userId: string, payload: CategoryCreate) {
@@ -42,7 +65,12 @@ export const CategoriesService = {
       .select()
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Error creating category', error);
+      throw error;
+    }
+
+    logger.info('Category created', { userId, categoryId: data?.id });
     return data;
   },
 
@@ -56,7 +84,12 @@ export const CategoriesService = {
       .select()
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Error updating category', error);
+      throw error;
+    }
+
+    logger.info('Category updated', { userId, categoryId: id });
     return data;
   },
 
@@ -67,7 +100,13 @@ export const CategoriesService = {
       .update({ activo: false })
       .eq('id', id)
       .eq('user_id', userId);
-    if (error) throw error;
+
+    if (error) {
+      logger.error('Error deleting category', error);
+      throw error;
+    }
+
+    logger.info('Category deleted', { userId, categoryId: id });
     return true;
   },
 };
