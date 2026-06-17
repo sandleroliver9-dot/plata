@@ -9,6 +9,11 @@ dotenv.config();
 import profileRoutes from './routes/profile';
 import categoriesRoutes from './routes/categories';
 import transactionsRoutes from './routes/transactions';
+import incomeRoutes from './routes/income';
+import billsRoutes from './routes/bills';
+import goalsRoutes from './routes/goals';
+import investmentsRoutes from './routes/investments';
+import quotesRoutes from './routes/quotes';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +36,11 @@ app.get('/health', (req, res) => {
 app.use('/api/profile', profileRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/transactions', transactionsRoutes);
+app.use('/api/income', incomeRoutes);
+app.use('/api/bills', billsRoutes);
+app.use('/api/goals', goalsRoutes);
+app.use('/api/investments', investmentsRoutes);
+app.use('/api/quotes', quotesRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
