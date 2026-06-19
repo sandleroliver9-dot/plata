@@ -1,6 +1,9 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerConfig, swaggerOptions } from './config/swagger';
+import { securityMiddleware, apiLimiter, sanitizeRequestBody } from './middleware/security';
 
 // Load environment variables
 dotenv.config();
@@ -25,14 +28,20 @@ import quotesRoutes from './routes/quotes';
 const app: Express = express();
 const PORT = env.PORT;
 
-// Middleware
+// Security middleware
+app.use(securityMiddleware);
+app.use(apiLimiter);
+
+// CORS
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing
+app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: env.URLENCODED_BODY_LIMIT }));
+app.use(sanitizeRequestBody);
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -48,9 +57,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Health check
+// Health check (before Swagger to avoid rate limiting issues)
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
+});
+
+// Swagger UI
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerConfig as any, swaggerOptions));
+app.get('/api/docs.json', (req: Request, res: Response) => {
+  res.json(swaggerConfig);
 });
 
 // API Routes
@@ -83,22 +98,5 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(PORT, () => {
   logger.info(`🚀 Server running on port ${PORT}`);
   logger.info(`📝 Environment: ${env.NODE_ENV}`);
-});
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
-  console.log(`   API: http://localhost:${PORT}/api`);
-  console.log(`   Health: http://localhost:${PORT}/health`);
+  logger.info(`📚 API Docs: http://localhost:${PORT}/api/docs`);
 });

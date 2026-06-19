@@ -2,7 +2,7 @@ import { PaginationParams, PaginatedResponse } from '../types';
 import { env } from '../config/env';
 import { ValidationError } from './errors';
 
-export const parsePaginationParams = (page?: string | number, limit?: string | number): PaginationParams => {
+export const parsePaginationParams = (page?: unknown, limit?: unknown): PaginationParams => {
   const pageNum = parseInt(String(page) || '1', 10);
   const limitNum = parseInt(String(limit) || String(env.DEFAULT_PAGE_SIZE), 10);
 

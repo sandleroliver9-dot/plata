@@ -20,7 +20,7 @@ export const ProfileService = {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .maybeSingle();
     if (error) throw error;
     return data;
@@ -37,7 +37,7 @@ export const ProfileService = {
         ...(payload.financial_center !== undefined ? { financial_center: payload.financial_center } : {}),
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', userId)
+      .eq('id', userId)
       .select()
       .maybeSingle();
 

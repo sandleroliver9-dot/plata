@@ -10,11 +10,19 @@ const optional = (key: string, defaultValue?: string): string | undefined => {
   return process.env[key] ?? defaultValue;
 };
 
+const parseIntWithDefault = (key: string, defaultValue: number): number => {
+  const raw = optional(key, String(defaultValue));
+  const parsed = parseInt(raw || String(defaultValue), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
+};
+
 export const env = {
   // Server
   NODE_ENV: optional('NODE_ENV', 'development'),
-  PORT: parseInt(optional('PORT', '3000') || '3000', 10),
+  PORT: parseIntWithDefault('PORT', 3000),
   FRONTEND_URL: optional('FRONTEND_URL', 'http://localhost:8080'),
+  JSON_BODY_LIMIT: optional('JSON_BODY_LIMIT', '1mb') || '1mb',
+  URLENCODED_BODY_LIMIT: optional('URLENCODED_BODY_LIMIT', '1mb') || '1mb',
   
   // Supabase
   SUPABASE_URL: required('SUPABASE_URL'),
@@ -23,8 +31,8 @@ export const env = {
   SUPABASE_JWT_SECRET: required('SUPABASE_JWT_SECRET'),
   
   // Pagination defaults
-  DEFAULT_PAGE_SIZE: parseInt(optional('DEFAULT_PAGE_SIZE', '10') || '10', 10),
-  MAX_PAGE_SIZE: parseInt(optional('MAX_PAGE_SIZE', '100') || '100', 10),
+  DEFAULT_PAGE_SIZE: parseIntWithDefault('DEFAULT_PAGE_SIZE', 10),
+  MAX_PAGE_SIZE: parseIntWithDefault('MAX_PAGE_SIZE', 100),
   
   // Feature flags
   ENABLE_LOGGING: optional('ENABLE_LOGGING', 'true') === 'true',

@@ -25,6 +25,8 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
@@ -65,6 +67,24 @@ function AuthPage() {
       return toast.error(error.message);
     }
     if (data.session) navigate({ to: "/dashboard", replace: true });
+  }
+
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      toast.error("Ingresá tu email para enviarte el link de recuperación");
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setResetEmailSent(true);
+    toast.success("Te enviamos un email para recuperar tu contraseña");
   }
 
   function handlePreview() {
@@ -131,6 +151,14 @@ function AuthPage() {
                   <Input id="pw-in" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Ingresar</Button>
+                <Button type="button" variant="ghost" className="w-full" onClick={handleForgotPassword} disabled={resetLoading}>
+                  {resetLoading ? "Enviando..." : "Olvidé mi contraseña"}
+                </Button>
+                {resetEmailSent && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Revisá tu email. Te enviamos un link para cambiar la contraseña.
+                  </p>
+                )}
               </form>
             </TabsContent>
 

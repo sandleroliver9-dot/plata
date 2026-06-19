@@ -149,7 +149,7 @@ function MovimientosPage() {
     return { ing, gas, balance: ing - gas };
   }, [filtered]);
 
-  const catColor = (nombre: string | null) => cats?.find(c => c.nombre === nombre)?.color ?? "#64748b";
+  const catColor = (nombre: string | null) => cats?.find((c: any) => c.nombre === nombre)?.color ?? "#64748b";
 
   const gastosPorCategoria = useMemo(() => {
     const map = new Map<string, number>();

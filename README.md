@@ -85,7 +85,7 @@ npm run dev
 ```
 
 Accede a:
-- **Frontend**: http://localhost:8080
+Placeholder
 - **Backend API**: http://localhost:3000/api
 - **Health Check**: http://localhost:3000/health
 
