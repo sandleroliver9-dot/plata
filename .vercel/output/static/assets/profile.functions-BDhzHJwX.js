@@ -1,0 +1,1 @@
+import{c as e}from"./createServerFn-B2UiI2cS.js";import{h as c,f as a}from"./index-BWcqDagR.js";const d=c({type:"function"}),f=e({method:"POST"}).middleware([d]).handler(a("65f2c32628d3e32ea947e615c7e37077766a388cb6fbba203ae3860c04e416fd")),i=e({method:"POST"}).middleware([d]).handler(a("f22f50eccfd39638dbbcaae729ae249d81d4cc4f6e6ae2d270db81284b66cd60"));export{i as a,f as u};
