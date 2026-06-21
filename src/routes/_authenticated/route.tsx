@@ -16,9 +16,6 @@ async function waitForSession() {
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    if (typeof window !== "undefined" && window.localStorage.getItem("plata_preview_mode") === "1") {
-      return { user: null };
-    }
     const session = await waitForSession();
     if (!session) throw redirect({ to: "/auth" });
     return { user: session.user };

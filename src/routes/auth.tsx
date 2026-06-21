@@ -29,6 +29,12 @@ function AuthPage() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem("plata_preview_mode");
+    window.localStorage.removeItem("plata_preview_store_v2");
+  }, []);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === "SIGNED_IN" && s) navigate({ to: "/dashboard", replace: true });
     });
@@ -87,11 +93,6 @@ function AuthPage() {
     toast.success("Te enviamos un email para recuperar tu contraseña");
   }
 
-  function handlePreview() {
-    window.localStorage.setItem("plata_preview_mode", "1");
-    navigate({ to: "/dashboard", replace: true });
-  }
-
   async function handleGoogle() {
     if (googleLoading) return;
     setGoogleLoading(true);
@@ -129,11 +130,6 @@ function AuthPage() {
         </div>
 
         <Card className="p-6 bg-card border-border" style={{ boxShadow: "var(--shadow-card)" }}>
-          <Button type="button" className="w-full mb-4" onClick={handlePreview}>
-            Entrar a la app
-          </Button>
-          <p className="text-xs text-center text-muted-foreground mb-4">Modo preview: funciona sin email ni Google y guarda datos en este navegador.</p>
-
           <Tabs defaultValue="signin">
             <TabsList className="grid grid-cols-2 w-full mb-6">
               <TabsTrigger value="signin">Ingresar</TabsTrigger>
