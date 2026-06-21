@@ -27,7 +27,7 @@ import "../_libs/supabase__phoenix.mjs";
 import "../_libs/supabase__storage-js.mjs";
 import "../_libs/iceberg-js.mjs";
 import "../_libs/supabase__auth-js.mjs";
-import "tslib";
+import "../_libs/tslib.mjs";
 import "../_libs/supabase__functions-js.mjs";
 const updateSavingTarget_createServerFn_handler = createServerRpc({
   id: "65f2c32628d3e32ea947e615c7e37077766a388cb6fbba203ae3860c04e416fd",

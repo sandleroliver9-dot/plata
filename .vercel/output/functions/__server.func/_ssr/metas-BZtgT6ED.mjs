@@ -22,7 +22,7 @@ import "../_libs/supabase__phoenix.mjs";
 import "../_libs/supabase__storage-js.mjs";
 import "../_libs/iceberg-js.mjs";
 import "../_libs/supabase__auth-js.mjs";
-import "tslib";
+import "../_libs/tslib.mjs";
 import "../_libs/supabase__functions-js.mjs";
 import "./utils-H80jjgLf.mjs";
 import "../_libs/clsx.mjs";

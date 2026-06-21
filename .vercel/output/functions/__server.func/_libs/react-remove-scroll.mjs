@@ -1,4 +1,4 @@
-import { __rest, __assign, __spreadArray } from "tslib";
+import { a as __rest, b as __assign, c as __spreadArray } from "./tslib.mjs";
 import { r as reactExports } from "./react.mjs";
 import { z as zeroRightClassName, f as fullWidthClassName, R as RemoveScrollBar } from "./react-remove-scroll-bar.mjs";
 import { c as createSidecarMedium, e as exportSidecar } from "./use-sidecar.mjs";
