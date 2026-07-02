@@ -65,21 +65,29 @@ function Dashboard() {
       return data ?? [];
     },
   });
+  const { data: ingresosCargados } = useQuery({
+    queryKey: ["ingresos", user?.id, meses6.join(",")],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ingresos")
+        .select("id, user_id, concepto, tipo, monto, fecha_cobro, mes_financiero, activo")
+        .eq("user_id", user!.id)
+        .eq("activo", true)
+        .in("mes_financiero", meses6);
 
-
-const { data: ingresosCargados } = useQuery({
-  queryKey: ["ingresos", user?.id],
-  enabled: !!user,
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from("ingresos")
-      .select("id, concepto, tipo, monto, fecha_cobro, mes_financiero, activo")
-      .eq("activo", true);
-
-    if (error) throw error;
-    return data ?? [];
-  },
-});
+      if (error) throw error;
+      if (import.meta.env.DEV) {
+        console.log("[dashboard] ingresosCargados", {
+          userId: user!.id,
+          mes,
+          count: data?.length ?? 0,
+          rows: data ?? [],
+        });
+      }
+      return data ?? [];
+    },
+  });
 
 
   const { ingresos, gastos, balance, topCats, serie, anomalias } = useMemo(() => {
@@ -211,7 +219,7 @@ const { data: ingresosCargados } = useQuery({
     });
 
     return { ingresos, gastos, balance: ingresos - gastos, topCats, serie, anomalias: anomalias.slice(0, 3) };
-  }, [movs, cuotasActivas, gastosFijos, mes, meses6]);
+  }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6]);
 
   const overdraft = Number(profile?.overdraft_allowed ?? 0);
   const score = financialScore(ingresos, gastos, overdraft);
