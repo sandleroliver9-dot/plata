@@ -81,7 +81,15 @@ function ConfiguracionPage() {
       const payDay = clampDay(parseIntegerInput(profileForm.payDay, "Dia de cobro", 1));
       const salary = parseOptionalNumberInput(profileForm.salary, 0, "Sueldo");
       const savingTarget = Math.max(0, Math.min(80, parseIntegerInput(profileForm.savingTarget, "Objetivo de ahorro", 20)));
-      await saveProfile({ data: { payDay, salary, savingTarget } });
+      await saveProfile({
+        data: {
+          payDay,
+          salary,
+          savingTarget,
+          payDateMode: preferences.income.payDateMode,
+          incomeFrequency: preferences.income.frequency,
+        },
+      });
       setPreferences((prev) => ({
         ...prev,
         income: {
@@ -93,6 +101,8 @@ function ConfiguracionPage() {
     onSuccess: () => {
       toast.success("Configuracion guardada");
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["financial-settings-data", user?.id] });
+      qc.invalidateQueries({ queryKey: ["ingresos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["proyecciones"] });
       qc.invalidateQueries({ queryKey: ["alertas"] });

@@ -66,6 +66,22 @@ function Dashboard() {
     },
   });
 
+
+const { data: ingresosCargados } = useQuery({
+  queryKey: ["ingresos", user?.id],
+  enabled: !!user,
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("ingresos")
+      .select("id, concepto, tipo, monto, fecha_cobro, mes_financiero, activo")
+      .eq("activo", true);
+
+    if (error) throw error;
+    return data ?? [];
+  },
+});
+
+
   const { ingresos, gastos, balance, topCats, serie, anomalias } = useMemo(() => {
     const movsConCuotas = [...(movs ?? [])];
     (cuotasActivas ?? []).forEach((c) => {
@@ -104,7 +120,33 @@ function Dashboard() {
         });
       });
     });
+    // Ingresos cargados: agregar al mes correspondiente
+    (ingresosCargados ?? []).forEach((ingreso: any) => {
+      const concepto = String(ingreso.concepto ?? "").toLowerCase();
+      const monto = Number(ingreso.monto ?? 0);
+      const mesIngreso = String(ingreso.mes_financiero ?? "");
+      const yaExiste = movsConCuotas.some((mov) => {
+        if (mov.tipo !== "Ingreso") return false;
+        if (String(mov.mes_financiero ?? "") !== mesIngreso) return false;
+        const mismoConcepto = String(mov.descripcion ?? "").toLowerCase() === concepto;
+        const mismoMonto = Math.abs(Number(mov.monto ?? 0) - monto) < 0.01;
+        return mismoConcepto && mismoMonto;
+      });
+      if (yaExiste) return;
 
+      movsConCuotas.push({
+        tipo: "Ingreso",
+        monto,
+        categoria: ingreso.tipo ?? "Ingreso",
+        mes_financiero: ingreso.mes_financiero,
+        descripcion: ingreso.concepto,
+        fecha: ingreso.fecha_cobro,
+        es_cuota: false,
+        cuota_origen_id: null,
+        tarjeta: null,
+        medio: null,
+      });
+    });
     // Gastos fijos: agregar al mes actual
     (gastosFijos ?? []).forEach((g) => {
       const yaExiste = movsConCuotas.some((mov) => {
