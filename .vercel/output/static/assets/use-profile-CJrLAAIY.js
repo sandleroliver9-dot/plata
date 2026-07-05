@@ -1,1 +1,0 @@
-import{u as a,a as o}from"./use-auth-w0KHOha9.js";import{s as u}from"./index-BWcqDagR.js";function n(){const{user:e}=a();return o({queryKey:["profile",e?.id],enabled:!!e,queryFn:async()=>{const{data:s,error:r}=await u.from("profiles").select("*").eq("id",e.id).maybeSingle();if(r)throw r;return s}})}export{n as u};
