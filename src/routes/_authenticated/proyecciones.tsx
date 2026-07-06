@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { financialDataQuery } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
@@ -80,24 +80,7 @@ function ProyeccionesPage() {
     }
   }, [infl, inflacionTouched]);
 
-  const { data } = useQuery({
-    queryKey: ["proyecciones", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const [fijos, cuotas, prest, ingExtra] = await Promise.all([
-        supabase.from("gastos_fijos").select("*").eq("activo", true),
-        supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
-        supabase.from("prestamos").select("*").eq("activo", true),
-        supabase.from("ingresos").select("id,concepto,monto,fecha_cobro,tipo,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
-      ]);
-      return {
-        fijos: fijos.data ?? [],
-        cuotas: cuotas.data ?? [],
-        prestamos: prest.data ?? [],
-        ingresos: ingExtra.data ?? [],
-      };
-    },
-  });
+  const { data } = useQuery(financialDataQuery(user?.id));
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -118,7 +101,7 @@ function ProyeccionesPage() {
     const events = buildUpcomingEvents({
       profile,
       ingresos: data.ingresos,
-      tarjetas: data.cuotas,
+      tarjetas: data.tarjetas,
       prestamos: data.prestamos,
       gastosFijos: data.fijos,
       horizonDays: 370,
@@ -152,7 +135,7 @@ function ProyeccionesPage() {
       let gastosFijos = totalFijos * infFactor;
 
       // Cuotas de tarjeta activas que aún corren en este mes
-      const cuotasTar = data.cuotas.reduce((s: number, c: any) => {
+      const cuotasTar = data.tarjetas.reduce((s: number, c: any) => {
         const ini = new Date(c.inicio);
         const monthsFromIni = (d.getFullYear() - ini.getFullYear()) * 12 + (d.getMonth() - ini.getMonth());
         const cuotaEnMes = (Number(c.cuota_actual) || 1) + monthsFromIni - 0;

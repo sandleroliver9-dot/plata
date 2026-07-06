@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Save, Shield, Wallet, CreditCard, Receipt, Target } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { financialDataQuery } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
@@ -54,26 +54,7 @@ function ConfiguracionPage() {
     });
   }, [profile?.pay_day, profile?.salary, profile?.saving_target]);
 
-  const { data } = useQuery({
-    queryKey: ["financial-settings-data", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const [ingresos, fijos, tarjetas, prestamos, movimientos] = await Promise.all([
-        supabase.from("ingresos").select("id,concepto,tipo,monto,fecha_cobro,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
-        supabase.from("gastos_fijos").select("*").eq("activo", true).order("monto_mensual", { ascending: false }),
-        supabase.from("tarjetas_cuotas").select("*").eq("activo", true).order("tarjeta", { ascending: true }),
-        supabase.from("prestamos").select("*").eq("activo", true),
-        supabase.from("movimientos").select("*").eq("activo", true).order("fecha", { ascending: false }).limit(200),
-      ]);
-      return {
-        ingresos: ingresos.data ?? [],
-        fijos: fijos.data ?? [],
-        tarjetas: tarjetas.data ?? [],
-        prestamos: prestamos.data ?? [],
-        movimientos: movimientos.data ?? [],
-      };
-    },
-  });
+  const { data } = useQuery(financialDataQuery(user?.id));
 
   const saveProfile = useServerFn(updateFinancialProfile);
   const saveProfileMutation = useMutation({
@@ -101,13 +82,9 @@ function ConfiguracionPage() {
     onSuccess: () => {
       toast.success("Configuracion guardada");
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
-      qc.invalidateQueries({ queryKey: ["financial-settings-data", user?.id] });
+      qc.invalidateQueries({ queryKey: ["financial-data", user?.id] });
       qc.invalidateQueries({ queryKey: ["ingresos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
-      qc.invalidateQueries({ queryKey: ["proyecciones"] });
-      qc.invalidateQueries({ queryKey: ["alertas"] });
-      qc.invalidateQueries({ queryKey: ["insights"] });
-      qc.invalidateQueries({ queryKey: ["calendario-financiero"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });

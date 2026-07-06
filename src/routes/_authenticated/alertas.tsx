@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CalendarClock, TrendingDown, Wallet, CircleCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, detectUnusualSpending, getMonthlyCashflow } from "@/lib/financial-centers";
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
+import { financialDataQuery } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/alertas")({
   head: () => ({ meta: [{ title: "Alertas · Plata" }] }),
@@ -28,28 +28,7 @@ function AlertasPage() {
   const [preferences] = useFinancialPreferences(user?.id);
   const currency = profile?.currency ?? "ARS";
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["alertas", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const [movimientos, ingresos, fijos, tarjetas, prestamos, vencimientos] = await Promise.all([
-        supabase.from("movimientos").select("*").eq("activo", true).order("fecha", { ascending: false }).limit(200),
-        supabase.from("ingresos").select("id,concepto,monto,fecha_cobro,tipo,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
-        supabase.from("gastos_fijos").select("*").eq("activo", true),
-        supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
-        supabase.from("prestamos").select("*").eq("activo", true),
-        supabase.from("vencimientos").select("*").order("fecha", { ascending: true }),
-      ]);
-      return {
-        movimientos: movimientos.data ?? [],
-        ingresos: ingresos.data ?? [],
-        fijos: fijos.data ?? [],
-        tarjetas: tarjetas.data ?? [],
-        prestamos: prestamos.data ?? [],
-        vencimientos: vencimientos.data ?? [],
-      };
-    },
-  });
+  const { data, isLoading } = useQuery(financialDataQuery(user?.id));
 
   const cash = getMonthlyCashflow({
     profile,

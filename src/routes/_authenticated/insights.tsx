@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { CalendarClock, Lightbulb, TrendingUp, Wallet, Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
@@ -10,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, estimateNetWorth, getEmergencyFundSummary, getMonthlyCashflow, getSavingTargetPercent } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
-import { getDolares } from "@/lib/quotes.functions";
-import { computeBalance } from "@/lib/portfolio";
+import { financialDataQuery, usePortfolioValue } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights · Plata" }] }),
@@ -32,53 +29,8 @@ function InsightsPage() {
   const [preferences] = useFinancialPreferences(user?.id);
   const currency = profile?.currency ?? "ARS";
 
-  const fetchDolares = useServerFn(getDolares);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["insights", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const [movimientos, ingresos, fijos, tarjetas, prestamos, vencimientos, invActivos, invCompras, invVentas, invDividendos, inmuebles] = await Promise.all([
-        supabase.from("movimientos").select("*").eq("activo", true).order("fecha", { ascending: false }).limit(200),
-        supabase.from("ingresos").select("id,concepto,monto,fecha_cobro,tipo,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
-        supabase.from("gastos_fijos").select("*").eq("activo", true),
-        supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
-        supabase.from("prestamos").select("*").eq("activo", true),
-        supabase.from("vencimientos").select("*").order("fecha", { ascending: true }),
-        supabase.from("inversiones_activos").select("*").eq("activo", true),
-        supabase.from("inversiones_compras").select("*"),
-        supabase.from("inversiones_ventas").select("*"),
-        supabase.from("inversiones_dividendos").select("*"),
-        supabase.from("inmuebles").select("valor_estimado,deuda_asociada,moneda").eq("activo", true),
-      ]);
-      return {
-        movimientos: movimientos.data ?? [],
-        ingresos: ingresos.data ?? [],
-        fijos: fijos.data ?? [],
-        tarjetas: tarjetas.data ?? [],
-        prestamos: prestamos.data ?? [],
-        vencimientos: vencimientos.data ?? [],
-        invActivos: (invActivos.data ?? []) as import("@/lib/portfolio").Activo[],
-        invCompras: (invCompras.data ?? []) as import("@/lib/portfolio").Compra[],
-        invVentas: (invVentas.data ?? []) as import("@/lib/portfolio").Venta[],
-        invDividendos: (invDividendos.data ?? []) as import("@/lib/portfolio").Dividendo[],
-        inmuebles: inmuebles.data ?? [],
-      };
-    },
-  });
-
-  const { data: dolar } = useQuery({
-    queryKey: ["dolares"],
-    queryFn: () => fetchDolares(),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue ?? 1000;
-
-  const inversionesValor = (data
-    ? computeBalance(data.invActivos, data.invCompras, data.invVentas, data.invDividendos, tc)
-    : []
-  ).reduce((s, r) => s + r.valorARS, 0);
+  const { data, isLoading } = useQuery(financialDataQuery(user?.id));
+  const { valorARS: inversionesValor, hasActivos } = usePortfolioValue(user?.id);
 
   const cash = getMonthlyCashflow({
     profile,
@@ -197,7 +149,7 @@ function InsightsPage() {
   ];
 
   const hasAnyData = Boolean(data && (
-    data.movimientos.length || data.ingresos.length || data.fijos.length || data.tarjetas.length || data.prestamos.length || data.inmuebles.length || data.invActivos.length
+    data.movimientos.length || data.ingresos.length || data.fijos.length || data.tarjetas.length || data.prestamos.length || data.inmuebles.length || hasActivos
   ));
 
   return (

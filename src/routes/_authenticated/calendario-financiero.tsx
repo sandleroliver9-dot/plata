@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, CircleDollarSign } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, type CalendarEvent } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
+import { financialDataQuery } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/calendario-financiero")({
   head: () => ({ meta: [{ title: "Calendario financiero · Plata" }] }),
@@ -21,26 +21,7 @@ function CalendarioFinancieroPage() {
   const [preferences] = useFinancialPreferences(user?.id);
   const currency = profile?.currency ?? "ARS";
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["calendario-financiero", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const [ingresos, fijos, tarjetas, prestamos, vencimientos] = await Promise.all([
-        supabase.from("ingresos").select("id,concepto,monto,fecha_cobro,tipo,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
-        supabase.from("gastos_fijos").select("*").eq("activo", true),
-        supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
-        supabase.from("prestamos").select("*").eq("activo", true),
-        supabase.from("vencimientos").select("*").order("fecha", { ascending: true }),
-      ]);
-      return {
-        ingresos: ingresos.data ?? [],
-        fijos: fijos.data ?? [],
-        tarjetas: tarjetas.data ?? [],
-        prestamos: prestamos.data ?? [],
-        vencimientos: vencimientos.data ?? [],
-      };
-    },
-  });
+  const { data, isLoading } = useQuery(financialDataQuery(user?.id));
 
   const events = buildUpcomingEvents({
     profile,
