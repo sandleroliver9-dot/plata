@@ -7,19 +7,25 @@ import { validateBody } from '../middleware/validate';
 const router = Router();
 
 const goalCreateSchema = z.object({
-  nombre: z.string().min(1),
-  monto_objetivo: z.number().min(0),
-  fecha_target: z.string().optional(),
+  meta: z.string().min(1),
+  objetivo: z.number().min(0),
+  ahorrado: z.number().min(0).optional(),
+  moneda: z.string().optional(),
+  fecha_objetivo: z.string().nullable().optional(),
+  notas: z.string().nullable().optional(),
 });
 
 const goalUpdateSchema = z.object({
-  nombre: z.string().optional(),
-  monto_objetivo: z.number().optional(),
-  fecha_target: z.string().nullable().optional(),
+  meta: z.string().optional(),
+  objetivo: z.number().min(0).optional(),
+  ahorrado: z.number().min(0).optional(),
+  moneda: z.string().optional(),
+  fecha_objetivo: z.string().nullable().optional(),
+  notas: z.string().nullable().optional(),
 });
 
 const goalProgressSchema = z.object({
-  monto_actual: z.number().min(0),
+  ahorrado: z.number().min(0),
 });
 
 // GET /api/goals - List all goals
@@ -35,7 +41,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
 // POST /api/goals - Create goal
 router.post('/', authenticateToken, validateBody(goalCreateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof goalCreateSchema>;
     const data = await GoalsService.create(req.userId!, payload);
     res.status(201).json(data);
   } catch (err: any) {
@@ -47,7 +53,7 @@ router.post('/', authenticateToken, validateBody(goalCreateSchema), async (req: 
 router.put('/:id', authenticateToken, validateBody(goalUpdateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof goalUpdateSchema>;
     const data = await GoalsService.update(req.userId!, id, payload);
     res.json(data);
   } catch (err: any) {
@@ -59,19 +65,19 @@ router.put('/:id', authenticateToken, validateBody(goalUpdateSchema), async (req
 router.patch('/:id/progress', authenticateToken, validateBody(goalProgressSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { monto_actual } = req.body as any;
-    const data = await GoalsService.updateProgress(req.userId!, id, monto_actual);
+    const { ahorrado } = req.body as z.infer<typeof goalProgressSchema>;
+    const data = await GoalsService.updateProgress(req.userId!, id, ahorrado);
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE /api/goals/:id - Delete goal
+// DELETE /api/goals/:id - Delete goal (hard delete: no `activo` column on metas)
 router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await GoalsService.softDelete(req.userId!, id);
+    await GoalsService.remove(req.userId!, id);
     res.status(204).send();
   } catch (err: any) {
     res.status(500).json({ error: err.message });

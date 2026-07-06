@@ -7,30 +7,36 @@ import { validateBody } from '../middleware/validate';
 const router = Router();
 
 const transactionCreateSchema = z.object({
-  fecha: z.string().min(1),
-  concepto: z.string().min(1),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
+  descripcion: z.string().nullable().optional(),
   monto: z.number(),
   tipo: z.string().min(1),
   categoria: z.string().nullable().optional(),
-  cuota: z.number().nullable().optional(),
-  descripcion: z.string().nullable().optional(),
+  medio: z.string().nullable().optional(),
+  tarjeta: z.string().nullable().optional(),
+  es_cuota: z.boolean().optional(),
+  cuota_origen_id: z.string().nullable().optional(),
+  notas: z.string().nullable().optional(),
 });
 
 const transactionUpdateSchema = z.object({
-  fecha: z.string().optional(),
-  concepto: z.string().optional(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  descripcion: z.string().nullable().optional(),
   monto: z.number().optional(),
   tipo: z.string().optional(),
   categoria: z.string().nullable().optional(),
-  cuota: z.number().nullable().optional(),
-  descripcion: z.string().nullable().optional(),
+  medio: z.string().nullable().optional(),
+  tarjeta: z.string().nullable().optional(),
+  es_cuota: z.boolean().optional(),
+  cuota_origen_id: z.string().nullable().optional(),
+  notas: z.string().nullable().optional(),
 });
 
-// GET /api/transactions?month=YYYY-MM - List transactions for a month
+// GET /api/transactions?mes=jun 2026 - List transactions for a financial month
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { month } = req.query as any;
-    const data = await TransactionsService.list(req.userId!, month);
+    const { mes } = req.query as { mes?: string };
+    const data = await TransactionsService.list(req.userId!, mes);
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -40,7 +46,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
 // POST /api/transactions - Create transaction
 router.post('/', authenticateToken, validateBody(transactionCreateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof transactionCreateSchema>;
     const data = await TransactionsService.create(req.userId!, payload);
     res.status(201).json(data);
   } catch (err: any) {
@@ -52,7 +58,7 @@ router.post('/', authenticateToken, validateBody(transactionCreateSchema), async
 router.put('/:id', authenticateToken, validateBody(transactionUpdateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof transactionUpdateSchema>;
     const data = await TransactionsService.update(req.userId!, id, payload);
     res.json(data);
   } catch (err: any) {

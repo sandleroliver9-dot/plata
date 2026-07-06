@@ -6,24 +6,66 @@ import { validateBody } from '../middleware/validate';
 
 const router = Router();
 
+const assetCreateSchema = z.object({
+  nombre: z.string().min(1),
+  ticker: z.string().nullable().optional(),
+  tipo: z.string().min(1),
+  sector: z.string().nullable().optional(),
+  moneda_base: z.string().optional(),
+  notas: z.string().nullable().optional(),
+});
+
 const investmentBuySchema = z.object({
-  descripcion: z.string().min(1),
-  cantidad: z.number().min(0),
-  precio_unitario: z.number().min(0),
-  fecha: z.string().min(1),
+  activo_id: z.string().min(1),
+  cantidad: z.number().positive(),
+  precio_usd: z.number().positive(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
+  tc: z.number().positive().nullable().optional(),
+  broker: z.string().nullable().optional(),
+  notas: z.string().nullable().optional(),
 });
 
 const investmentSellSchema = z.object({
-  descripcion: z.string().min(1),
-  cantidad: z.number().min(0),
-  precio_unitario: z.number().min(0),
-  fecha: z.string().min(1),
+  activo_id: z.string().min(1),
+  cantidad: z.number().positive(),
+  precio_usd: z.number().positive(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
+  tc: z.number().positive().nullable().optional(),
+  notas: z.string().nullable().optional(),
 });
 
 const investmentDividendSchema = z.object({
-  descripcion: z.string().min(1),
-  monto: z.number().min(0),
-  fecha: z.string().min(1),
+  activo_id: z.string().min(1),
+  monto_usd: z.number().positive(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
+  tc: z.number().positive().nullable().optional(),
+  notas: z.string().nullable().optional(),
+});
+
+const respondError = (res: Response, err: any) => {
+  const status = typeof err?.status === 'number' ? err.status : 500;
+  res.status(status).json({ error: err.message });
+};
+
+// GET /api/investments/assets - List investment assets
+router.get('/assets', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = await InvestmentsService.listAssets(req.userId!);
+    res.json(data);
+  } catch (err: any) {
+    respondError(res, err);
+  }
+});
+
+// POST /api/investments/assets - Create investment asset
+router.post('/assets', authenticateToken, validateBody(assetCreateSchema), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const payload = req.body as z.infer<typeof assetCreateSchema>;
+    const data = await InvestmentsService.createAsset(req.userId!, payload);
+    res.status(201).json(data);
+  } catch (err: any) {
+    respondError(res, err);
+  }
 });
 
 // GET /api/investments/buys - List purchases
@@ -32,7 +74,7 @@ router.get('/buys', authenticateToken, async (req: AuthenticatedRequest, res: Re
     const data = await InvestmentsService.listBuys(req.userId!);
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
@@ -42,7 +84,7 @@ router.get('/sells', authenticateToken, async (req: AuthenticatedRequest, res: R
     const data = await InvestmentsService.listSells(req.userId!);
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
@@ -52,40 +94,40 @@ router.get('/dividends', authenticateToken, async (req: AuthenticatedRequest, re
     const data = await InvestmentsService.listDividends(req.userId!);
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
 // POST /api/investments/buy - Create purchase
 router.post('/buy', authenticateToken, validateBody(investmentBuySchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof investmentBuySchema>;
     const data = await InvestmentsService.createBuy(req.userId!, payload);
     res.status(201).json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
 // POST /api/investments/sell - Create sale
 router.post('/sell', authenticateToken, validateBody(investmentSellSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof investmentSellSchema>;
     const data = await InvestmentsService.createSell(req.userId!, payload);
     res.status(201).json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
 // POST /api/investments/dividend - Create dividend
 router.post('/dividend', authenticateToken, validateBody(investmentDividendSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof investmentDividendSchema>;
     const data = await InvestmentsService.createDividend(req.userId!, payload);
     res.status(201).json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
@@ -96,7 +138,7 @@ router.delete('/buy/:id', authenticateToken, async (req: AuthenticatedRequest, r
     await InvestmentsService.deleteBuy(req.userId!, id);
     res.status(204).send();
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
@@ -107,7 +149,7 @@ router.delete('/sell/:id', authenticateToken, async (req: AuthenticatedRequest, 
     await InvestmentsService.deleteSell(req.userId!, id);
     res.status(204).send();
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 
@@ -118,7 +160,7 @@ router.delete('/dividend/:id', authenticateToken, async (req: AuthenticatedReque
     await InvestmentsService.deleteDividend(req.userId!, id);
     res.status(204).send();
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    respondError(res, err);
   }
 });
 

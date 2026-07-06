@@ -9,18 +9,24 @@ const router = Router();
 const billCreateSchema = z.object({
   concepto: z.string().min(1),
   monto: z.number().min(0),
-  fecha_vencimiento: z.string().min(1),
-  categoria: z.string().nullable().optional(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
+  recurrente: z.boolean().optional(),
+  notas: z.string().nullable().optional(),
 });
 
 const billUpdateSchema = z.object({
   concepto: z.string().optional(),
-  monto: z.number().optional(),
-  fecha_vencimiento: z.string().optional(),
-  categoria: z.string().nullable().optional(),
+  monto: z.number().min(0).optional(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  recurrente: z.boolean().optional(),
+  notas: z.string().nullable().optional(),
 });
 
-// GET /api/bills - List all bills
+const billPaySchema = z.object({
+  pagado: z.boolean().optional(),
+});
+
+// GET /api/bills - List manual bills (vencimientos)
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = await BillsService.list(req.userId!);
@@ -33,7 +39,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
 // POST /api/bills - Create bill
 router.post('/', authenticateToken, validateBody(billCreateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof billCreateSchema>;
     const data = await BillsService.create(req.userId!, payload);
     res.status(201).json(data);
   } catch (err: any) {
@@ -45,7 +51,7 @@ router.post('/', authenticateToken, validateBody(billCreateSchema), async (req: 
 router.put('/:id', authenticateToken, validateBody(billUpdateSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const payload = req.body as any;
+    const payload = req.body as z.infer<typeof billUpdateSchema>;
     const data = await BillsService.update(req.userId!, id, payload);
     res.json(data);
   } catch (err: any) {
@@ -53,22 +59,23 @@ router.put('/:id', authenticateToken, validateBody(billUpdateSchema), async (req
   }
 });
 
-// PATCH /api/bills/:id/pay - Mark bill as paid
-router.patch('/:id/pay', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+// PATCH /api/bills/:id/pay - Mark bill as paid (or unpaid with { pagado: false })
+router.patch('/:id/pay', authenticateToken, validateBody(billPaySchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await BillsService.markAsPaid(req.userId!, id);
-    res.status(204).send();
+    const { pagado } = req.body as z.infer<typeof billPaySchema>;
+    const data = await BillsService.setPaid(req.userId!, id, pagado ?? true);
+    res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE /api/bills/:id - Delete bill
+// DELETE /api/bills/:id - Delete bill (hard delete: no `activo` column on vencimientos)
 router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await BillsService.softDelete(req.userId!, id);
+    await BillsService.remove(req.userId!, id);
     res.status(204).send();
   } catch (err: any) {
     res.status(500).json({ error: err.message });

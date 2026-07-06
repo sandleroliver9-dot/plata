@@ -1,28 +1,35 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 const getSupabaseClient = () => {
-  return createClient(
-    process.env.SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  );
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 };
 
 export type GoalCreate = {
-  nombre: string;
-  monto_objetivo: number | string;
-  fecha_target?: string;
+  meta: string;
+  objetivo: number;
+  ahorrado?: number;
+  moneda?: string;
+  fecha_objetivo?: string | null;
+  notas?: string | null;
 };
 
+export type GoalUpdate = Partial<GoalCreate>;
+
 export const GoalsService = {
+  // La tabla `metas` no tiene columna `activo`: no hay soft delete posible.
   async list(userId: string) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('metas')
       .select('*')
       .eq('user_id', userId)
-      .eq('activo', true)
       .order('created_at', { ascending: false });
-    if (error) throw error;
+    if (error) {
+      logger.error('Error fetching goals', error);
+      throw error;
+    }
     return data ?? [];
   },
 
@@ -32,59 +39,80 @@ export const GoalsService = {
       .from('metas')
       .insert({
         user_id: userId,
-        nombre: payload.nombre,
-        monto_objetivo: parseFloat(String(payload.monto_objetivo)),
-        monto_actual: 0,
-        fecha_target: payload.fecha_target ?? null,
-        activo: true,
+        meta: payload.meta,
+        objetivo: payload.objetivo,
+        ahorrado: payload.ahorrado ?? 0,
+        moneda: payload.moneda ?? 'ARS',
+        fecha_objetivo: payload.fecha_objetivo ?? null,
+        notas: payload.notas ?? null,
       })
       .select()
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Error creating goal', error);
+      throw error;
+    }
+    logger.info('Goal created', { userId, goalId: data?.id });
     return data;
   },
 
-  async update(userId: string, id: string, payload: Partial<GoalCreate>) {
+  async update(userId: string, id: string, payload: GoalUpdate) {
     const supabase = getSupabaseClient();
+    const patch: Record<string, unknown> = {};
+    if (payload.meta !== undefined) patch.meta = payload.meta;
+    if (payload.objetivo !== undefined) patch.objetivo = payload.objetivo;
+    if (payload.ahorrado !== undefined) patch.ahorrado = payload.ahorrado;
+    if (payload.moneda !== undefined) patch.moneda = payload.moneda;
+    if (payload.fecha_objetivo !== undefined) patch.fecha_objetivo = payload.fecha_objetivo;
+    if (payload.notas !== undefined) patch.notas = payload.notas;
+
     const { data, error } = await supabase
       .from('metas')
-      .update({
-        ...(payload.nombre ? { nombre: payload.nombre } : {}),
-        ...(payload.monto_objetivo ? { monto_objetivo: parseFloat(String(payload.monto_objetivo)) } : {}),
-        ...(payload.fecha_target !== undefined ? { fecha_target: payload.fecha_target } : {}),
-      })
+      .update(patch)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Error updating goal', error);
+      throw error;
+    }
+    logger.info('Goal updated', { userId, goalId: id });
     return data;
   },
 
-  async updateProgress(userId: string, id: string, monto_actual: number) {
+  async updateProgress(userId: string, id: string, ahorrado: number) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('metas')
-      .update({ monto_actual })
+      .update({ ahorrado })
       .eq('id', id)
       .eq('user_id', userId)
       .select()
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      logger.error('Error updating goal progress', error);
+      throw error;
+    }
+    logger.info('Goal progress updated', { userId, goalId: id });
     return data;
   },
 
-  async softDelete(userId: string, id: string) {
+  async remove(userId: string, id: string) {
     const supabase = getSupabaseClient();
     const { error } = await supabase
       .from('metas')
-      .update({ activo: false })
+      .delete()
       .eq('id', id)
       .eq('user_id', userId);
-    if (error) throw error;
+    if (error) {
+      logger.error('Error deleting goal', error);
+      throw error;
+    }
+    logger.info('Goal deleted', { userId, goalId: id });
     return true;
   },
 };
