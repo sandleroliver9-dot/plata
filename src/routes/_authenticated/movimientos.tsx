@@ -117,7 +117,11 @@ function MovimientosPage() {
         activo: true,
       }];
     });
-    const fijosComoMovimientos = (gastosFijos ?? []).map((g) => ({
+    // Los gastos fijos son la configuración *actual* del usuario: solo tiene sentido
+    // proyectarlos como gasto estimado del mes financiero en curso, nunca de meses
+    // pasados o futuros que el usuario elija en el selector (esos gastos, si existieron,
+    // ya deberían estar cargados como movimientos reales).
+    const fijosComoMovimientos = mes !== mesActual ? [] : (gastosFijos ?? []).map((g) => ({
       id: `fijo-${g.id}-${mes}`,
       tipo: "Gasto",
       descripcion: g.gasto,
@@ -133,7 +137,7 @@ function MovimientosPage() {
       es_fijo: true,
     }));
     return [...base, ...cuotasComoMovimientos, ...fijosComoMovimientos];
-  }, [movs, cuotasActivas, gastosFijos, mes]);
+  }, [movs, cuotasActivas, gastosFijos, mes, mesActual]);
 
   const filtered = useMemo(() => {
     return movimientosConCuotas.filter(m => {
