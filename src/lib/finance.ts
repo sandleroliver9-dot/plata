@@ -26,7 +26,8 @@ export function formatCompact(amount: number, currency = "ARS"): string {
  * va del 5 de junio al 4 de julio.
  */
 export function financialMonth(date: Date, payDay = 1): string {
-  const safePayDay = Math.max(1, Math.min(31, Number(payDay) || 1));
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const safePayDay = Math.max(1, Math.min(daysInMonth, Number(payDay) || 1));
   const period = new Date(date.getFullYear(), date.getMonth(), 1);
   if (safePayDay > 1 && date.getDate() < safePayDay) {
     period.setMonth(period.getMonth() - 1);

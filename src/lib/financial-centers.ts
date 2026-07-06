@@ -514,15 +514,15 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
 }
 
 export function estimateNetWorth({
-  inversiones = [],
+  inversionesValor = 0,
   inmuebles = [],
   prestamos = [],
 }: {
-  inversiones?: Row[];
+  inversionesValor?: number;
   inmuebles?: Row[];
   prestamos?: Row[];
 }) {
-  const inv = inversiones.reduce((s, i) => s + Number(i.cantidad ?? 0) * Number(i.valor_actual ?? i.precio_compra ?? 0), 0);
+  const inv = inversionesValor;
   const inm = inmuebles.reduce((s, i) => s + Number(i.valor_estimado ?? 0) - Number(i.deuda_asociada ?? 0), 0);
   const deudaPrestamos = prestamos.reduce((s, p) => {
     const restantes = Math.max(0, Number(p.cuotas_totales ?? 0) - Number(p.cuotas_pagadas ?? 0));
