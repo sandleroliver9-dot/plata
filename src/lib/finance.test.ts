@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  currentFinancialMonth,
   financialMonth,
   installmentForFinancialMonth,
   listFinancialMonths,
@@ -55,6 +56,29 @@ describe("listFinancialMonths", () => {
     const months = listFinancialMonths(1, 3, 0);
     expect(months).toHaveLength(4);
     expect(months[months.length - 1]).toBe(financialMonth(new Date(), 1));
+  });
+
+  it("includes the current financial month as the last entry even when pay day isn't the 1st (regression)", () => {
+    // Con payDay > 1, reconstruir cada mes como "día 1" y volver a pasarlo por
+    // financialMonth() corría todo un mes para atrás, dejando afuera el mes
+    // financiero actual (bug real detectado en producción: Dashboard/Ingresos/
+    // Movimientos mostraban $0 porque el mes en curso no estaba en la lista).
+    for (const payDay of [5, 25, 29, 30]) {
+      const months = listFinancialMonths(payDay, 5, 0);
+      expect(months).toHaveLength(6);
+      expect(months[months.length - 1]).toBe(currentFinancialMonth(payDay));
+    }
+  });
+
+  it("keeps consecutive months in order without gaps or repeats", () => {
+    const payDay = 25;
+    const months = listFinancialMonths(payDay, 5, 0);
+    const parsed = months.map((m) => parseFinancialMonth(m)!);
+    for (let i = 1; i < parsed.length; i++) {
+      const monthsApart = (parsed[i].getFullYear() - parsed[i - 1].getFullYear()) * 12
+        + (parsed[i].getMonth() - parsed[i - 1].getMonth());
+      expect(monthsApart).toBe(1);
+    }
   });
 });
 

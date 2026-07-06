@@ -44,7 +44,13 @@ export function listFinancialMonths(payDay = 1, monthsBack = 6, monthsForward = 
   const out: string[] = [];
   for (let i = -monthsBack; i <= monthsForward; i++) {
     const d = new Date(current.getFullYear(), current.getMonth() + i, 1);
-    out.push(financialMonth(d, payDay));
+    // OJO: no volver a pasar `d` por financialMonth(). `d` ya es el primer día
+    // del mes calendario en el que arranca ese período financiero (derivado de
+    // `current`, que sí es correcto). Si se reevaluara con financialMonth(),
+    // como el día 1 siempre es "antes" de cualquier payDay > 1, cada mes se
+    // corría uno para atrás y el mes financiero ACTUAL terminaba excluido de
+    // la lista para cualquier usuario que no cobre el día 1.
+    out.push(`${monthsEs[d.getMonth()]} ${d.getFullYear()}`);
   }
   return out;
 }
