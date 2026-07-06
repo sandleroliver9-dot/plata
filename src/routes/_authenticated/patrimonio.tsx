@@ -19,16 +19,20 @@ function Patrimonio() {
   const currency = profile?.currency ?? "ARS";
 
   const { data } = useQuery(financialDataQuery(user?.id));
-  const { valorARS: inversionesValor } = usePortfolioValue(user?.id);
+  const { valorARS: inversionesValor, tc } = usePortfolioValue(user?.id);
+
+  // Cada inmueble puede estar cargado en USD o ARS: convertimos a ARS (moneda
+  // de referencia de esta pantalla) antes de sumar, para no mezclar unidades.
+  const toARS = (monto: number, moneda: string | undefined) => (moneda === "USD" ? monto * tc : monto);
 
   const totals = useMemo(() => {
     const inversiones = inversionesValor;
-    const inmuebles = (data?.inmuebles ?? []).reduce((s: number, i: any) => s + Number(i.valor_estimado || 0), 0);
-    const deudasInm = (data?.inmuebles ?? []).reduce((s: number, i: any) => s + Number(i.deuda_asociada || 0), 0);
+    const inmuebles = (data?.inmuebles ?? []).reduce((s: number, i: any) => s + toARS(Number(i.valor_estimado || 0), i.moneda), 0);
+    const deudasInm = (data?.inmuebles ?? []).reduce((s: number, i: any) => s + toARS(Number(i.deuda_asociada || 0), i.moneda), 0);
     const deudasPres = (data?.prestamos ?? []).reduce((s: number, p: any) => s + (Number(p.cuota_mensual || 0) * Math.max(0, Number(p.cuotas_totales || 0) - Number(p.cuotas_pagadas || 0))), 0);
     const deudas = deudasInm + deudasPres;
     return { inversiones, inmuebles, deudas, neto: inversiones + inmuebles - deudas };
-  }, [data, inversionesValor]);
+  }, [data, inversionesValor, tc]);
 
   const pieData = [
     { name: "Inversiones", value: totals.inversiones, color: "var(--primary)" },

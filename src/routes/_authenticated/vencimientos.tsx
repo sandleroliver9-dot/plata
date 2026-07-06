@@ -69,11 +69,21 @@ function Vencimientos() {
 
       for (const p of prestamos.data ?? []) {
         if (!p.inicio) continue;
-        const base = new Date(p.inicio + "T00:00:00");
-        if (p.dia_pago) base.setDate(p.dia_pago);
+        // El próximo pago es la primera fecha (desde hoy) con el día configurado,
+        // no "fecha en que se cargó el préstamo + cuotas ya pagadas": eso empujaba
+        // el vencimiento meses hacia el futuro en préstamos ya empezados antes de
+        // cargarlos en la app.
+        let base: Date;
+        if (p.dia_pago) {
+          const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+          base = new Date(hoy.getFullYear(), hoy.getMonth(), Math.min(p.dia_pago, diasEnMes));
+          if (base < hoy) base = addMonths(base, 1);
+        } else {
+          base = new Date(p.inicio + "T00:00:00");
+        }
         const restantes = p.cuotas_totales - p.cuotas_pagadas;
         for (let i = 0; i < restantes; i++) {
-          const fecha = addMonths(base, p.cuotas_pagadas + i);
+          const fecha = addMonths(base, i);
           out.push({
             id: `prestamo-${p.id}-${p.cuotas_pagadas + i + 1}`,
             concepto: `${p.descripcion} (cuota ${p.cuotas_pagadas + i + 1}/${p.cuotas_totales})`,

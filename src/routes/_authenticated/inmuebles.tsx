@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
 import { Plus, Trash2, Building2, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/finance";
+import { getDolares } from "@/lib/quotes.functions";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/inmuebles")({
@@ -32,6 +34,7 @@ const TIPOS = ["Casa", "Departamento", "PH", "Terreno", "Local", "Oficina", "Coc
 function Inmuebles() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const fetchDolares = useServerFn(getDolares);
 
   const { data: list } = useQuery({
     queryKey: ["inmuebles", user?.id],
@@ -43,13 +46,26 @@ function Inmuebles() {
     },
   });
 
+  const { data: dolar } = useQuery({
+    queryKey: ["dolares"],
+    queryFn: () => fetchDolares(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue ?? 1000;
+
+  // Cada inmueble puede estar cargado en USD o ARS: convertimos todo a USD
+  // (moneda de referencia del portafolio inmobiliario) antes de sumar, para
+  // no mezclar unidades distintas en un mismo total.
+  const toUSD = (monto: number, moneda: string) => (moneda === "ARS" ? monto / tc : monto);
+
   const totals = useMemo(() => {
     const arr = list ?? [];
-    const valor = arr.reduce((s, i) => s + Number(i.valor_estimado || 0), 0);
-    const deuda = arr.reduce((s, i) => s + Number(i.deuda_asociada || 0), 0);
-    const renta = arr.filter(i => i.alquilado).reduce((s, i) => s + Number(i.renta_mensual || 0), 0);
+    const valor = arr.reduce((s, i) => s + toUSD(Number(i.valor_estimado || 0), i.moneda), 0);
+    const deuda = arr.reduce((s, i) => s + toUSD(Number(i.deuda_asociada || 0), i.moneda), 0);
+    const renta = arr.filter(i => i.alquilado).reduce((s, i) => s + toUSD(Number(i.renta_mensual || 0), i.moneda), 0);
     return { valor, deuda, renta, neto: valor - deuda };
-  }, [list]);
+  }, [list, tc]);
 
   async function del(id: string) {
     if (!confirm("¿Eliminar este inmueble?")) return;
