@@ -41,8 +41,21 @@ function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  function passwordIssue(value: string): string | null {
+    if (value.length < 8) return "La contraseña necesita al menos 8 caracteres.";
+    if (!/[A-Z]/.test(value)) return "Agregá al menos una mayúscula.";
+    if (!/[0-9]/.test(value)) return "Agregá al menos un número.";
+    if (!/[^A-Za-z0-9]/.test(value)) return "Agregá al menos un símbolo, por ejemplo !";
+    return null;
+  }
+
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
+    const issue = passwordIssue(password);
+    if (issue) {
+      toast.error(issue);
+      return;
+    }
     setFormLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email, password,
