@@ -62,6 +62,19 @@ export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, r
   return new Date(year, month, Math.max(1, Math.min(31, payDay)));
 }
 
+/**
+ * Resuelve la fecha de cobro y el "pay_day" numérico a persistir. Para modos
+ * que no son "día fijo", el día efectivo se deriva de la fecha real resuelta
+ * (nunca del número crudo que llega del formulario, que puede quedar
+ * desactualizado en esos modos y romper el cálculo de mes financiero en toda
+ * la app).
+ */
+export function resolveEffectivePayDay(rawPayDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
+  const payDate = resolveSalaryPayDate(rawPayDay, payDateMode, referenceDate);
+  const payDay = payDateMode === "fixed_day" ? rawPayDay : payDate.getDate();
+  return { payDate, payDay };
+}
+
 export const updateSavingTarget = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { savingTarget: number }) => data)
@@ -80,10 +93,13 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
   .inputValidator((data: { payDay: number; salary: number; savingTarget: number; payDateMode?: PayDateMode; incomeFrequency?: "mensual" | "quincenal" | "semanal" | "variable" }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const payDay = Math.max(1, Math.min(31, Math.round(Number(data.payDay) || 1)));
+    const rawPayDay = Math.max(1, Math.min(31, Math.round(Number(data.payDay) || 1)));
     const salary = Math.max(0, Number(data.salary) || 0);
     const savingTarget = Math.max(0, Math.min(80, Math.round(Number(data.savingTarget) || 0)));
     const payDateMode = normalizePayDateMode(data.payDateMode);
+
+    const { payDate, payDay } = resolveEffectivePayDay(rawPayDay, payDateMode);
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -96,7 +112,6 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
     if (error) throw error;
 
     if (salary > 0) {
-      const payDate = resolveSalaryPayDate(payDay, payDateMode);
       const fechaCobro = toISODate(payDate);
       const mesFinanciero = financialMonth(payDate, payDay);
 
