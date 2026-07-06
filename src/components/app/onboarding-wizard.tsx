@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, Wallet, Calendar, DollarSign, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,11 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { parseIntegerInput, parseOptionalNumberInput } from "@/lib/number-input";
+import { updateFinancialProfile } from "@/lib/profile.functions";
 
 export function OnboardingWizard() {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const qc = useQueryClient();
+  const saveFinancialProfile = useServerFn(updateFinancialProfile);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ display_name: "", currency: "ARS", pay_day: "1", salary: "" });
@@ -54,12 +57,22 @@ export function OnboardingWizard() {
     const { error } = await supabase.from("profiles").update({
       display_name: form.display_name || null,
       currency: form.currency,
-      pay_day: payDay,
-      salary,
       onboarding_done: true,
     }).eq("id", user.id);
+    if (error) { setSaving(false); toast.error(error.message); return; }
+    try {
+      // Reutiliza la misma sincronización de Configuración: guarda pay_day/salary
+      // y crea el ingreso "Sueldo" correspondiente, para que el Dashboard lo vea
+      // desde el primer momento en vez de recién después de pasar por Configuración.
+      await saveFinancialProfile({
+        data: { payDay, salary, savingTarget: Number(profile?.saving_target ?? 20) },
+      });
+    } catch (e) {
+      setSaving(false);
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar el sueldo");
+      return;
+    }
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["profile"] });
     setOpen(false);
     toast.success("¡Listo! Bienvenido a Plata 🎉");
