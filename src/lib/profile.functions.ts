@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { financialMonth } from "@/lib/finance";
+import { financialMonth, parseFinancialMonth } from "@/lib/finance";
 
 type PayDateMode = "fixed_day" | "first_business_day" | "second_business_day" | "third_business_day" | "last_business_day" | "variable";
 
@@ -47,9 +47,14 @@ function normalizePayDateMode(value: unknown): PayDateMode {
   return "fixed_day";
 }
 
-function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
-  const year = referenceDate.getFullYear();
-  const month = referenceDate.getMonth();
+export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
+  // Anclamos el cálculo al mes calendario donde arrancó el período financiero
+  // ACTUAL (no el mes calendario de "hoy"): si todavía no llegó el día de cobro
+  // de este mes, el período financiero vigente empezó el mes anterior, y el
+  // sueldo debe quedar fechado ahí para no desaparecer del mes en curso.
+  const currentPeriodStart = parseFinancialMonth(financialMonth(referenceDate, payDay)) ?? referenceDate;
+  const year = currentPeriodStart.getFullYear();
+  const month = currentPeriodStart.getMonth();
   if (payDateMode === "first_business_day") return getNthBusinessDay(year, month, 1);
   if (payDateMode === "second_business_day") return getNthBusinessDay(year, month, 2);
   if (payDateMode === "third_business_day") return getNthBusinessDay(year, month, 3);
