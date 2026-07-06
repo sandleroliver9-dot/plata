@@ -9,9 +9,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.4",
