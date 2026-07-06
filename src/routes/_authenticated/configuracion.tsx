@@ -39,7 +39,7 @@ function ConfiguracionPage() {
   const { data: profile } = useProfile();
   const currency = profile?.currency ?? "ARS";
   const qc = useQueryClient();
-  const [preferences, setPreferences] = useFinancialPreferences(user?.id);
+  const [preferences, setPreferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const [profileForm, setProfileForm] = useState({
     payDay: String(profile?.pay_day ?? 1),
     salary: String(profile?.salary ?? ""),
@@ -71,13 +71,10 @@ function ConfiguracionPage() {
           incomeFrequency: preferences.income.frequency,
         },
       });
-      setPreferences((prev) => ({
-        ...prev,
-        income: {
-          ...prev.income,
-          payDay,
-        },
-      }));
+      // No hace falta actualizar `preferences.income.payDay` a mano acá: al
+      // invalidar el perfil (abajo) se vuelve a traer desde la cuenta, ya
+      // corregido, y el efecto de sincronización de useFinancialPreferences
+      // lo refleja automáticamente.
     },
     onSuccess: () => {
       toast.success("Configuracion guardada");

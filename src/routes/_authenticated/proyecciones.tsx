@@ -31,7 +31,7 @@ function monthLabel(d: Date) {
 function ProyeccionesPage() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const [preferences] = useFinancialPreferences(user?.id);
+  const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const currency = profile?.currency ?? "ARS";
   const overdraft = Number(profile?.overdraft_allowed ?? 0);
   const salary = Number(profile?.salary ?? 0);

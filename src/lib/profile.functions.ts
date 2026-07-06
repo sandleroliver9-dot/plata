@@ -104,6 +104,7 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
       .from("profiles")
       .update({
         pay_day: payDay,
+        pay_date_mode: payDateMode,
         salary,
         saving_target: savingTarget,
         updated_at: new Date().toISOString(),

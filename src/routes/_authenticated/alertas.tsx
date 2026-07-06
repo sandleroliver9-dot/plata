@@ -25,7 +25,7 @@ type Alert = {
 function AlertasPage() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const [preferences] = useFinancialPreferences(user?.id);
+  const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const currency = profile?.currency ?? "ARS";
 
   const { data, isLoading } = useQuery(financialDataQuery(user?.id));

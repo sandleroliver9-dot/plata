@@ -158,7 +158,19 @@ export function saveFinancialPreferences(userId: string | null | undefined, pref
   window.dispatchEvent(new CustomEvent("plata:financial-preferences", { detail: { userId } }));
 }
 
-export function useFinancialPreferences(userId?: string | null) {
+/**
+ * `payDateMode`/`payDay` del perfil (Supabase) son la fuente de verdad de la
+ * cuenta. Antes esta función solo leía/escribía en localStorage, así que el
+ * "tipo de fecha de cobro" quedaba pegado al navegador: no viajaba entre
+ * dispositivos y podía quedar desincronizado del pay_day real, haciendo que
+ * distintas pantallas calcularan un mes financiero distinto entre sí. Pasar
+ * `profileIncome` (desde useProfile) sincroniza el valor local con la cuenta
+ * cada vez que el perfil cambia.
+ */
+export function useFinancialPreferences(
+  userId?: string | null,
+  profileIncome?: { payDateMode?: string | null; payDay?: number | null },
+) {
   const [preferences, setPreferencesState] = useState<FinancialPreferences>(() => loadFinancialPreferences(userId));
 
   useEffect(() => {
@@ -175,6 +187,21 @@ export function useFinancialPreferences(userId?: string | null) {
       window.removeEventListener("plata:financial-preferences", onStorage);
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!profileIncome || !profileIncome.payDateMode) return;
+    const nextMode = normalizePayDateMode(profileIncome.payDateMode);
+    const nextDay = profileIncome.payDay ?? undefined;
+    setPreferencesState((prev) => {
+      if (prev.income.payDateMode === nextMode && prev.income.payDay === nextDay) return prev;
+      const resolved = normalizeFinancialPreferences({
+        ...prev,
+        income: { ...prev.income, payDateMode: nextMode, payDay: nextDay },
+      });
+      saveFinancialPreferences(userId, resolved);
+      return resolved;
+    });
+  }, [userId, profileIncome?.payDateMode, profileIncome?.payDay]);
 
   const setPreferences = useCallback((next: FinancialPreferences | ((prev: FinancialPreferences) => FinancialPreferences)) => {
     setPreferencesState((prev) => {

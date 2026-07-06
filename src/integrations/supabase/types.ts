@@ -602,6 +602,7 @@ export type Database = {
           id: string
           onboarding_done: boolean
           overdraft_allowed: number | null
+          pay_date_mode: string
           pay_day: number | null
           salary: number | null
           saving_target: number | null
@@ -615,6 +616,7 @@ export type Database = {
           id: string
           onboarding_done?: boolean
           overdraft_allowed?: number | null
+          pay_date_mode?: string
           pay_day?: number | null
           salary?: number | null
           saving_target?: number | null
@@ -628,6 +630,7 @@ export type Database = {
           id?: string
           onboarding_done?: boolean
           overdraft_allowed?: number | null
+          pay_date_mode?: string
           pay_day?: number | null
           salary?: number | null
           saving_target?: number | null
