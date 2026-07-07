@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   currentFinancialMonth,
   financialMonth,
+  financialPeriodRange,
+  formatFinancialPeriodRange,
   installmentForFinancialMonth,
   listFinancialMonths,
   parseFinancialMonth,
@@ -79,6 +81,31 @@ describe("listFinancialMonths", () => {
         + (parsed[i].getMonth() - parsed[i - 1].getMonth());
       expect(monthsApart).toBe(1);
     }
+  });
+});
+
+describe("financialPeriodRange / formatFinancialPeriodRange", () => {
+  it("covers the whole calendar month when pay day is the 1st", () => {
+    const range = financialPeriodRange("jun 2026", 1);
+    expect(range?.start.getDate()).toBe(1);
+    expect(range?.start.getMonth()).toBe(5);
+    expect(range?.end.getDate()).toBe(30);
+    expect(range?.end.getMonth()).toBe(5);
+  });
+
+  it("spans from pay day to the day before next pay day when pay day > 1", () => {
+    // Paid on the 25th: "jun 2026" runs June 25 -> July 24.
+    const range = financialPeriodRange("jun 2026", 25);
+    expect(range?.start.getMonth()).toBe(5);
+    expect(range?.start.getDate()).toBe(25);
+    expect(range?.end.getMonth()).toBe(6);
+    expect(range?.end.getDate()).toBe(24);
+    expect(formatFinancialPeriodRange("jun 2026", 25)).toBe("25 jun al 24 jul");
+  });
+
+  it("returns null for an invalid label", () => {
+    expect(financialPeriodRange("no-es-un-mes", 25)).toBeNull();
+    expect(formatFinancialPeriodRange("no-es-un-mes", 25)).toBeNull();
   });
 });
 

@@ -75,6 +75,30 @@ export function parseFinancialMonth(label: string): Date | null {
   return new Date(fullYear, monthIndex, 1);
 }
 
+/**
+ * Rango de fechas calendario que cubre un "mes financiero" (ej: si cobrás el
+ * 25, el período "jun 2026" va del 25 de junio al 24 de julio). Sirve para
+ * aclarar en la UI que el mes financiero no coincide con el mes calendario
+ * cuando payDay > 1, y así el usuario entienda por qué en julio puede seguir
+ * viendo "jun 2026" (todavía no llegó su próximo cobro).
+ */
+export function financialPeriodRange(label: string, payDay = 1): { start: Date; end: Date } | null {
+  const monthStart = parseFinancialMonth(label);
+  if (!monthStart) return null;
+  const daysInStartMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+  const safePayDay = Math.max(1, Math.min(daysInStartMonth, Number(payDay) || 1));
+  const start = new Date(monthStart.getFullYear(), monthStart.getMonth(), safePayDay);
+  const end = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, safePayDay - 1);
+  return { start, end };
+}
+
+export function formatFinancialPeriodRange(label: string, payDay = 1): string | null {
+  const range = financialPeriodRange(label, payDay);
+  if (!range) return null;
+  const fmt = (d: Date) => `${d.getDate()} ${monthsEs[d.getMonth()]}`;
+  return `${fmt(range.start)} al ${fmt(range.end)}`;
+}
+
 export function monthsBetween(start: Date, end: Date): number {
   return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
 }

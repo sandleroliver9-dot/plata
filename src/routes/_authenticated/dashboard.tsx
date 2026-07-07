@@ -9,7 +9,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney, formatCompact, currentFinancialMonth, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
+import { formatMoney, formatCompact, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
 import { DolarWidget } from "@/components/app/dolar-widget";
 import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
@@ -25,6 +25,11 @@ function Dashboard() {
   const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const payDay = profile?.pay_day ?? 1;
   const mes = currentFinancialMonth(payDay);
+  // Si cobrás después del día 1, tu "mes financiero" no coincide con el mes
+  // calendario (ej: cobrás el 25 → el período "jun 2026" sigue vigente hasta
+  // el 24 de julio). Mostramos el rango de fechas para que no parezca que la
+  // app se quedó atrasada cuando en realidad todavía no llegó tu próximo cobro.
+  const periodoRango = payDay > 1 ? formatFinancialPeriodRange(mes, payDay) : null;
   const currency = profile?.currency ?? "ARS";
   const meses6 = listFinancialMonths(payDay, 5, 0);
 
@@ -213,6 +218,9 @@ function Dashboard() {
       <header>
         <p className="text-sm text-muted-foreground">Hola{profile?.display_name ? `, ${profile.display_name}` : ""} 👋</p>
         <h1 className="text-3xl font-bold tracking-tight mt-1">Tu resumen de {mes}</h1>
+        {periodoRango && (
+          <p className="text-xs text-muted-foreground mt-1">Período del {periodoRango} (según tu día de cobro)</p>
+        )}
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
