@@ -16,10 +16,12 @@ const assetCreateSchema = z.object({
   notas: z.string().nullable().optional(),
 });
 
+// precio_usd/monto_usd permiten 0 (activos regalados, airdrops, dividendos
+// simbolicos): la cantidad si tiene que ser positiva, no existe "comprar 0".
 const investmentBuySchema = z.object({
   activo_id: z.string().min(1),
   cantidad: z.number().positive(),
-  precio_usd: z.number().positive(),
+  precio_usd: z.number().min(0),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
   tc: z.number().positive().nullable().optional(),
   broker: z.string().nullable().optional(),
@@ -29,7 +31,7 @@ const investmentBuySchema = z.object({
 const investmentSellSchema = z.object({
   activo_id: z.string().min(1),
   cantidad: z.number().positive(),
-  precio_usd: z.number().positive(),
+  precio_usd: z.number().min(0),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
   tc: z.number().positive().nullable().optional(),
   notas: z.string().nullable().optional(),
@@ -37,7 +39,7 @@ const investmentSellSchema = z.object({
 
 const investmentDividendSchema = z.object({
   activo_id: z.string().min(1),
-  monto_usd: z.number().positive(),
+  monto_usd: z.number().min(0),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
   tc: z.number().positive().nullable().optional(),
   notas: z.string().nullable().optional(),

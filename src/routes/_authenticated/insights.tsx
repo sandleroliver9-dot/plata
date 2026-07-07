@@ -30,7 +30,7 @@ function InsightsPage() {
   const currency = profile?.currency ?? "ARS";
 
   const { data, isLoading } = useQuery(financialDataQuery(user?.id));
-  const { valorARS: inversionesValor, hasActivos } = usePortfolioValue(user?.id);
+  const { valorARS: inversionesValor, hasActivos, warnings: portfolioWarnings } = usePortfolioValue(user?.id);
 
   const cash = getMonthlyCashflow({
     profile,
@@ -157,6 +157,11 @@ function InsightsPage() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Insights</h1>
         <p className="text-sm text-muted-foreground mt-1">Mensajes automáticos simples generados con tus datos actuales.</p>
+        {portfolioWarnings.length > 0 && (
+          <p className="text-xs text-warning mt-1">
+            {portfolioWarnings.length === 1 ? "Hay una venta" : `Hay ${portfolioWarnings.length} ventas`} de inversiones sin compra que la respalde — el valor de Inversiones puede estar desactualizado.
+          </p>
+        )}
       </header>
 
       {isLoading ? (

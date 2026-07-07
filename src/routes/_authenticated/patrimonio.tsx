@@ -22,7 +22,7 @@ function Patrimonio() {
   const displayCurrency = "ARS";
 
   const { data } = useQuery(financialDataQuery(user?.id));
-  const { valorARS: inversionesValor, tc, tcIsFallback } = usePortfolioValue(user?.id);
+  const { valorARS: inversionesValor, tc, tcIsFallback, warnings: portfolioWarnings } = usePortfolioValue(user?.id);
 
   // Cada inmueble puede estar cargado en USD o ARS: convertimos a ARS (moneda
   // de referencia de esta pantalla) antes de sumar, para no mezclar unidades.
@@ -53,6 +53,11 @@ function Patrimonio() {
         {tcIsFallback && (
           <p className="text-xs text-warning mt-1">
             No se pudo obtener la cotización del dólar del día: los montos en inversiones usan un tipo de cambio de referencia y pueden no ser exactos.
+          </p>
+        )}
+        {portfolioWarnings.length > 0 && (
+          <p className="text-xs text-warning mt-1">
+            {portfolioWarnings.length === 1 ? "Hay una venta" : `Hay ${portfolioWarnings.length} ventas`} de inversiones sin compra que la respalde — el total de Inversiones puede estar desactualizado. Revisalo en la sección Inversiones.
           </p>
         )}
       </header>

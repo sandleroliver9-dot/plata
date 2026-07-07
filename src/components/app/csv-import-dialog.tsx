@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { financialMonth } from "@/lib/finance";
+import { parseISODate } from "@/lib/financial-centers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -83,7 +84,11 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
         descripcion: r.descripcion,
         monto: r.monto,
         fecha: r.fecha,
-        mes_financiero: financialMonth(new Date(r.fecha), payDay),
+        // new Date(r.fecha) parsea "YYYY-MM-DD" como UTC medianoche: en
+        // Argentina (UTC-3) cada fila importada podia caer en el mes
+        // financiero anterior al real. Mismo bug que ya se arreglo en
+        // ingresos.tsx y movimiento-dialog.tsx.
+        mes_financiero: financialMonth(parseISODate(r.fecha) ?? new Date(r.fecha), payDay),
         categoria: r.categoria ?? null,
         medio: r.medio ?? null,
       }));

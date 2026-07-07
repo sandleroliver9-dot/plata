@@ -111,6 +111,33 @@ export function hasSimilarMovement(movs: Row[], descripcion: string, monto: numb
   });
 }
 
+/**
+ * Si una cuota de tarjeta de un mes ya quedó registrada como movimiento real
+ * (ya sea via el pago agrupado "Pago tarjeta X" o via la cuota individual).
+ * Esta misma regla vivia copiada de forma identica en Dashboard, Movimientos
+ * y Vencimientos: quedar en un solo lugar evita que un cambio futuro (ej. el
+ * texto del pago agrupado) se aplique en un lugar y se olvide en los otros.
+ */
+export function isCardInstallmentRecorded(
+  movs: Row[],
+  mesFinanciero: string,
+  params: { tarjeta: string; compra?: string | null; cuotaOrigenId?: string | null },
+) {
+  const pagoTarjetaDelMes = movs.some((mov) => {
+    if (mov.tipo !== "Gasto" || mov.mes_financiero !== mesFinanciero) return false;
+    if (mov.tarjeta !== params.tarjeta) return false;
+    return String(mov.descripcion ?? "").toLowerCase().startsWith("pago tarjeta");
+  });
+  if (pagoTarjetaDelMes) return true;
+
+  return movs.some((mov) => {
+    if (!mov.es_cuota || mov.mes_financiero !== mesFinanciero) return false;
+    if (params.cuotaOrigenId && mov.cuota_origen_id === params.cuotaOrigenId) return true;
+    if (!params.compra) return false;
+    return mov.tarjeta === params.tarjeta && String(mov.descripcion ?? "").toLowerCase().includes(String(params.compra).toLowerCase());
+  });
+}
+
 function incomeEventAmount(monthlyAmount: number, frequency: IncomeFrequency) {
   if (frequency === "semanal") return monthlyAmount / 4.33;
   if (frequency === "quincenal") return monthlyAmount / 2;

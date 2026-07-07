@@ -70,14 +70,31 @@ export const IncomeService = {
   async update(userId: string, id: string, payload: IncomeUpdate) {
     const supabase = getSupabaseClient();
     const patch: Record<string, unknown> = {};
-    if (payload.concepto !== undefined) patch.concepto = payload.concepto;
-    if (payload.monto !== undefined) patch.monto = payload.monto;
-    if (payload.tipo !== undefined) patch.tipo = payload.tipo;
+    // Espejo de los campos que tambien existen en el movimiento vinculado
+    // (ver migracion add_ingreso_id_to_movimientos). softDelete ya cascadeaba
+    // por ingreso_id; update() se habia quedado sin hacerlo, dejando el
+    // movimiento con el monto/fecha viejos tras editar un ingreso.
+    const movPatch: Record<string, unknown> = {};
+    if (payload.concepto !== undefined) {
+      patch.concepto = payload.concepto;
+      movPatch.descripcion = payload.concepto;
+    }
+    if (payload.monto !== undefined) {
+      patch.monto = payload.monto;
+      movPatch.monto = payload.monto;
+    }
+    if (payload.tipo !== undefined) {
+      patch.tipo = payload.tipo;
+      movPatch.categoria = payload.tipo === 'Sueldo' ? 'Sueldo' : 'Extra';
+    }
     if (payload.notas !== undefined) patch.notas = payload.notas;
     if (payload.ajuste_esperado !== undefined) patch.ajuste_esperado = payload.ajuste_esperado;
     if (payload.fecha_cobro !== undefined) {
+      const mesFinanciero = await financialMonthForUser(userId, payload.fecha_cobro);
       patch.fecha_cobro = payload.fecha_cobro;
-      patch.mes_financiero = await financialMonthForUser(userId, payload.fecha_cobro);
+      patch.mes_financiero = mesFinanciero;
+      movPatch.fecha = payload.fecha_cobro;
+      movPatch.mes_financiero = mesFinanciero;
     }
 
     const { data, error } = await supabase
@@ -91,6 +108,18 @@ export const IncomeService = {
     if (error) {
       logger.error('Error updating income', error);
       throw error;
+    }
+
+    if (Object.keys(movPatch).length > 0) {
+      const { error: movError } = await supabase
+        .from('movimientos')
+        .update(movPatch)
+        .eq('ingreso_id', id)
+        .eq('user_id', userId);
+      if (movError) {
+        logger.error('Error updating mirrored movimiento for income', movError);
+        throw movError;
+      }
     }
 
     logger.info('Income updated', { userId, incomeId: id });

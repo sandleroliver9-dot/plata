@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { categoriasQuery } from "@/lib/queries";
 import { formatMoney, currentFinancialMonth, installmentForFinancialMonth, listFinancialMonths } from "@/lib/finance";
+import { isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -92,17 +93,7 @@ function MovimientosPage() {
         mesFinanciero: mes,
       });
       if (!cuotaDelMes) return [];
-      const pagoTarjetaDelMes = base.some((m) => {
-        if (m.tipo !== "Gasto" || m.tarjeta !== c.tarjeta) return false;
-        return (m.descripcion ?? "").toLowerCase().startsWith("pago tarjeta");
-      });
-      if (pagoTarjetaDelMes) return [];
-      const yaExiste = base.some((m) => {
-        if (!m.es_cuota) return false;
-        if (m.cuota_origen_id === c.id) return true;
-        return m.tarjeta === c.tarjeta && (m.descripcion ?? "").toLowerCase().includes(c.compra.toLowerCase());
-      });
-      if (yaExiste) return [];
+      if (isCardInstallmentRecorded(base, mes, { tarjeta: c.tarjeta, compra: c.compra, cuotaOrigenId: c.id })) return [];
       return [{
         id: `cuota-${c.id}-${mes}`,
         tipo: "Gasto",

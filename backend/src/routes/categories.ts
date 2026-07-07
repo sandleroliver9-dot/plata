@@ -26,8 +26,14 @@ const categoryUpdateSchema = z.object({
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { page, limit } = parsePaginationParams(req.query.page, req.query.limit);
-    const data = await CategoriesService.list(req.userId!, page, limit);
-    res.json({ success: true, ...data, timestamp: new Date().toISOString() });
+    const { data } = await CategoriesService.list(req.userId!, page, limit);
+    // Todos los demas endpoints (income, transactions, bills, goals,
+    // investments, profile) devuelven el array/objeto plano. Este era el
+    // unico envuelto en {success,data,pagination,timestamp}: categoriasQuery
+    // (src/lib/queries.ts) espera un array y lo pasa directo a
+    // categoryNamesFor, que hace .filter() sobre lo que reciba — con el
+    // envelope, eso tira TypeError apenas el backend queda conectado.
+    res.json(data);
   } catch (error) {
     respondError(res, error);
   }
@@ -38,7 +44,7 @@ router.post('/', authenticateToken, validateBody(categoryCreateSchema), async (r
   try {
     const payload = req.body as any;
     const data = await CategoriesService.create(req.userId!, payload);
-    res.status(201).json({ success: true, data, timestamp: new Date().toISOString() });
+    res.status(201).json(data);
   } catch (error) {
     respondError(res, error);
   }
@@ -50,7 +56,7 @@ router.put('/:id', authenticateToken, validateBody(categoryUpdateSchema), async 
     const { id } = req.params;
     const payload = req.body as any;
     const data = await CategoriesService.update(req.userId!, id, payload);
-    res.json({ success: true, data, timestamp: new Date().toISOString() });
+    res.json(data);
   } catch (error) {
     respondError(res, error);
   }

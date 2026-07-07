@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatMoney, financialMonth } from "@/lib/finance";
-import { hasSimilarMovement } from "@/lib/financial-centers";
+import { hasSimilarMovement, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/vencimientos")({
@@ -65,7 +65,12 @@ function Vencimientos() {
         supabase.from("prestamos").select("*").eq("activo", true),
         supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
         supabase.from("gastos_fijos").select("*").eq("activo", true),
-        supabase.from("movimientos").select("tipo,descripcion,monto,mes_financiero,tarjeta,es_cuota,cuota_origen_id").eq("activo", true).eq("tipo", "Gasto"),
+        // El dedupe solo necesita movimientos recientes (la cuota generada
+        // siempre es "de hoy en adelante"; si ya se pago sin actualizar el
+        // contador, va a estar entre los mas recientes). Mismo limite que
+        // financialDataQuery para no traer el historico completo del usuario
+        // en cada refetch de esta pantalla.
+        supabase.from("movimientos").select("tipo,descripcion,monto,mes_financiero,tarjeta,es_cuota,cuota_origen_id").eq("activo", true).eq("tipo", "Gasto").order("fecha", { ascending: false }).limit(200),
       ]);
       const movimientos = movs.data ?? [];
       const out: V[] = [];
@@ -75,9 +80,9 @@ function Vencimientos() {
       // Un vencimiento automatico no deberia seguir apareciendo como pendiente
       // si ya se registro el pago como movimiento (a diferencia de Dashboard y
       // Movimientos, que si dedupean contra movimientos reales, esta pantalla
-      // no lo hacia). Misma logica que ya usan esas dos pantallas: chequea
-      // cuota_origen_id, el "Pago tarjeta X" agregado, y como ultimo recurso
-      // una coincidencia de descripcion+monto+mes.
+      // no lo hacia). Misma logica compartida (isCardInstallmentRecorded) que
+      // usan esas dos pantallas para el caso de tarjeta, con hasSimilarMovement
+      // como ultimo recurso para prestamos/gastos fijos.
       const yaRegistrado = (
         fecha: Date,
         descripcionFallback: string,
@@ -86,12 +91,8 @@ function Vencimientos() {
       ) => {
         const mes = financialMonth(fecha, payDay);
         if (opts?.tarjeta) {
-          const pagoTarjetaDelMes = movimientos.some(
-            (mov: any) => mov.mes_financiero === mes && mov.tarjeta === opts.tarjeta && String(mov.descripcion ?? "").toLowerCase().startsWith("pago tarjeta"),
-          );
-          if (pagoTarjetaDelMes) return true;
-        }
-        if (opts?.cuotaOrigenId) {
+          if (isCardInstallmentRecorded(movimientos as any, mes, { tarjeta: opts.tarjeta, compra: descripcionFallback, cuotaOrigenId: opts.cuotaOrigenId })) return true;
+        } else if (opts?.cuotaOrigenId) {
           const porId = movimientos.some((mov: any) => mov.es_cuota && mov.mes_financiero === mes && mov.cuota_origen_id === opts.cuotaOrigenId);
           if (porId) return true;
         }

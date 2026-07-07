@@ -104,7 +104,11 @@ export function installmentForFinancialMonth({
 }
 
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  // toISOString() da la fecha en UTC: en Argentina (UTC-3), durante las
+  // ultimas ~3 horas de cada dia local esto devolvia la fecha de MANANA.
+  // Se arma la fecha local a mano, igual que isoLocal() en financial-centers.ts.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function addMonths(date: Date, n: number): Date {
