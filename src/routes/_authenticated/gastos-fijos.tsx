@@ -79,13 +79,17 @@ function GastosFijosPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("gastos_fijos").update({ activo: false }).eq("id", id); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("gastos_fijos").update({ activo: false }).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       toast.success("Eliminado");
       qc.invalidateQueries({ queryKey: ["gastos-fijos"] });
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const totalFijos = (items ?? []).reduce((s, i) => s + Number(i.monto_mensual), 0);

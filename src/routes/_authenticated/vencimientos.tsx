@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, financialMonth } from "@/lib/finance";
+import { hasSimilarMovement } from "@/lib/financial-centers";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/vencimientos")({
@@ -38,6 +39,7 @@ function Vencimientos() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const currency = profile?.currency ?? "ARS";
+  const payDay = profile?.pay_day ?? 1;
   const qc = useQueryClient();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -58,14 +60,42 @@ function Vencimientos() {
     queryKey: ["vencimientos-auto", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [prestamos, tarjetas, gastos] = await Promise.all([
+      const [prestamos, tarjetas, gastos, movs] = await Promise.all([
         supabase.from("prestamos").select("*").eq("activo", true),
         supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
         supabase.from("gastos_fijos").select("*").eq("activo", true),
+        supabase.from("movimientos").select("tipo,descripcion,monto,mes_financiero,tarjeta,es_cuota,cuota_origen_id").eq("activo", true).eq("tipo", "Gasto"),
       ]);
+      const movimientos = movs.data ?? [];
       const out: V[] = [];
       const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
       const horizonteGastos = new Date(hoy); horizonteGastos.setMonth(horizonteGastos.getMonth() + 12);
+
+      // Un vencimiento automatico no deberia seguir apareciendo como pendiente
+      // si ya se registro el pago como movimiento (a diferencia de Dashboard y
+      // Movimientos, que si dedupean contra movimientos reales, esta pantalla
+      // no lo hacia). Misma logica que ya usan esas dos pantallas: chequea
+      // cuota_origen_id, el "Pago tarjeta X" agregado, y como ultimo recurso
+      // una coincidencia de descripcion+monto+mes.
+      const yaRegistrado = (
+        fecha: Date,
+        descripcionFallback: string,
+        monto: number,
+        opts?: { cuotaOrigenId?: string; tarjeta?: string },
+      ) => {
+        const mes = financialMonth(fecha, payDay);
+        if (opts?.tarjeta) {
+          const pagoTarjetaDelMes = movimientos.some(
+            (mov: any) => mov.mes_financiero === mes && mov.tarjeta === opts.tarjeta && String(mov.descripcion ?? "").toLowerCase().startsWith("pago tarjeta"),
+          );
+          if (pagoTarjetaDelMes) return true;
+        }
+        if (opts?.cuotaOrigenId) {
+          const porId = movimientos.some((mov: any) => mov.es_cuota && mov.mes_financiero === mes && mov.cuota_origen_id === opts.cuotaOrigenId);
+          if (porId) return true;
+        }
+        return hasSimilarMovement(movimientos as any, descripcionFallback, monto, mes);
+      };
 
       for (const p of prestamos.data ?? []) {
         if (!p.inicio) continue;
@@ -73,17 +103,21 @@ function Vencimientos() {
         // no "fecha en que se cargó el préstamo + cuotas ya pagadas": eso empujaba
         // el vencimiento meses hacia el futuro en préstamos ya empezados antes de
         // cargarlos en la app.
-        let base: Date;
-        if (p.dia_pago) {
-          const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
-          base = new Date(hoy.getFullYear(), hoy.getMonth(), Math.min(p.dia_pago, diasEnMes));
-          if (base < hoy) base = addMonths(base, 1);
-        } else {
-          base = new Date(p.inicio + "T00:00:00");
-        }
+        // Sin dia_pago configurado, se usa el dia del mes de `inicio` como
+        // dia de pago recurrente, con la misma logica de "proxima fecha desde
+        // hoy" que la rama de arriba. Antes esta rama usaba `inicio` tal cual
+        // como primera cuota: en un prestamo cargado hace varios meses sin
+        // mantener cuotas_pagadas al dia, esa fecha quedaba en el pasado y la
+        // cuota desaparecia (no entraba en "proximos" por estar vencida, ni en
+        // "vencidos" porque esa lista solo contempla origen === "manual").
+        const diaBase = Number(p.dia_pago) || new Date(p.inicio + "T00:00:00").getDate();
+        const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+        let base = new Date(hoy.getFullYear(), hoy.getMonth(), Math.min(diaBase, diasEnMes));
+        if (base < hoy) base = addMonths(base, 1);
         const restantes = p.cuotas_totales - p.cuotas_pagadas;
         for (let i = 0; i < restantes; i++) {
           const fecha = addMonths(base, i);
+          if (yaRegistrado(fecha, p.descripcion, Number(p.cuota_mensual), { cuotaOrigenId: p.id })) continue;
           out.push({
             id: `prestamo-${p.id}-${p.cuotas_pagadas + i + 1}`,
             concepto: `${p.descripcion} (cuota ${p.cuotas_pagadas + i + 1}/${p.cuotas_totales})`,
@@ -97,7 +131,7 @@ function Vencimientos() {
         const restantes = t.cuotas_totales - t.cuota_actual + 1;
         for (let i = 0; i < restantes; i++) {
           const fecha = addMonths(base, i);
-          
+          if (yaRegistrado(fecha, t.compra, Number(t.valor_cuota), { cuotaOrigenId: t.id, tarjeta: t.tarjeta })) continue;
           out.push({
             id: `tarjeta-${t.id}-${t.cuota_actual + i}`,
             concepto: `${t.tarjeta}: ${t.compra} (${t.cuota_actual + i}/${t.cuotas_totales})`,
@@ -115,6 +149,7 @@ function Vencimientos() {
           d.setDate(Math.min(baseDay, dim));
           if (fin && d > fin) break;
           if (d > horizonteGastos) break;
+          if (yaRegistrado(d, g.gasto, Number(g.monto_mensual))) continue;
           out.push({
             id: `gasto-${g.id}-${d.getFullYear()}${d.getMonth()}`,
             concepto: g.gasto,

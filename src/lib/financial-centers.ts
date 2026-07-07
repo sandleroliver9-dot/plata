@@ -101,7 +101,7 @@ export function getBaseMonthlyIncome(profile: Row | null | undefined, ingresos: 
   return fromIncome > 0 ? fromIncome : Math.max(0, fromProfile);
 }
 
-function hasSimilarMovement(movs: Row[], descripcion: string, monto: number, mes: string) {
+export function hasSimilarMovement(movs: Row[], descripcion: string, monto: number, mes: string) {
   const desc = descripcion.toLowerCase();
   return movs.some((mov) => {
     if (mov.tipo !== "Gasto" || mov.mes_financiero !== mes) return false;

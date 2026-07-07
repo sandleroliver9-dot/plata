@@ -83,8 +83,12 @@ function PrestamoPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("prestamos").update({ activo: false }).eq("id", id); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("prestamos").update({ activo: false }).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => { toast.success("Eliminado"); qc.invalidateQueries({ queryKey: ["prestamos"] }); },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const pagarCuota = useMutation({
@@ -99,19 +103,23 @@ function PrestamoPage() {
         fecha: todayISO(),
         mes_financiero: currentFinancialMonth(payDay),
         categoria: "Préstamo",
+        es_cuota: true,
+        cuota_origen_id: p.id,
       });
       if (e1) throw e1;
       const next = p.cuotas_pagadas + 1;
-      await supabase.from("prestamos").update({
+      const { error: e2 } = await supabase.from("prestamos").update({
         cuotas_pagadas: next,
         activo: next < p.cuotas_totales,
       }).eq("id", p.id);
+      if (e2) throw e2;
     },
     onSuccess: () => {
       toast.success("Cuota registrada");
       qc.invalidateQueries({ queryKey: ["prestamos"] });
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
