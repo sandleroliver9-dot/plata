@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Trash2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, resolveTC } from "@/lib/finance";
 import { getCryptoQuotes, getStockQuotes, getDolares } from "@/lib/quotes.functions";
 import { computeBalance, formatPct, type Activo, type Compra, type Venta, type Dividendo, type BalanceRow } from "@/lib/portfolio";
 import { MercadoWidget } from "@/components/app/mercado-widget";
@@ -75,12 +75,21 @@ function Inversiones() {
     staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false,
   });
 
-  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue ?? 1000;
+  const { tc, isFallback: tcIsFallback } = resolveTC(dolar);
 
-  const rows = useMemo(() => {
-    if (!activos) return [] as BalanceRow[];
-    return computeBalance(activos, compras ?? [], ventas ?? [], dividendos ?? [], tc).filter(r => r.cantidad > 0.000001);
+  const { rows, warnings } = useMemo(() => {
+    if (!activos) return { rows: [] as BalanceRow[], warnings: [] };
+    const result = computeBalance(activos, compras ?? [], ventas ?? [], dividendos ?? [], tc);
+    return { rows: result.rows.filter(r => r.cantidad > 0.000001), warnings: result.warnings };
   }, [activos, compras, ventas, dividendos, tc]);
+
+  useEffect(() => {
+    // Antes una venta sin tenencia disponible (ej: se borró la compra que la
+    // respaldaba) se ignoraba en silencio en el cálculo de balance.
+    if (warnings.length > 0) {
+      toast.warning(`${warnings.length === 1 ? "Hay una venta" : `Hay ${warnings.length} ventas`} sin compra que la respalde. Revisá la sección Ventas.`);
+    }
+  }, [warnings]);
 
   const totals = useMemo(() => {
     const invertidoUSD = rows.reduce((s, r) => s + r.cantidad * r.pMedioUSD, 0);
@@ -133,6 +142,11 @@ function Inversiones() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Inversiones</h1>
           <p className="text-muted-foreground text-sm">Portfolio con compras, ventas y dividendos.</p>
+          {tcIsFallback && (
+            <p className="text-xs text-warning mt-1">
+              No se pudo obtener la cotización del dólar del día: los montos en ARS usan un tipo de cambio de referencia y pueden no ser exactos.
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={refreshPrices}><RefreshCw className="size-4 mr-2" />Actualizar precios</Button>
@@ -356,15 +370,18 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
               <TableHead className="text-right">PMedio USD</TableHead>
               <TableHead className="text-right">G/P USD</TableHead>
               <TableHead className="text-right">Total USD</TableHead>
+              <TableHead className="text-right">Total ARS</TableHead>
               <TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {ventas.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Sin ventas.</TableCell></TableRow>}
+              {ventas.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Sin ventas.</TableCell></TableRow>}
               {ventas.map((v) => {
                 const a = activoById.get(v.activo_id);
                 const r = rowById.get(v.activo_id);
                 const pMed = r?.pMedioUSD ?? 0;
                 const gp = (Number(v.precio_usd) - pMed) * Number(v.cantidad);
+                const totalUSD = Number(v.cantidad) * Number(v.precio_usd);
+                const totalARS = totalUSD * Number(v.tc || tc);
                 return (
                   <TableRow key={v.id}>
                     <TableCell className="text-xs">{v.fecha}</TableCell>
@@ -373,7 +390,8 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
                     <TableCell className="text-right num">{formatMoney(Number(v.precio_usd), "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(pMed, "USD")}</TableCell>
                     <TableCell className={`text-right num ${gp >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(gp, "USD")}</TableCell>
-                    <TableCell className="text-right num">{formatMoney(Number(v.cantidad) * Number(v.precio_usd), "USD")}</TableCell>
+                    <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
+                    <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
                     <TableCell><Button variant="ghost" size="sm" onClick={() => del(v.id)}><Trash2 className="size-4" /></Button></TableCell>
                   </TableRow>
                 );

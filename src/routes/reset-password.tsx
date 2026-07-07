@@ -26,7 +26,12 @@ function ResetPasswordPage() {
   const linkLooksLikeRecovery = useMemo(() => {
     if (typeof window === "undefined") return false;
     const hash = window.location.hash.toLowerCase();
-    return hash.includes("type=recovery") || hash.includes("access_token=");
+    // Supabase puede mandar el link de recuperación con el token en el hash
+    // (flujo implícito) o con `?code=` en la query (flujo PKCE, el que usan
+    // los proyectos nuevos). Solo revisar el hash mostraba "enlace inválido"
+    // en un link de PKCE válido que todavía no había terminado de procesarse.
+    const search = window.location.search.toLowerCase();
+    return hash.includes("type=recovery") || hash.includes("access_token=") || search.includes("code=");
   }, []);
 
   useEffect(() => {

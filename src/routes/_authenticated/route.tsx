@@ -5,9 +5,16 @@ import { FeedbackWidget } from "@/components/app/feedback-widget";
 import { OnboardingWizard } from "@/components/app/onboarding-wizard";
 
 async function waitForSession() {
-  for (let attempt = 0; attempt < 12; attempt += 1) {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) return data.session;
+  // 24 intentos x 250ms = 6s. Antes eran 3s (12 intentos): en dispositivos o
+  // redes lentas alcanzaba a expirar y deslogueaba a un usuario con sesión
+  // válida antes de que localStorage terminara de resolver.
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) return data.session;
+    } catch {
+      // Reintenta: un fallo puntual de red/storage no debería deslogear.
+    }
     await new Promise((resolve) => window.setTimeout(resolve, 250));
   }
   return null;

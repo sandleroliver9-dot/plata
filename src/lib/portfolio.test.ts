@@ -31,7 +31,7 @@ function compra(overrides: Partial<Compra> = {}): Compra {
 
 describe("computeBalance", () => {
   it("values a simple position in both USD and ARS using the given exchange rate", () => {
-    const rows = computeBalance([activo()], [compra()], [], [], 1000);
+    const { rows } = computeBalance([activo()], [compra()], [], [], 1000);
     expect(rows).toHaveLength(1);
     const [row] = rows;
     expect(row.cantidad).toBe(10);
@@ -41,7 +41,7 @@ describe("computeBalance", () => {
   });
 
   it("excludes fully-sold assets from the resulting rows' quantity", () => {
-    const rows = computeBalance(
+    const { rows } = computeBalance(
       [activo()],
       [compra()],
       [{ id: "v1", activo_id: "a1", fecha: "2026-02-01", cantidad: 10, precio_usd: 120, tc: null }],
@@ -49,5 +49,20 @@ describe("computeBalance", () => {
       1000,
     );
     expect(rows[0].cantidad).toBe(0);
+  });
+
+  it("reports a warning instead of silently dropping a sale with no backing holdings", () => {
+    // No hay compras: la venta no tiene nada que respaldarla (ej: se borró
+    // la compra original).
+    const { rows, warnings } = computeBalance(
+      [activo()],
+      [],
+      [{ id: "v1", activo_id: "a1", fecha: "2026-02-01", cantidad: 5, precio_usd: 120, tc: null }],
+      [],
+      1000,
+    );
+    expect(rows[0].cantidad).toBe(0);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatchObject({ activoId: "a1", ventaId: "v1" });
   });
 });

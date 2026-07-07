@@ -46,9 +46,13 @@ export const updateSavingTarget = createServerFn({ method: "POST" })
   .inputValidator((data: { savingTarget: number }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Antes solo lo limitaba el <Slider min={0} max={60}> del cliente; sin
+    // clamp acá, cualquiera podía mandar un valor fuera de rango directo al
+    // server function. Mismo límite que updateFinancialProfile.
+    const savingTarget = Math.max(0, Math.min(80, Math.round(Number(data.savingTarget) || 0)));
     const { error } = await supabase
       .from("profiles")
-      .update({ saving_target: data.savingTarget })
+      .update({ saving_target: savingTarget })
       .eq("id", userId);
     if (error) throw error;
     return { ok: true };

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, resolveTC } from "@/lib/finance";
 import { getDolares } from "@/lib/quotes.functions";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
@@ -52,7 +52,7 @@ function Inmuebles() {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue ?? 1000;
+  const { tc, isFallback: tcIsFallback } = resolveTC(dolar);
 
   // Cada inmueble puede estar cargado en USD o ARS: convertimos todo a USD
   // (moneda de referencia del portafolio inmobiliario) antes de sumar, para
@@ -81,6 +81,11 @@ function Inmuebles() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Inmuebles</h1>
           <p className="text-muted-foreground text-sm">Tu portafolio inmobiliario.</p>
+          {tcIsFallback && (
+            <p className="text-xs text-warning mt-1">
+              No se pudo obtener la cotización del dólar del día: los totales en USD usan un tipo de cambio de referencia y pueden no ser exactos.
+            </p>
+          )}
         </div>
         <NewI userId={user?.id} onCreated={() => qc.invalidateQueries({ queryKey: ["inmuebles"] })} />
       </header>

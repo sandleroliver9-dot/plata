@@ -22,7 +22,7 @@ function Patrimonio() {
   const displayCurrency = "ARS";
 
   const { data } = useQuery(financialDataQuery(user?.id));
-  const { valorARS: inversionesValor, tc } = usePortfolioValue(user?.id);
+  const { valorARS: inversionesValor, tc, tcIsFallback } = usePortfolioValue(user?.id);
 
   // Cada inmueble puede estar cargado en USD o ARS: convertimos a ARS (moneda
   // de referencia de esta pantalla) antes de sumar, para no mezclar unidades.
@@ -50,6 +50,11 @@ function Patrimonio() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Patrimonio neto</h1>
         <p className="text-muted-foreground text-sm">Activos menos pasivos.</p>
+        {tcIsFallback && (
+          <p className="text-xs text-warning mt-1">
+            No se pudo obtener la cotización del dólar del día: los montos en inversiones usan un tipo de cambio de referencia y pueden no ser exactos.
+          </p>
+        )}
       </header>
 
       <div className="grid gap-4 md:grid-cols-4">

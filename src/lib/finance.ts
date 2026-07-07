@@ -21,6 +21,18 @@ export function formatCompact(amount: number, currency = "ARS"): string {
   return formatMoney(n, currency);
 }
 
+// Tipo de cambio de referencia cuando no hay cotizacion disponible (API de
+// dolarapi.com caida o sin datos). Antes este numero estaba repetido en 3
+// archivos distintos (patrimonio, inversiones, inmuebles) sin avisar al
+// usuario que el valor mostrado podia estar desactualizado.
+export const TC_FALLBACK = 1000;
+
+export function resolveTC(dolar?: { mep?: number; ccl?: number; blue?: number } | null): { tc: number; isFallback: boolean } {
+  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue;
+  if (tc && tc > 0) return { tc, isFallback: false };
+  return { tc: TC_FALLBACK, isFallback: true };
+}
+
 /**
  * Mes financiero: si el usuario cobra el dia 5, el periodo de "jun 2026"
  * va del 5 de junio al 4 de julio.
@@ -120,8 +132,10 @@ export function smartMessage(ingresos: number, gastos: number, overdraft: number
   if (ingresos === 0 && gastos === 0) return "Empezá cargando tus ingresos y movimientos del mes para ver tu situación real.";
   const balance = ingresos - gastos;
   const ahorroPct = ingresos > 0 ? balance / ingresos : 0;
-  const day = new Date().getDate();
-  const diasRestantes = payDay > day ? payDay - day : 30 - day + payDay;
+  const now = new Date();
+  const day = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const diasRestantes = payDay > day ? payDay - day : daysInMonth - day + payDay;
   if (balance < -overdraft) return `Estás sobregirado por ${Math.abs(balance + overdraft).toFixed(0)}. Bajá gastos no esenciales este mes.`;
   if (balance < 0) return `Vas usando el descubierto. Te quedan ${diasRestantes} días hasta tu próximo cobro.`;
   if (ahorroPct >= 0.3) return `Muy bien: estás ahorrando ${(ahorroPct * 100).toFixed(0)}% de tus ingresos. Considerá invertir el excedente.`;

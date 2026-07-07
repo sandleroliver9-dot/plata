@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, ArrowLeftRight, TrendingUp, Wallet, CreditCard, Landmark, LineChart, Building2, Target, Settings, LogOut, Receipt, Menu, Sparkles, Bell, Lightbulb, CalendarDays } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    // supabase-js limpia la sesión local antes de intentar el llamado al
+    // servidor, así que igual navegamos a /auth si falla la red — pero
+    // avisamos, en vez de fallar en silencio.
+    if (error) toast.error("No se pudo cerrar sesión en el servidor, pero se cerró localmente.");
     navigate({ to: "/auth", replace: true });
   }
 
