@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Target, Trash2, Plus as PlusIcon } from "lucide-react";
+import { Plus, Target, Plus as PlusIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/finance";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
@@ -40,16 +41,7 @@ function Metas() {
     },
   });
 
-  async function addProgress(m: Meta) {
-    const v = prompt(`¿Cuánto sumar a "${m.meta}"?`);
-    if (!v) return;
-    let monto: number;
-    try {
-      monto = parsePositiveNumberInput(v, "Monto");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Revisa el monto");
-      return;
-    }
+  async function addProgress(m: Meta, monto: number) {
     const { error } = await supabase.from("metas").update({ ahorrado: Number(m.ahorrado) + monto }).eq("id", m.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Progreso actualizado");
@@ -57,7 +49,6 @@ function Metas() {
   }
 
   async function del(id: string) {
-    if (!confirm("¿Eliminar esta meta?")) return;
     const { error } = await supabase.from("metas").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["metas"] });
@@ -96,7 +87,12 @@ function Metas() {
                       </p>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => del(m.id)}><Trash2 className="size-4" /></Button>
+                  <ConfirmDeleteButton
+                    size="sm"
+                    title="¿Eliminar esta meta?"
+                    description={`"${m.meta}" se va a borrar, junto con el progreso guardado.`}
+                    onConfirm={() => del(m.id)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -109,15 +105,51 @@ function Metas() {
                     <span className="text-muted-foreground">Falta: <span className="num">{formatMoney(falta, m.moneda)}</span></span>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="w-full mt-4" onClick={() => addProgress(m)}>
-                  <PlusIcon className="size-4 mr-2" /> Sumar ahorro
-                </Button>
+                <AddProgressDialog meta={m} onConfirm={(monto) => addProgress(m, monto)} />
               </Card>
             );
           })}
         </div>
       )}
     </div>
+  );
+}
+
+function AddProgressDialog({ meta, onConfirm }: { meta: Meta; onConfirm: (monto: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const [monto, setMonto] = useState("");
+
+  function save() {
+    let parsed: number;
+    try {
+      parsed = parsePositiveNumberInput(monto, "Monto");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Revisá el monto");
+      return;
+    }
+    onConfirm(parsed);
+    setOpen(false);
+    setMonto("");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setMonto(""); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full mt-4">
+          <PlusIcon className="size-4 mr-2" /> Sumar ahorro
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Sumar ahorro a "{meta.meta}"</DialogTitle></DialogHeader>
+        <div className="grid gap-3">
+          <div>
+            <Label>Monto a sumar</Label>
+            <DecimalInput value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="Ej: 50000" autoFocus />
+          </div>
+        </div>
+        <DialogFooter><Button onClick={save}>Sumar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

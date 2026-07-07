@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Plus, Check, Trash2, CalendarClock, AlertTriangle } from "lucide-react";
+import { Plus, Check, CalendarClock, AlertTriangle } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -343,7 +344,12 @@ function Vencimientos() {
                   <Button size="sm" variant={v.pagado ? "secondary" : "default"} onClick={() => togglePagado(v)}>
                     <Check className="size-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => del(v.id)}><Trash2 className="size-4" /></Button>
+                  <ConfirmDeleteButton
+                    size="sm"
+                    title="¿Eliminar este vencimiento?"
+                    description={`${v.concepto} por ${formatMoney(Number(v.monto), currency)} se va a borrar.`}
+                    onConfirm={() => del(v.id)}
+                  />
                 </li>
               );
             })}

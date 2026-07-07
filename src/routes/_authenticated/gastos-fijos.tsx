@@ -2,7 +2,8 @@ import { ConceptCombo } from "@/components/app/concept-combo";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -129,7 +130,11 @@ function GastosFijosPage() {
                   <div className="text-xs text-muted-foreground">{i.categoria ?? "Sin categoría"}{i.medio ? ` · ${i.medio}` : ""}</div>
                 </div>
                 <div className="num font-semibold">{formatMoney(Number(i.monto_mensual), currency)}</div>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate(i.id)}><Trash2 className="size-4" /></Button>
+                <ConfirmDeleteButton
+                  title="¿Eliminar este gasto fijo?"
+                  description={`${i.gasto} (${formatMoney(Number(i.monto_mensual), currency)}/mes) se va a borrar.`}
+                  onConfirm={() => del.mutate(i.id)}
+                />
               </div>
             ))}
             {(cuotasActivas ?? []).filter(c => c.cuota_actual <= c.cuotas_totales).map(c => (

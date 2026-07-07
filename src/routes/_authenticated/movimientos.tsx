@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Upload, Trash2, Search } from "lucide-react";
+import { Plus, Upload, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MovimientoDialog } from "@/components/app/movimiento-dialog";
 import { CsvImportDialog } from "@/components/app/csv-import-dialog";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/movimientos")({
@@ -176,6 +177,7 @@ function MovimientosPage() {
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
@@ -281,9 +283,11 @@ function MovimientosPage() {
                   {m.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(m.monto), currency)}
                 </div>
                 {!String(m.id).startsWith("cuota-") && !String(m.id).startsWith("fijo-") && (
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => delMut.mutate(m.id)}>
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <ConfirmDeleteButton
+                    title="¿Eliminar este movimiento?"
+                    description={`${m.descripcion ?? "Este movimiento"} por ${formatMoney(Number(m.monto), currency)} se va a borrar.`}
+                    onConfirm={() => delMut.mutate(m.id)}
+                  />
                 )}
               </div>
             ))}

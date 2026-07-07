@@ -2,7 +2,8 @@ import { TarjetaCombo } from "@/components/app/tarjeta-combo";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -211,7 +212,11 @@ function TarjetasPage() {
                         </div>
                       </div>
                       <div className="num font-semibold">{formatMoney(Number(i.valor_cuota), currency)}</div>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate(i.id)}><Trash2 className="size-4" /></Button>
+                      <ConfirmDeleteButton
+                        title="¿Eliminar esta compra en cuotas?"
+                        description={`${i.compra} (cuota ${i.cuota_actual}/${i.cuotas_totales}) se va a borrar.`}
+                        onConfirm={() => del.mutate(i.id)}
+                      />
                     </div>
                   ))}
                 </div>

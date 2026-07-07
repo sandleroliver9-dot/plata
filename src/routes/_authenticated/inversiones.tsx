@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Trash2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -336,7 +337,14 @@ function CompraSection({ activos, compras, userId, tc, onChange }: { activos: Ac
                     <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
                     <TableCell className="text-xs">{c.broker ?? "—"}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" onClick={() => del(c.id)}><Trash2 className="size-4" /></Button></TableCell>
+                    <TableCell>
+                      <ConfirmDeleteButton
+                        size="sm"
+                        title="¿Eliminar esta compra?"
+                        description={`Compra de ${a?.nombre ?? "este activo"} del ${c.fecha} se va a borrar.`}
+                        onConfirm={() => del(c.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -392,7 +400,14 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
                     <TableCell className={`text-right num ${gp >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(gp, "USD")}</TableCell>
                     <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" onClick={() => del(v.id)}><Trash2 className="size-4" /></Button></TableCell>
+                    <TableCell>
+                      <ConfirmDeleteButton
+                        size="sm"
+                        title="¿Eliminar esta venta?"
+                        description={`Venta de ${a?.nombre ?? "este activo"} del ${v.fecha} se va a borrar.`}
+                        onConfirm={() => del(v.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -434,7 +449,14 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
                     <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-muted-foreground">({a.ticker})</span>}</TableCell>
                     <TableCell className="text-right num">{formatMoney(Number(d.monto_usd), "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(Number(d.monto_usd) * Number(d.tc || tc), "ARS")}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" onClick={() => del(d.id)}><Trash2 className="size-4" /></Button></TableCell>
+                    <TableCell>
+                      <ConfirmDeleteButton
+                        size="sm"
+                        title="¿Eliminar este dividendo?"
+                        description={`Dividendo de ${a?.nombre ?? "este activo"} del ${d.fecha} se va a borrar.`}
+                        onConfirm={() => del(d.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}

@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
-import { Plus, Trash2, Building2, Home } from "lucide-react";
+import { Plus, Building2, Home } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -68,7 +69,6 @@ function Inmuebles() {
   }, [list, tc]);
 
   async function del(id: string) {
-    if (!confirm("¿Eliminar este inmueble?")) return;
     const { error } = await supabase.from("inmuebles").update({ activo: false }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["inmuebles"] });
@@ -113,7 +113,12 @@ function Inmuebles() {
                     {[i.tipo, i.ciudad, i.pais].filter(Boolean).join(" · ") || "Sin datos"}
                   </p>
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => del(i.id)}><Trash2 className="size-4" /></Button>
+                <ConfirmDeleteButton
+                  size="sm"
+                  title="¿Eliminar este inmueble?"
+                  description={`${i.propiedad} se va a borrar de tu portafolio.`}
+                  onConfirm={() => del(i.id)}
+                />
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Valor</span><span className="num font-medium">{formatMoney(Number(i.valor_estimado), i.moneda)}</span></div>

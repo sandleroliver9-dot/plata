@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -155,7 +156,11 @@ function PrestamoPage() {
                     <Button size="sm" variant="outline" onClick={() => pagarCuota.mutate(p)} disabled={pagarCuota.isPending}>
                       <CheckCircle2 className="size-4 mr-1" />Pagar cuota
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => del.mutate(p.id)}><Trash2 className="size-4" /></Button>
+                    <ConfirmDeleteButton
+                      title="¿Eliminar este préstamo?"
+                      description={`${p.descripcion} se va a borrar.`}
+                      onConfirm={() => del.mutate(p.id)}
+                    />
                   </div>
                 </div>
                 <Progress value={pct} className="mt-4 h-2" />
