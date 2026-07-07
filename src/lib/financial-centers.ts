@@ -5,6 +5,7 @@ import {
   getPayDateForMonth,
   recurringFrequencyLabel,
   riskProfileSettings,
+  safeDayInMonth,
   type FinancialPreferences,
   type IncomeFrequency,
   type RecurringFrequency,
@@ -76,7 +77,7 @@ function lastDayOfMonth(year: number, month: number) {
 }
 
 function dateWithDay(year: number, month: number, day: number) {
-  return new Date(year, month, Math.min(clampDay(day), lastDayOfMonth(year, month)));
+  return new Date(year, month, safeDayInMonth(year, month, day));
 }
 
 export function daysUntil(dateISO: string) {

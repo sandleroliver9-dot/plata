@@ -70,7 +70,22 @@ export function clampDay(value: unknown, fallback = 1) {
   return Math.max(1, Math.min(31, parsed));
 }
 
-function normalizePayDateMode(value: unknown): PayDateMode {
+function lastDayOfMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/**
+ * Clampea contra los dias reales de ESE mes especifico (no solo [1,31]).
+ * `new Date(year, month, 31)` en febrero desborda a marzo si no se hace esto:
+ * es el mismo bug de "dia de cobro 31" que ya se arreglo una vez en
+ * financialMonth() y volvio a aparecer en los call-sites que construian la
+ * fecha de cobro sin pasar por este clamp.
+ */
+export function safeDayInMonth(year: number, month: number, day: unknown) {
+  return Math.min(clampDay(day), lastDayOfMonth(year, month));
+}
+
+export function normalizePayDateMode(value: unknown): PayDateMode {
   if (
     value === "first_business_day" ||
     value === "second_business_day" ||
@@ -262,7 +277,7 @@ export function getPayDateForMonth(year: number, month: number, preferences: Fin
   if (income.payDateMode === "second_business_day") return getNthBusinessDay(year, month, 2);
   if (income.payDateMode === "third_business_day") return getNthBusinessDay(year, month, 3);
   if (income.payDateMode === "last_business_day") return getLastBusinessDay(year, month);
-  return new Date(year, month, clampDay(income.payDay ?? 1));
+  return new Date(year, month, safeDayInMonth(year, month, income.payDay ?? 1));
 }
 
 export function recurringFrequencyLabel(value: RecurringFrequency) {
