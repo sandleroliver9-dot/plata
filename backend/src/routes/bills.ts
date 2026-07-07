@@ -3,6 +3,7 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { BillsService } from '../services/billsService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
@@ -31,8 +32,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
   try {
     const data = await BillsService.list(req.userId!);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -42,8 +43,8 @@ router.post('/', authenticateToken, validateBody(billCreateSchema), async (req: 
     const payload = req.body as z.infer<typeof billCreateSchema>;
     const data = await BillsService.create(req.userId!, payload);
     res.status(201).json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -54,8 +55,8 @@ router.put('/:id', authenticateToken, validateBody(billUpdateSchema), async (req
     const payload = req.body as z.infer<typeof billUpdateSchema>;
     const data = await BillsService.update(req.userId!, id, payload);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -66,8 +67,8 @@ router.patch('/:id/pay', authenticateToken, validateBody(billPaySchema), async (
     const { pagado } = req.body as z.infer<typeof billPaySchema>;
     const data = await BillsService.setPaid(req.userId!, id, pagado ?? true);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -77,8 +78,8 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     const { id } = req.params;
     await BillsService.remove(req.userId!, id);
     res.status(204).send();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 

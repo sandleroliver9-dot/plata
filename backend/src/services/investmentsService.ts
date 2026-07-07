@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
+import { NotFoundError } from '../utils/errors';
 
 const getSupabaseClient = () => {
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
@@ -58,9 +59,7 @@ async function assertAssetOwnership(userId: string, assetId: string) {
     throw error;
   }
   if (!data) {
-    const notFound = new Error('Investment asset not found');
-    (notFound as any).status = 404;
-    throw notFound;
+    throw new NotFoundError('Investment asset not found');
   }
 }
 

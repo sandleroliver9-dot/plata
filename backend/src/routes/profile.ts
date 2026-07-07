@@ -3,6 +3,7 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { ProfileService } from '../services/profileService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
@@ -32,8 +33,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
   try {
     const data = await ProfileService.getProfile(req.userId!);
     res.json(data ?? null);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -43,8 +44,8 @@ router.put('/', authenticateToken, validateBody(profileUpdateSchema), async (req
     const payload = req.body as z.infer<typeof profileUpdateSchema>;
     const data = await ProfileService.updateProfile(req.userId!, payload);
     res.json(data ?? null);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 

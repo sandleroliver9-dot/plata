@@ -6,10 +6,11 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --packages=external --sourcemap --outfile=dist/index.js",
     "start": "node dist/index.js",
     "lint": "eslint src",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.4",
@@ -29,7 +30,9 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.8.9",
     "@types/swagger-ui-express": "^4.1.8",
+    "esbuild": "^0.28.1",
     "tsx": "^4.1.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^4.1.10"
   }
 }

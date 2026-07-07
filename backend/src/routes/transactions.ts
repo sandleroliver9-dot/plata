@@ -3,14 +3,18 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { TransactionsService } from '../services/transactionsService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
-const transactionCreateSchema = z.object({
+// La tabla `movimientos` tiene un CHECK (tipo IN ('Ingreso','Gasto')).
+const transactionTipoEnum = z.enum(['Ingreso', 'Gasto']);
+
+export const transactionCreateSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
   descripcion: z.string().nullable().optional(),
   monto: z.number(),
-  tipo: z.string().min(1),
+  tipo: transactionTipoEnum,
   categoria: z.string().nullable().optional(),
   medio: z.string().nullable().optional(),
   tarjeta: z.string().nullable().optional(),
@@ -23,7 +27,7 @@ const transactionUpdateSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   descripcion: z.string().nullable().optional(),
   monto: z.number().optional(),
-  tipo: z.string().optional(),
+  tipo: transactionTipoEnum.optional(),
   categoria: z.string().nullable().optional(),
   medio: z.string().nullable().optional(),
   tarjeta: z.string().nullable().optional(),
@@ -38,8 +42,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     const { mes } = req.query as { mes?: string };
     const data = await TransactionsService.list(req.userId!, mes);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -49,8 +53,8 @@ router.post('/', authenticateToken, validateBody(transactionCreateSchema), async
     const payload = req.body as z.infer<typeof transactionCreateSchema>;
     const data = await TransactionsService.create(req.userId!, payload);
     res.status(201).json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -61,8 +65,8 @@ router.put('/:id', authenticateToken, validateBody(transactionUpdateSchema), asy
     const payload = req.body as z.infer<typeof transactionUpdateSchema>;
     const data = await TransactionsService.update(req.userId!, id, payload);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -72,8 +76,8 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     const { id } = req.params;
     await TransactionsService.softDelete(req.userId!, id);
     res.status(204).send();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 

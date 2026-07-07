@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { passwordIssue } from "@/lib/password";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Ingresar · Plata" }] }),
@@ -40,14 +41,6 @@ function AuthPage() {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  function passwordIssue(value: string): string | null {
-    if (value.length < 8) return "La contraseña necesita al menos 8 caracteres.";
-    if (!/[A-Z]/.test(value)) return "Agregá al menos una mayúscula.";
-    if (!/[0-9]/.test(value)) return "Agregá al menos un número.";
-    if (!/[^A-Za-z0-9]/.test(value)) return "Agregá al menos un símbolo, por ejemplo !";
-    return null;
-  }
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
@@ -110,23 +103,19 @@ function AuthPage() {
     if (googleLoading) return;
     setGoogleLoading(true);
 
-    try {
-      const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? "").replace(/^["']|["']$/g, "");
-      if (!supabaseUrl) {
-        toast.error("Falta configurar Supabase para iniciar sesión con Google");
-        return;
-      }
-      const params = new URLSearchParams({
-        provider: "google",
-        redirect_to: `${window.location.origin}/dashboard`,
-        prompt: "select_account",
-      });
-      window.location.assign(`${supabaseUrl}/auth/v1/authorize?${params.toString()}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo iniciar sesión con Google");
-    } finally {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error) {
+      toast.error(error.message);
       setGoogleLoading(false);
     }
+    // En éxito, signInWithOAuth redirige el navegador a Google: no hace falta
+    // apagar el loading, la página se va a ir de acá.
   }
 
   return (

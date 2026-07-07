@@ -3,6 +3,7 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { GoalsService } from '../services/goalsService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
@@ -33,8 +34,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
   try {
     const data = await GoalsService.list(req.userId!);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -44,8 +45,8 @@ router.post('/', authenticateToken, validateBody(goalCreateSchema), async (req: 
     const payload = req.body as z.infer<typeof goalCreateSchema>;
     const data = await GoalsService.create(req.userId!, payload);
     res.status(201).json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -56,8 +57,8 @@ router.put('/:id', authenticateToken, validateBody(goalUpdateSchema), async (req
     const payload = req.body as z.infer<typeof goalUpdateSchema>;
     const data = await GoalsService.update(req.userId!, id, payload);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -68,8 +69,8 @@ router.patch('/:id/progress', authenticateToken, validateBody(goalProgressSchema
     const { ahorrado } = req.body as z.infer<typeof goalProgressSchema>;
     const data = await GoalsService.updateProgress(req.userId!, id, ahorrado);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -79,8 +80,8 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     const { id } = req.params;
     await GoalsService.remove(req.userId!, id);
     res.status(204).send();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 

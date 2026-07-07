@@ -3,14 +3,19 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { IncomeService } from '../services/incomeService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
-const incomeCreateSchema = z.object({
+// La tabla `ingresos` tiene un CHECK (tipo IN (...)); validarlo aca da un 400
+// claro en vez de que la DB lo rechace con un error generico.
+const incomeTipoEnum = z.enum(['Sueldo', 'Bono', 'Aguinaldo', 'Extra', 'Otro']);
+
+export const incomeCreateSchema = z.object({
   concepto: z.string().min(1),
   monto: z.number().min(0),
   fecha_cobro: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha_cobro debe tener formato YYYY-MM-DD'),
-  tipo: z.string().nullable().optional(),
+  tipo: incomeTipoEnum.nullable().optional(),
   notas: z.string().nullable().optional(),
   ajuste_esperado: z.number().nullable().optional(),
 });
@@ -19,7 +24,7 @@ const incomeUpdateSchema = z.object({
   concepto: z.string().optional(),
   monto: z.number().min(0).optional(),
   fecha_cobro: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  tipo: z.string().nullable().optional(),
+  tipo: incomeTipoEnum.nullable().optional(),
   notas: z.string().nullable().optional(),
   ajuste_esperado: z.number().nullable().optional(),
 });
@@ -30,8 +35,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     const { mes } = req.query as { mes?: string };
     const data = await IncomeService.list(req.userId!, mes);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -41,8 +46,8 @@ router.post('/', authenticateToken, validateBody(incomeCreateSchema), async (req
     const payload = req.body as z.infer<typeof incomeCreateSchema>;
     const data = await IncomeService.create(req.userId!, payload);
     res.status(201).json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -53,8 +58,8 @@ router.put('/:id', authenticateToken, validateBody(incomeUpdateSchema), async (r
     const payload = req.body as z.infer<typeof incomeUpdateSchema>;
     const data = await IncomeService.update(req.userId!, id, payload);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -64,8 +69,8 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     const { id } = req.params;
     await IncomeService.softDelete(req.userId!, id);
     res.status(204).send();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 

@@ -6,6 +6,7 @@ export const securityMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
+      connectSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
     },
@@ -29,13 +30,9 @@ export const apiLimiter = rateLimit({
   },
 });
 
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth
-  message: 'Too many authentication attempts, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// No hay `authLimiter`: este backend Express no expone rutas de autenticacion
+// (login/signup/reset viven en Supabase Auth, del lado del cliente). Un
+// limiter sin ruta que proteja sugiere una defensa que no existe.
 
 const sanitizeValue = (value: unknown): unknown => {
   if (Array.isArray(value)) {

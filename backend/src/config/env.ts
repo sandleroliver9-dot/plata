@@ -16,11 +16,16 @@ const parseIntWithDefault = (key: string, defaultValue: number): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
 };
 
+const nodeEnv = optional('NODE_ENV', 'development');
+
 export const env = {
   // Server
-  NODE_ENV: optional('NODE_ENV', 'development'),
+  NODE_ENV: nodeEnv,
   PORT: parseIntWithDefault('PORT', 3000),
-  FRONTEND_URL: optional('FRONTEND_URL', 'http://localhost:8080'),
+  // En produccion es obligatorio: si falta, CORS termina bloqueando al
+  // frontend real sin ningun error que apunte a la causa. En desarrollo cae
+  // a localhost para no obligar a configurarlo en cada clone.
+  FRONTEND_URL: nodeEnv === 'production' ? required('FRONTEND_URL') : optional('FRONTEND_URL', 'http://localhost:8080'),
   JSON_BODY_LIMIT: optional('JSON_BODY_LIMIT', '1mb') || '1mb',
   URLENCODED_BODY_LIMIT: optional('URLENCODED_BODY_LIMIT', '1mb') || '1mb',
   

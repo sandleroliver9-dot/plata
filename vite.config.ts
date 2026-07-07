@@ -5,6 +5,7 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { configDefaults } from "vitest/config";
 
 export default defineConfig({
   nitro: {
@@ -16,4 +17,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    test: {
+      // `backend/` es un subproyecto Node aparte con su propio vitest.config.ts
+      // y variables de entorno requeridas: sin este exclude, `npm test` en la
+      // raiz intenta correr sus tests tambien y falla por falta de env vars.
+      exclude: [...configDefaults.exclude, "backend/**"],
+    },
+  } as any,
 });

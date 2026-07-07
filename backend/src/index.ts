@@ -28,6 +28,11 @@ import quotesRoutes from './routes/quotes';
 const app: Express = express();
 const PORT = env.PORT;
 
+// Detras de un load balancer / reverse proxy (Render, Railway, etc), express
+// necesita esto para leer la IP real del cliente en vez de la del proxy;
+// sin esto el rate limiting termina limitando a todos los usuarios por igual.
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(securityMiddleware);
 app.use(apiLimiter);
@@ -62,11 +67,14 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
 });
 
-// Swagger UI
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerConfig as any, swaggerOptions));
-app.get('/api/docs.json', (req: Request, res: Response) => {
-  res.json(swaggerConfig);
-});
+// Swagger UI - solo fuera de produccion, para no filtrar el esquema completo
+// de la API sin autenticacion.
+if (env.NODE_ENV !== 'production') {
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerConfig as any, swaggerOptions));
+  app.get('/api/docs.json', (req: Request, res: Response) => {
+    res.json(swaggerConfig);
+  });
+}
 
 // API Routes
 app.use('/api/profile', profileRoutes);

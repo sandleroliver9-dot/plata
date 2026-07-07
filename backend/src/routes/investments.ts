@@ -3,6 +3,7 @@ import { AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 import { InvestmentsService } from '../services/investmentsService';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validate';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
@@ -41,11 +42,6 @@ const investmentDividendSchema = z.object({
   tc: z.number().positive().nullable().optional(),
   notas: z.string().nullable().optional(),
 });
-
-const respondError = (res: Response, err: any) => {
-  const status = typeof err?.status === 'number' ? err.status : 500;
-  res.status(status).json({ error: err.message });
-};
 
 // GET /api/investments/assets - List investment assets
 router.get('/assets', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {

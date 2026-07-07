@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { passwordIssue } from "@/lib/password";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [{ title: "Restablecer contraseña · Plata" }] }),
@@ -69,8 +70,9 @@ function ResetPasswordPage() {
 
   async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
+    const issue = passwordIssue(password);
+    if (issue) {
+      toast.error(issue);
       return;
     }
     if (password !== confirmPassword) {
@@ -128,6 +130,7 @@ function ResetPasswordPage() {
                   minLength={8}
                   autoComplete="new-password"
                 />
+                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pw-confirm">Repetir contraseña</Label>

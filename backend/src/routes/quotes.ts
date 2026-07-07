@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
-import { authenticateToken } from '../middleware/auth';
 import { QuotesService } from '../services/quotesService';
+import { respondError } from '../utils/respondError';
 
 const router = Router();
 
@@ -9,8 +9,8 @@ router.get('/dolar', async (req, res: Response) => {
   try {
     const data = await QuotesService.getDolares();
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 
@@ -19,8 +19,8 @@ router.get('/inflation', async (req, res: Response) => {
   try {
     const data = await QuotesService.getInflacion();
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err) {
+    respondError(res, err);
   }
 });
 

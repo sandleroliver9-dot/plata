@@ -42,45 +42,28 @@ export const IncomeService = {
     const supabase = getSupabaseClient();
     const mesFinanciero = await financialMonthForUser(userId, payload.fecha_cobro);
 
-    const { data, error } = await supabase
-      .from('ingresos')
-      .insert({
-        user_id: userId,
-        concepto: payload.concepto,
-        monto: payload.monto,
-        fecha_cobro: payload.fecha_cobro,
-        mes_financiero: mesFinanciero,
-        tipo: payload.tipo ?? null,
-        notas: payload.notas ?? null,
-        ajuste_esperado: payload.ajuste_esperado ?? null,
-        activo: true,
-      })
-      .select()
-      .maybeSingle();
+    // Un ingreso tambien impacta el cashflow via movimientos (getMonthlyCashflow
+    // lee de ahi, no de ingresos). Los dos inserts (ingresos + movimientos)
+    // corren en una unica transaccion de Postgres (ver migracion
+    // create_income_with_movement_rpc) para que un fallo a mitad de camino no
+    // deje un ingreso sin su movimiento espejo.
+    const { data, error } = await supabase.rpc('create_income_with_movement', {
+      p_user_id: userId,
+      p_concepto: payload.concepto,
+      p_monto: payload.monto,
+      p_fecha_cobro: payload.fecha_cobro,
+      p_mes_financiero: mesFinanciero,
+      p_tipo: payload.tipo ?? 'Sueldo',
+      p_notas: payload.notas ?? null,
+      p_ajuste_esperado: payload.ajuste_esperado ?? null,
+    });
 
     if (error) {
       logger.error('Error creating income', error);
       throw error;
     }
 
-    // Un ingreso tambien impacta el cashflow via movimientos (getMonthlyCashflow
-    // lee de ahi, no de ingresos). Se replica el mismo doble-insert que hace
-    // ingresos.tsx para que dar de alta por API tenga el mismo efecto.
-    const { error: movError } = await supabase.from('movimientos').insert({
-      user_id: userId,
-      tipo: 'Ingreso',
-      descripcion: payload.concepto,
-      monto: payload.monto,
-      fecha: payload.fecha_cobro,
-      mes_financiero: mesFinanciero,
-      categoria: payload.tipo === 'Sueldo' ? 'Sueldo' : 'Extra',
-    });
-    if (movError) {
-      logger.error('Error mirroring income into movimientos', movError);
-      throw movError;
-    }
-
-    logger.info('Income created', { userId, incomeId: data?.id });
+    logger.info('Income created', { userId, incomeId: (data as any)?.id });
     return data;
   },
 
