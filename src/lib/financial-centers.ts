@@ -386,8 +386,13 @@ export function buildUpcomingEvents({
     const pagadas = Number(p.cuotas_pagadas ?? 0);
     const restantes = total - pagadas;
     if (restantes <= 0) continue;
-    const base = parseISODate(p.inicio) ?? today;
-    if (p.dia_pago) base.setDate(Math.min(Number(p.dia_pago), 28));
+    // Clonar `today` en vez de reusarlo: si p.inicio es null, `base` apuntaba
+    // al mismo objeto que `today` y el setDate() de abajo lo mutaba in-place,
+    // corrompiendo la fecha "hoy" compartida por el resto de la funcion
+    // (ingresos, gastos fijos, cobro principal) para todo lo calculado despues
+    // de este prestamo en el loop.
+    const base = parseISODate(p.inicio) ?? new Date(today);
+    if (p.dia_pago) base.setDate(safeDayInMonth(base.getFullYear(), base.getMonth(), Number(p.dia_pago)));
     for (let i = 0; i < restantes; i++) {
       const cuota = pagadas + i + 1;
       const date = addMonths(base, pagadas + i);
@@ -491,7 +496,12 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
   const currentRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero === current);
   const previousRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero !== current);
   const currentByCat = new Map<string, number>();
-  const previousByCat = new Map<string, { total: number; count: number }>();
+  // Se agrupa por mes_financiero (no por transaccion individual): el
+  // promedio tiene que ser "gasto mensual promedio en la categoria" para ser
+  // comparable contra `monto`, que ya es una suma mensual. Promediar por
+  // transaccion mezclaba dos unidades distintas y disparaba falsos positivos
+  // en categorias con muchas compras chicas (ej: supermercado).
+  const previousByCat = new Map<string, { total: number; months: Set<string> }>();
   const sensitivity = riskProfileSettings(prefs.riskProfile);
 
   currentRows.forEach((m) => {
@@ -500,14 +510,17 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
   });
   previousRows.forEach((m) => {
     const cat = String(m.categoria ?? "Sin categoria");
-    const prev = previousByCat.get(cat) ?? { total: 0, count: 0 };
-    previousByCat.set(cat, { total: prev.total + Number(m.monto ?? 0), count: prev.count + 1 });
+    const prev = previousByCat.get(cat) ?? { total: 0, months: new Set<string>() };
+    prev.total += Number(m.monto ?? 0);
+    prev.months.add(String(m.mes_financiero));
+    previousByCat.set(cat, prev);
   });
 
   return Array.from(currentByCat.entries())
     .map(([categoria, monto]) => {
       const prev = previousByCat.get(categoria);
-      const promedio = prev && prev.count >= 3 ? prev.total / prev.count : 0;
+      const mesesConDatos = prev?.months.size ?? 0;
+      const promedio = prev && mesesConDatos >= 2 ? prev.total / mesesConDatos : 0;
       return { categoria, monto, promedio };
     })
     .filter((item) => item.promedio > 0 && item.monto > item.promedio * sensitivity.unusualMultiplier && item.monto > 5000)

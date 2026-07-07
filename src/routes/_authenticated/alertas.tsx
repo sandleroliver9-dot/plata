@@ -68,8 +68,14 @@ function AlertasPage() {
 
   const nextIncome = upcoming.find((event) => event.type === "cobro");
   if (nextIncome) {
+    // cash.disponible ya descuenta las cuotas de tarjeta/prestamo y los
+    // gastos fijos pendientes de TODO el mes financiero (getMonthlyCashflow).
+    // Sumar de nuevo esos mismos eventos (type "cuota"/"prestamo"/"gasto_fijo")
+    // acá duplicaba el descuento. Los unicos eventos que no estan reflejados
+    // en cash.disponible son los vencimientos manuales, asi que son los
+    // unicos que hay que restar para esta alerta especifica.
     const paymentsBeforeIncome = upcoming
-      .filter((event) => event.type !== "cobro" && event.date <= nextIncome.date)
+      .filter((event) => event.type === "vencimiento" && event.date <= nextIncome.date)
       .reduce((sum, event) => sum + Number(event.amount), 0);
     const remainingBeforeIncome = cash.disponible - paymentsBeforeIncome;
     if (paymentsBeforeIncome > 0 && cash.ingresos > 0 && remainingBeforeIncome < cash.ingresos * sensitivity.liquidityRatio) {

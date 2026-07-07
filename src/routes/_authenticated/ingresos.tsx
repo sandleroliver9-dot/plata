@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { formatMoney, currentFinancialMonth, listFinancialMonths, financialMonth, todayISO } from "@/lib/finance";
+import { parseISODate } from "@/lib/financial-centers";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,18 +55,27 @@ function IngresosPage() {
       if (!user) throw new Error();
       if (!form.concepto.trim()) throw new Error("Falta concepto");
       const monto = parsePositiveNumberInput(form.monto, "Monto");
-      const mesIngreso = financialMonth(new Date(form.fecha_cobro), payDay);
-      const { error } = await supabase.from("ingresos").insert({
-        user_id: user.id,
-        concepto: form.concepto.trim().slice(0, 100),
-        monto,
-        fecha_cobro: form.fecha_cobro,
-        mes_financiero: mesIngreso,
-        tipo: form.tipo,
-      });
+      // parseISODate interpreta "YYYY-MM-DD" en hora local, no UTC: con
+      // `new Date(string)` un ingreso cargado justo el dia de cobro podia
+      // correrse un dia hacia atras en husos horarios negativos (Argentina).
+      const mesIngreso = financialMonth(parseISODate(form.fecha_cobro) ?? new Date(form.fecha_cobro), payDay);
+      const { data: ingreso, error } = await supabase
+        .from("ingresos")
+        .insert({
+          user_id: user.id,
+          concepto: form.concepto.trim().slice(0, 100),
+          monto,
+          fecha_cobro: form.fecha_cobro,
+          mes_financiero: mesIngreso,
+          tipo: form.tipo,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
-      // También crea movimiento para que impacte en dashboard
-      await supabase.from("movimientos").insert({
+      // También crea movimiento para que impacte en dashboard, vinculado por
+      // ingreso_id (no por heurística de descripcion+monto+fecha) para poder
+      // borrarlo con certeza si se borra el ingreso.
+      const { error: movError } = await supabase.from("movimientos").insert({
         user_id: user.id,
         tipo: "Ingreso",
         descripcion: form.concepto.trim().slice(0, 100),
@@ -73,7 +83,9 @@ function IngresosPage() {
         fecha: form.fecha_cobro,
         mes_financiero: mesIngreso,
         categoria: form.tipo === "Sueldo" ? "Sueldo" : "Extra",
+        ingreso_id: ingreso.id,
       });
+      if (movError) throw movError;
     },
     onSuccess: () => {
       toast.success("Ingreso registrado");
@@ -87,24 +99,14 @@ function IngresosPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (item: { id: string; concepto: string; monto: number; fecha_cobro: string }) => {
-      await supabase.from("ingresos").update({ activo: false }).eq("id", item.id);
-      if (!user) return;
-      const { data: mov } = await supabase
-        .from("movimientos")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("tipo", "Ingreso")
-        .eq("descripcion", item.concepto)
-        .eq("monto", item.monto)
-        .eq("fecha", item.fecha_cobro)
-        .eq("activo", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (mov?.id) {
-        await supabase.from("movimientos").update({ activo: false }).eq("id", mov.id);
-      }
+    mutationFn: async (item: { id: string }) => {
+      const { error } = await supabase.from("ingresos").update({ activo: false }).eq("id", item.id);
+      if (error) throw error;
+      // Vinculado por ingreso_id (FK real): ya no hace falta adivinar cual
+      // movimiento es por descripcion+monto+fecha, lo que podia borrar el
+      // movimiento equivocado si habia otro similar el mismo dia.
+      const { error: movError } = await supabase.from("movimientos").update({ activo: false }).eq("ingreso_id", item.id);
+      if (movError) throw movError;
     },
     onSuccess: () => {
       toast.success("Eliminado");
@@ -112,6 +114,7 @@ function IngresosPage() {
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const total = (items ?? []).reduce((s, i) => s + Number(i.monto), 0);
@@ -152,7 +155,7 @@ function IngresosPage() {
                   </div>
                 </div>
                 <div className="num font-semibold text-success">{formatMoney(Number(i.monto), currency)}</div>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate({ id: i.id, concepto: i.concepto, monto: Number(i.monto), fecha_cobro: i.fecha_cobro })}><Trash2 className="size-4" /></Button>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate({ id: i.id })}><Trash2 className="size-4" /></Button>
               </div>
             ))}
           </div>

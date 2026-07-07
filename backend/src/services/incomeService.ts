@@ -108,6 +108,20 @@ export const IncomeService = {
       logger.error('Error deleting income', error);
       throw error;
     }
+
+    // Vinculado por ingreso_id (FK real, ver migracion
+    // add_ingreso_id_to_movimientos): sin esto el movimiento espejo quedaba
+    // activo para siempre, inflando el cashflow real de meses pasados.
+    const { error: movError } = await supabase
+      .from('movimientos')
+      .update({ activo: false })
+      .eq('ingreso_id', id)
+      .eq('user_id', userId);
+    if (movError) {
+      logger.error('Error deleting mirrored movimiento for income', movError);
+      throw movError;
+    }
+
     logger.info('Income deleted', { userId, incomeId: id });
     return true;
   },

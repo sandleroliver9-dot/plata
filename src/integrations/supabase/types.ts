@@ -498,6 +498,7 @@ export type Database = {
           es_cuota: boolean
           fecha: string
           id: string
+          ingreso_id: string | null
           medio: string | null
           mes_financiero: string
           monto: number
@@ -516,6 +517,7 @@ export type Database = {
           es_cuota?: boolean
           fecha: string
           id?: string
+          ingreso_id?: string | null
           medio?: string | null
           mes_financiero: string
           monto: number
@@ -534,6 +536,7 @@ export type Database = {
           es_cuota?: boolean
           fecha?: string
           id?: string
+          ingreso_id?: string | null
           medio?: string | null
           mes_financiero?: string
           monto?: number
@@ -543,7 +546,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "movimientos_ingreso_id_fkey"
+            columns: ["ingreso_id"]
+            isOneToOne: false
+            referencedRelation: "ingresos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prestamos: {
         Row: {
