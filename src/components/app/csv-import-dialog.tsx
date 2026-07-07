@@ -34,6 +34,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const qc = useQueryClient();
   const [parsed, setParsed] = useState<Row[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [errorCount, setErrorCount] = useState(0);
   const [filename, setFilename] = useState("");
 
   function handleFile(file: File) {
@@ -65,6 +66,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
         });
         setParsed(rows);
         setErrors(errs.slice(0, 5));
+        setErrorCount(errs.length);
       },
       error: () => toast.error("No pude leer el archivo"),
     });
@@ -72,7 +74,8 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
   const mut = useMutation({
     mutationFn: async () => {
-      if (!user || !parsed.length) return;
+      if (!user) throw new Error("Iniciá sesión de nuevo antes de importar");
+      if (!parsed.length) throw new Error("No hay filas para importar");
       const payDay = profile?.pay_day ?? 1;
       const batch = parsed.map(r => ({
         user_id: user.id,
@@ -84,20 +87,52 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
         categoria: r.categoria ?? null,
         medio: r.medio ?? null,
       }));
-      const { error } = await supabase.from("movimientos").insert(batch);
-      if (error) throw error;
+
+      // Reimportar el mismo CSV (o uno que se superpone) duplicaba montos sin
+      // avisar. Se descartan filas que ya existan como movimiento activo con
+      // la misma fecha+descripcion+monto+tipo antes de insertar.
+      const mesesAfectados = Array.from(new Set(batch.map((b) => b.mes_financiero)));
+      const { data: existentes, error: fetchError } = await supabase
+        .from("movimientos")
+        .select("fecha,descripcion,monto,tipo")
+        .eq("activo", true)
+        .in("mes_financiero", mesesAfectados);
+      if (fetchError) throw fetchError;
+
+      const clave = (r: { fecha: string; descripcion: string | null; monto: number; tipo: string }) =>
+        `${r.fecha}|${(r.descripcion ?? "").trim().toLowerCase()}|${Number(r.monto).toFixed(2)}|${r.tipo}`;
+      const existentesSet = new Set((existentes ?? []).map(clave));
+      const vistasEnEsteArchivo = new Set<string>();
+      const aInsertar = batch.filter((b) => {
+        const k = clave(b);
+        if (existentesSet.has(k) || vistasEnEsteArchivo.has(k)) return false;
+        vistasEnEsteArchivo.add(k);
+        return true;
+      });
+      const duplicados = batch.length - aInsertar.length;
+
+      if (aInsertar.length > 0) {
+        const { error } = await supabase.from("movimientos").insert(aInsertar);
+        if (error) throw error;
+      }
+      return { insertados: aInsertar.length, duplicados };
     },
-    onSuccess: () => {
-      toast.success(`Importé ${parsed.length} movimientos`);
+    onSuccess: (result) => {
+      if (!result) return;
+      if (result.insertados === 0) {
+        toast.info(`Las ${result.duplicados} filas ya estaban importadas, no se agregó nada nuevo.`);
+      } else {
+        toast.success(`Importé ${result.insertados} movimientos${result.duplicados ? ` (${result.duplicados} ya existían y se omitieron)` : ""}`);
+      }
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       reset();
       onOpenChange(false);
     },
-    onError: () => toast.error("Falló la importación"),
+    onError: (e: Error) => toast.error(e.message || "Falló la importación"),
   });
 
-  function reset() { setParsed([]); setErrors([]); setFilename(""); }
+  function reset() { setParsed([]); setErrors([]); setErrorCount(0); setFilename(""); }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
@@ -121,7 +156,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
               <FileText className="size-5 text-primary" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{filename}</p>
-                <p className="text-xs text-muted-foreground">{parsed.length} filas listas{errors.length ? ` · ${errors.length}+ errores` : ""}</p>
+                <p className="text-xs text-muted-foreground">{parsed.length} filas listas{errorCount ? ` · ${errorCount} error${errorCount === 1 ? "" : "es"}` : ""}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={reset}>Cambiar</Button>
             </Card>
@@ -129,6 +164,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
             {errors.length > 0 && (
               <div className="text-xs text-warning bg-warning/10 p-2 rounded">
                 {errors.map((e, i) => <div key={i}>{e}</div>)}
+                {errorCount > errors.length && <div>+{errorCount - errors.length} error{errorCount - errors.length === 1 ? "" : "es"} más</div>}
               </div>
             )}
 

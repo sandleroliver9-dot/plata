@@ -131,6 +131,20 @@ export function OnboardingWizard() {
   const Icon = cur.icon;
   const pct = ((step + 1) / steps.length) * 100;
 
+  const PAY_DAY_STEP = 2;
+  function handleNext() {
+    // Antes el dia de cobro (1-31) solo se validaba al final del wizard: el
+    // usuario podia llegar al ultimo paso y recien ahi enterarse del error.
+    if (step === PAY_DAY_STEP) {
+      const day = Number(form.pay_day);
+      if (!Number.isFinite(day) || day < 1 || day > 31) {
+        toast.error("El día de cobro tiene que estar entre 1 y 31");
+        return;
+      }
+    }
+    setStep(step + 1);
+  }
+
   return (
     <Dialog open={open} onOpenChange={() => { /* no close on outside click */ }}>
       <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
@@ -150,7 +164,7 @@ export function OnboardingWizard() {
         <div className="flex gap-2 mt-4">
           {step > 0 && <Button variant="outline" className="flex-1" onClick={() => setStep(step - 1)}>Atrás</Button>}
           {step < steps.length - 1 ? (
-            <Button className="flex-1" onClick={() => setStep(step + 1)}>Siguiente</Button>
+            <Button className="flex-1" onClick={handleNext}>Siguiente</Button>
           ) : (
             <Button className="flex-1" onClick={finish} disabled={saving}>
               <Check className="size-4 mr-2" /> Listo, empezar
