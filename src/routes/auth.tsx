@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Wallet, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -189,6 +189,12 @@ function AuthPage() {
                   )}
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Crear cuenta</Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  Al crear una cuenta, aceptás los{" "}
+                  <Link to="/terminos" className="text-primary hover:underline">Términos y Condiciones</Link>{" "}
+                  y la{" "}
+                  <Link to="/privacidad" className="text-primary hover:underline">Política de Privacidad</Link>.
+                </p>
               </form>
             </TabsContent>
           </Tabs>

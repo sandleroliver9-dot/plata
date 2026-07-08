@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Save, Shield, Wallet, CreditCard, Receipt, Target } from "lucide-react";
@@ -415,6 +415,12 @@ function ConfiguracionPage() {
           </div>
         </Card>
       </div>
+
+      <p className="text-xs text-center text-muted-foreground pt-2">
+        <Link to="/terminos" className="hover:text-foreground hover:underline">Términos y Condiciones</Link>
+        {" · "}
+        <Link to="/privacidad" className="hover:text-foreground hover:underline">Política de Privacidad</Link>
+      </p>
     </div>
   );
 }
