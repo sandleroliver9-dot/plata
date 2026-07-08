@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { estimateNetWorth } from "./financial-centers";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { buildUpcomingEvents, estimateNetWorth } from "./financial-centers";
 
 describe("estimateNetWorth", () => {
   it("subtracts remaining loan debt from net worth", () => {
@@ -36,5 +36,41 @@ describe("estimateNetWorth", () => {
 
   it("defaults missing inputs to zero without throwing", () => {
     expect(estimateNetWorth({})).toBe(0);
+  });
+});
+
+describe("buildUpcomingEvents", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 8, 12, 0, 0)); // 8 jul 2026, mediodia
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("dates a loan's next installment from today, not from inicio + cuotas_pagadas (regression)", () => {
+    // Un prestamo cargado hoy con cuotas_pagadas > 0 (el usuario venia
+    // pagandolo antes de sumarlo a la app) siempre tiene `inicio` = fecha de
+    // alta, no la fecha real de la primera cuota. Antes de este fix, la
+    // proxima cuota se calculaba como inicio + cuotas_pagadas meses, lo que
+    // la mandaba meses al futuro (acá, a octubre) en vez de al proximo
+    // vencimiento real (15 de julio). Ese bug hacia que Proyecciones mostrara
+    // $0 de gastos para el mes en curso, entre otras roturas en
+    // Alertas/Insights/Calendario financiero (que comparten esta funcion).
+    const events = buildUpcomingEvents({
+      prestamos: [{
+        id: "p1",
+        descripcion: "Prestamo personal",
+        cuota_mensual: 60000,
+        cuotas_totales: 24,
+        cuotas_pagadas: 3,
+        dia_pago: 15,
+        inicio: "2026-07-08",
+      } as any],
+      horizonDays: 60,
+    });
+    const prestamoEvents = events.filter((e) => e.type === "prestamo");
+    expect(prestamoEvents[0]?.date).toBe("2026-07-15");
+    expect(prestamoEvents[0]?.detail).toBe("Cuota 4/24");
   });
 });

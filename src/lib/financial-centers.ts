@@ -414,16 +414,19 @@ export function buildUpcomingEvents({
     const pagadas = Number(p.cuotas_pagadas ?? 0);
     const restantes = total - pagadas;
     if (restantes <= 0) continue;
-    // Clonar `today` en vez de reusarlo: si p.inicio es null, `base` apuntaba
-    // al mismo objeto que `today` y el setDate() de abajo lo mutaba in-place,
-    // corrompiendo la fecha "hoy" compartida por el resto de la funcion
-    // (ingresos, gastos fijos, cobro principal) para todo lo calculado despues
-    // de este prestamo en el loop.
-    const base = parseISODate(p.inicio) ?? new Date(today);
-    if (p.dia_pago) base.setDate(safeDayInMonth(base.getFullYear(), base.getMonth(), Number(p.dia_pago)));
+    // El proximo pago es la primera fecha (desde hoy) con el dia configurado,
+    // no "fecha en que se cargo el prestamo + cuotas ya pagadas": eso empujaba
+    // el vencimiento meses hacia el futuro en prestamos ya empezados antes de
+    // cargarlos en la app (`inicio` siempre es la fecha de alta, no la fecha
+    // real de la primera cuota). Mismo fix que ya tiene vencimientos.tsx, que
+    // nunca se aplico a esta funcion compartida -- Alertas, Insights,
+    // Proyecciones y el Calendario financiero seguian con la cuenta vieja.
+    const diaBase = p.dia_pago ? Number(p.dia_pago) : (parseISODate(p.inicio)?.getDate() ?? today.getDate());
+    let base = dateWithDay(today.getFullYear(), today.getMonth(), diaBase);
+    if (base < today) base = addMonths(base, 1);
     for (let i = 0; i < restantes; i++) {
       const cuota = pagadas + i + 1;
-      const date = addMonths(base, pagadas + i);
+      const date = addMonths(base, i);
       addIfInRange({
         id: `prestamo-${p.id}-${cuota}`,
         date: isoLocal(date),
