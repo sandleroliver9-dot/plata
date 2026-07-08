@@ -1,12 +1,24 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export const categoriasQuery = (userId: string | undefined) =>
   queryOptions({
     queryKey: ["categorias", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const data = await apiClient.categories.list();
+      // Antes pasaba por apiClient (backend Express en VITE_API_URL/localhost:3000),
+      // que no corre en el deploy real: el fetch fallaba siempre, dejando esta
+      // query en error permanente. Ademas de perder los colores/categorias reales
+      // del usuario (se caia al fallback generico), disparaba requests fallidos
+      // en cada carga de Gastos fijos, Movimientos y el dialogo de Nuevo movimiento.
+      const { data, error } = await supabase
+        .from("categorias")
+        .select("*")
+        .eq("user_id", userId as string)
+        .eq("activo", true)
+        .order("nombre");
+      if (error) throw error;
       return data ?? [];
     },
   });

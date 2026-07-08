@@ -116,18 +116,48 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
           .eq("id", existing.id)
           .eq("user_id", userId);
         if (updateIncomeError) throw updateIncomeError;
-      } else {
-        const { error: createIncomeError } = await supabase
-          .from("ingresos")
-          .insert({
+
+        // Mantiene sincronizado el movimiento espejo (tipo "Ingreso") que
+        // hace que este sueldo impacte en Movimientos/Insights/Proyecciones,
+        // no solo en la pantalla Ingresos. Si por algún motivo no existe
+        // (ej. fila vieja creada antes de este fix, sin su espejo), se crea
+        // acá en vez de dejar el ingreso huérfano indefinidamente.
+        const { data: updatedMov, error: updateMovError } = await supabase
+          .from("movimientos")
+          .update({ monto: salary, fecha: fechaCobro, mes_financiero: mesFinanciero, activo: true })
+          .eq("ingreso_id", existing.id)
+          .eq("user_id", userId)
+          .select("id");
+        if (updateMovError) throw updateMovError;
+        if (!updatedMov || updatedMov.length === 0) {
+          const { error: insertMovError } = await supabase.from("movimientos").insert({
             user_id: userId,
-            concepto: "Sueldo",
-            tipo: "Sueldo",
+            tipo: "Ingreso",
+            descripcion: "Sueldo",
             monto: salary,
-            fecha_cobro: fechaCobro,
+            fecha: fechaCobro,
             mes_financiero: mesFinanciero,
+            categoria: "Sueldo",
             activo: true,
+            ingreso_id: existing.id,
           });
+          if (insertMovError) throw insertMovError;
+        }
+      } else {
+        // Alta atómica ingreso + movimiento espejo (misma RPC que usa
+        // ingresos.tsx): un insert directo a `ingresos` acá dejaba el sueldo
+        // del onboarding/Configuración invisible en Movimientos, Insights y
+        // Proyecciones (que leen de `movimientos`), aunque sí apareciera en
+        // la pantalla Ingresos y en el Dashboard (que mergea ambas tablas
+        // como workaround).
+        const { error: createIncomeError } = await supabase.rpc("create_income_with_movement", {
+          p_user_id: userId,
+          p_concepto: "Sueldo",
+          p_monto: salary,
+          p_fecha_cobro: fechaCobro,
+          p_mes_financiero: mesFinanciero,
+          p_tipo: "Sueldo",
+        });
         if (createIncomeError) throw createIncomeError;
       }
     }
