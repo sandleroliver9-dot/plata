@@ -18,6 +18,10 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    server: {
+      host: "127.0.0.1",
+      port: 8080,
+    },
     test: {
       // `backend/` es un subproyecto Node aparte con su propio vitest.config.ts
       // y variables de entorno requeridas: sin este exclude, `npm test` en la
