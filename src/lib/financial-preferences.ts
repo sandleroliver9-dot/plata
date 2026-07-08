@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { currentFinancialMonth } from "./finance";
 
 export type IncomeFrequency = "mensual" | "quincenal" | "semanal" | "variable";
 export type PayDateMode = "fixed_day" | "first_business_day" | "second_business_day" | "third_business_day" | "last_business_day" | "variable";
@@ -295,4 +296,25 @@ export function riskProfileSettings(profile: FinancialProfileType) {
     return { alertDays: 4, liquidityRatio: 0.05, unusualMultiplier: 3 };
   }
   return { alertDays: 7, liquidityRatio: 0.1, unusualMultiplier: 2.5 };
+}
+
+/**
+ * Selector de "mes financiero" con default = mes actual, que se resincroniza
+ * si `payDay` cambia (ej: el perfil todavia no habia cargado y usaba el
+ * fallback payDay=1) siempre que el usuario no haya elegido otro mes a mano.
+ * Sin esto, ingresos.tsx/movimientos.tsx fijaban el mes inicial con el
+ * fallback y se quedaban mostrando el mes financiero equivocado hasta que el
+ * usuario tocaba el selector.
+ */
+export function useDefaultFinancialMonth(payDay: number): [string, (mes: string) => void] {
+  const mesActual = currentFinancialMonth(payDay);
+  const [mes, setMes] = useState(mesActual);
+  const prevMesActual = useRef(mesActual);
+  useEffect(() => {
+    if (mes === prevMesActual.current && mesActual !== prevMesActual.current) {
+      setMes(mesActual);
+    }
+    prevMesActual.current = mesActual;
+  }, [mesActual, mes]);
+  return [mes, setMes];
 }

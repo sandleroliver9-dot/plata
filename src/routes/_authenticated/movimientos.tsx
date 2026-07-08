@@ -8,7 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { categoriasQuery } from "@/lib/queries";
 import { formatMoney, currentFinancialMonth, installmentForFinancialMonth, listFinancialMonths } from "@/lib/finance";
-import { isCardInstallmentRecorded } from "@/lib/financial-centers";
+import { hasSimilarMovement, isCardInstallmentRecorded } from "@/lib/financial-centers";
+import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -34,7 +35,7 @@ function MovimientosPage() {
 
   const [openNew, setOpenNew] = useState(false);
   const [openImport, setOpenImport] = useState(false);
-  const [mes, setMes] = useState(mesActual);
+  const [mes, setMes] = useDefaultFinancialMonth(payDay);
   const [tipo, setTipo] = useState("todos");
   const [search, setSearch] = useState("");
 
@@ -113,7 +114,14 @@ function MovimientosPage() {
     // proyectarlos como gasto estimado del mes financiero en curso, nunca de meses
     // pasados o futuros que el usuario elija en el selector (esos gastos, si existieron,
     // ya deberían estar cargados como movimientos reales).
-    const fijosComoMovimientos = mes !== mesActual ? [] : (gastosFijos ?? []).map((g) => ({
+    const fijosComoMovimientos = mes !== mesActual ? [] : (gastosFijos ?? [])
+      // Si el usuario ya cargo este gasto fijo como movimiento real este mes
+      // (lo esperable una vez que lo paga), no duplicarlo con la fila
+      // sintetica: sin este chequeo (que Dashboard si tiene via
+      // isCardInstallmentRecorded/hasSimilarMovement) el total de gastos y el
+      // grafico de categorias contaban el mismo gasto dos veces.
+      .filter((g) => !hasSimilarMovement(base as any, g.gasto, Number(g.monto_mensual), mes))
+      .map((g) => ({
       id: `fijo-${g.id}-${mes}`,
       tipo: "Gasto",
       descripcion: g.gasto,
@@ -159,13 +167,29 @@ function MovimientosPage() {
   }, [movimientosConCuotas, cats]);
 
   const delMut = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("movimientos").update({ activo: false }).eq("id", id);
+    mutationFn: async (m: { id: string; ingreso_id?: string | null }) => {
+      // Si este movimiento es el espejo de un ingreso (ver migracion
+      // add_ingreso_id_to_movimientos), borrarlo solo de aca dejaba el
+      // ingreso original activo: reaparecia en el total de la pantalla
+      // Ingresos y en getBaseMonthlyIncome aunque el usuario lo haya
+      // "eliminado" desde Movimientos. Usar la misma RPC atomica da de baja
+      // ambas filas juntas.
+      if (m.ingreso_id) {
+        if (!user) throw new Error();
+        const { error } = await supabase.rpc("delete_income_with_movement", {
+          p_user_id: user.id,
+          p_ingreso_id: m.ingreso_id,
+        });
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("movimientos").update({ activo: false }).eq("id", m.id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Eliminado");
       qc.invalidateQueries({ queryKey: ["movimientos"] });
+      qc.invalidateQueries({ queryKey: ["ingresos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -277,7 +301,7 @@ function MovimientosPage() {
                   <ConfirmDeleteButton
                     title="¿Eliminar este movimiento?"
                     description={`${m.descripcion ?? "Este movimiento"} por ${formatMoney(Number(m.monto), currency)} se va a borrar.`}
-                    onConfirm={() => delMut.mutate(m.id)}
+                    onConfirm={() => delMut.mutate({ id: m.id, ingreso_id: (m as any).ingreso_id })}
                   />
                 )}
               </div>
