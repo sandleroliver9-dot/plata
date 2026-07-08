@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { appNow, formatMoney, financialMonth, todayISO } from "@/lib/finance";
-import { hasSimilarMovement, isCardInstallmentRecorded, nextLoanInstallmentBase } from "@/lib/financial-centers";
+import { hasSimilarMovement, isCardInstallmentRecorded, nextLoanInstallmentBase, resolveGastoFijoDebitDay } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
@@ -140,13 +140,7 @@ function Vencimientos() {
         }
       }
       for (const g of gastos.data ?? []) {
-        // Mismo orden de prioridad que buildUpcomingEvents (financial-centers.ts):
-        // preferencia guardada > dia de `inicio` > dia 1. Antes esta pantalla
-        // ignoraba recurringSettings por completo, asi que el "dia de debito"
-        // configurado en el alta o en Configuracion no se reflejaba aca --
-        // justo la pantalla donde mas importa la fecha exacta de vencimiento.
-        const debitPref = preferences.recurringSettings[String(g.id)]?.debitDay;
-        const baseDay = debitPref ?? (g.inicio ? new Date(g.inicio + "T00:00:00").getDate() : 1);
+        const baseDay = resolveGastoFijoDebitDay(g, preferences.recurringSettings);
         const fin = g.fin ? new Date(g.fin + "T00:00:00") : null;
         // Si la ocurrencia de este mes calendario ya paso (ej: se cobra/paga
         // el dia 5 y hoy es 20), arrancar desde el mes que viene: mismo

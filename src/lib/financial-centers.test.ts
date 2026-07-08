@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildUpcomingEvents, estimateNetWorth } from "./financial-centers";
+import { buildUpcomingEvents, estimateNetWorth, resolveGastoFijoDebitDay } from "./financial-centers";
 
 describe("estimateNetWorth", () => {
   it("subtracts remaining loan debt from net worth", () => {
@@ -95,5 +95,41 @@ describe("buildUpcomingEvents", () => {
     const prestamoEvents = events.filter((e) => e.type === "prestamo");
     expect(prestamoEvents[0]?.date).toBe("2026-07-15");
     expect(prestamoEvents[0]?.detail).toBe("Cuota 4/24");
+  });
+
+  it("dates a gasto fijo's next occurrence using the saved debitDay preference, not just inicio (regression)", () => {
+    // vencimientos.tsx no leia recurringSettings en absoluto (solo `inicio`,
+    // que a su vez casi siempre es null porque el alta no lo pedia). Un gasto
+    // fijo con "dia de debito" configurado en el alta o en Configuracion
+    // mostraba "Proximo: 1 de [mes que viene]" en Vencimientos mientras
+    // Alertas/Insights/Proyecciones/Calendario (que si usan esta funcion)
+    // ya mostraban la fecha correcta.
+    const events = buildUpcomingEvents({
+      gastosFijos: [{ id: "g1", gasto: "Alquiler", monto_mensual: 100000, inicio: null } as any],
+      preferences: { recurringSettings: { g1: { debitDay: 15 } } } as any,
+      horizonDays: 30,
+    });
+    const gastoEvents = events.filter((e) => e.type === "gasto_fijo");
+    expect(gastoEvents[0]?.date).toBe("2026-07-15");
+  });
+});
+
+describe("resolveGastoFijoDebitDay", () => {
+  it("prefers the saved recurringSettings preference over inicio", () => {
+    const day = resolveGastoFijoDebitDay(
+      { id: "g1", inicio: "2026-07-01" } as any,
+      { g1: { debitDay: 20 } },
+    );
+    expect(day).toBe(20);
+  });
+
+  it("falls back to inicio's day when there is no preference", () => {
+    const day = resolveGastoFijoDebitDay({ id: "g1", inicio: "2026-07-09" } as any, {});
+    expect(day).toBe(9);
+  });
+
+  it("defaults to day 1 when there is neither a preference nor inicio", () => {
+    const day = resolveGastoFijoDebitDay({ id: "g1", inicio: null } as any, {});
+    expect(day).toBe(1);
   });
 });

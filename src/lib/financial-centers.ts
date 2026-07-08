@@ -95,6 +95,18 @@ export function nextLoanInstallmentBase(p: Row, today: Date) {
   return base;
 }
 
+// Dia del mes en que se debita un gasto fijo: la preferencia guardada
+// (recurringSettings, seteada en el alta o en Configuracion) gana sobre el
+// dia de `inicio`, que a su vez gana sobre el default (dia 1). Compartida
+// entre buildUpcomingEvents (Alertas/Insights/Proyecciones/Calendario) y
+// vencimientos.tsx: antes cada uno tenia su propia copia de esta prioridad,
+// y vencimientos.tsx ni siquiera miraba la preferencia guardada.
+export function resolveGastoFijoDebitDay(g: Row, recurringSettings: Record<string, { debitDay?: number }>) {
+  const pref = recurringSettings[String(g.id)];
+  if (pref?.debitDay) return pref.debitDay;
+  return parseISODate(g.inicio)?.getDate() ?? 1;
+}
+
 export function daysUntil(dateISO: string) {
   const today = appNow();
   today.setHours(0, 0, 0, 0);
@@ -445,15 +457,14 @@ export function buildUpcomingEvents({
   }
 
   for (const g of gastosFijos) {
-    const start = parseISODate(g.inicio);
     const pref = prefs.recurringSettings[String(g.id)] ?? {};
     const frequency = pref.frequency ?? "mensual";
-    const debitDay = pref.debitDay ?? start?.getDate() ?? 1;
+    const debitDay = resolveGastoFijoDebitDay(g, prefs.recurringSettings);
     const dates = buildRecurringDates({
       day: debitDay,
       frequency,
       horizonDays,
-      startDate: start,
+      startDate: parseISODate(g.inicio),
     });
     dates.forEach((date, index) => {
       addIfInRange({

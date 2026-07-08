@@ -65,4 +65,24 @@ describe("computeBalance", () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({ activoId: "a1", ventaId: "v1" });
   });
+
+  it("combines a partial sale's realized gain with dividends, keeping the remaining position at cost (regression)", () => {
+    // Reproduce el flujo probado a mano en Inversiones: compra 10 @150,
+    // vende 4 @180 (gana (180-150)*4=120), cobra un dividendo de 12,5.
+    // "G/P realizada + Divs" en la UI es exactamente realizadaUSD + divUSDTotal.
+    const { rows } = computeBalance(
+      [activo({ valor_actual_usd: 150 })],
+      [compra({ cantidad: 10, precio_usd: 150 })],
+      [{ id: "v1", activo_id: "a1", fecha: "2026-02-01", cantidad: 4, precio_usd: 180, tc: null }],
+      [{ id: "d1", activo_id: "a1", fecha: "2026-02-05", monto_usd: 12.5, tc: null }],
+      1000,
+    );
+    const [row] = rows;
+    expect(row.cantidad).toBe(6);
+    expect(row.pMedioUSD).toBe(150);
+    expect(row.valorUSD).toBe(900); // 6 restantes * $150 (precio actual = precio de compra en este caso)
+    expect(row.realizadaUSD).toBe(120);
+    expect(row.divUSDTotal).toBe(12.5);
+    expect(row.realizadaUSD + row.divUSDTotal).toBe(132.5);
+  });
 });
