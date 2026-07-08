@@ -2,7 +2,8 @@ import { TarjetaCombo } from "@/components/app/tarjeta-combo";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -83,7 +84,14 @@ function TarjetasPage() {
         es_cuota: true,
         cuota_origen_id: cuota?.id ?? null,
       });
-      if (e2) throw e2;
+      if (e2) {
+        // Si el movimiento espejo no se pudo crear, no dejar la tarjeta_cuota
+        // huerfana: sin este rollback quedaba una fila activa sin ningun
+        // movimiento real detras, que igual se contaba en totalMes, en
+        // buildUpcomingEvents y en el patrimonio neto.
+        await supabase.from("tarjetas_cuotas").delete().eq("id", cuota.id);
+        throw e2;
+      }
     },
     onSuccess: () => {
       toast.success("Compra agregada");
@@ -97,7 +105,10 @@ function TarjetasPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("tarjetas_cuotas").update({ activo: false }).eq("id", id); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tarjetas_cuotas").update({ activo: false }).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       toast.success("Eliminado");
       qc.invalidateQueries({ queryKey: ["tarjetas"] });
@@ -105,6 +116,7 @@ function TarjetasPage() {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   // Pago de tarjeta: agrupa por tarjeta, suma cuotas pendientes, crea movimiento gasto y avanza cuota_actual
@@ -132,11 +144,16 @@ function TarjetasPage() {
       if (e1) throw e1;
       for (const c of pendientes) {
         const next = c.cuota_actual + 1;
-        await supabase.from("tarjetas_cuotas").update({
+        const { error: e3 } = await supabase.from("tarjetas_cuotas").update({
           cuota_actual: next,
           activo: next <= c.cuotas_totales,
           inicio: proximoMes,
         }).eq("id", c.id);
+        // Si una cuota falla a mitad de camino, el movimiento "Pago tarjeta"
+        // ya se insertó (cobrando el total) pero no todas las cuotas
+        // avanzaron. Cortar acá evita que el usuario crea que el pago quedó
+        // registrado bien cuando en realidad falló a la mitad.
+        if (e3) throw e3;
       }
     },
     onSuccess: (_d, tarjeta) => {
@@ -202,7 +219,11 @@ function TarjetasPage() {
                         </div>
                       </div>
                       <div className="num font-semibold">{formatMoney(Number(i.valor_cuota), currency)}</div>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate(i.id)}><Trash2 className="size-4" /></Button>
+                      <ConfirmDeleteButton
+                        title="¿Eliminar esta compra en cuotas?"
+                        description={`${i.compra} (cuota ${i.cuota_actual}/${i.cuotas_totales}) se va a borrar.`}
+                        onConfirm={() => del.mutate(i.id)}
+                      />
                     </div>
                   ))}
                 </div>

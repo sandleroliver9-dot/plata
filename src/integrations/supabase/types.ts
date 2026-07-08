@@ -498,6 +498,7 @@ export type Database = {
           es_cuota: boolean
           fecha: string
           id: string
+          ingreso_id: string | null
           medio: string | null
           mes_financiero: string
           monto: number
@@ -516,6 +517,7 @@ export type Database = {
           es_cuota?: boolean
           fecha: string
           id?: string
+          ingreso_id?: string | null
           medio?: string | null
           mes_financiero: string
           monto: number
@@ -534,6 +536,7 @@ export type Database = {
           es_cuota?: boolean
           fecha?: string
           id?: string
+          ingreso_id?: string | null
           medio?: string | null
           mes_financiero?: string
           monto?: number
@@ -543,7 +546,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "movimientos_ingreso_id_fkey"
+            columns: ["ingreso_id"]
+            isOneToOne: false
+            referencedRelation: "ingresos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prestamos: {
         Row: {
@@ -724,7 +735,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_income_with_movement: {
+        Args: {
+          p_ajuste_esperado?: number | null
+          p_concepto: string
+          p_fecha_cobro: string
+          p_mes_financiero: string
+          p_monto: number
+          p_notas?: string | null
+          p_tipo?: string
+          p_user_id: string
+        }
+        Returns: Database["public"]["Tables"]["ingresos"]["Row"]
+      }
+      delete_income_with_movement: {
+        Args: {
+          p_ingreso_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

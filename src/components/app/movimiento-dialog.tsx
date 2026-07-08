@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { categoriasQuery } from "@/lib/queries";
 import { financialMonth, todayISO } from "@/lib/finance";
+import { parseISODate } from "@/lib/financial-centers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,10 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
       if (!form.descripcion.trim()) throw new Error("Falta descripción");
       const monto = parsePositiveNumberInput(form.monto, "Monto");
       const fecha = form.fecha || todayISO();
-      const mes_financiero = financialMonth(new Date(fecha), profile?.pay_day ?? 1);
+      // new Date(fecha) parsea "YYYY-MM-DD" como UTC medianoche: en Argentina
+      // (UTC-3) corria el mes financiero un dia para atras. Mismo bug que ya
+      // se arreglo en ingresos.tsx.
+      const mes_financiero = financialMonth(parseISODate(fecha) ?? new Date(fecha), profile?.pay_day ?? 1);
       const { error } = await supabase.from("movimientos").insert({
         user_id: user.id,
         tipo: form.tipo,

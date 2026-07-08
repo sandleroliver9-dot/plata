@@ -1,53 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { financialMonth, parseFinancialMonth } from "@/lib/finance";
-
-type PayDateMode = "fixed_day" | "first_business_day" | "second_business_day" | "third_business_day" | "last_business_day" | "variable";
-
-function isBusinessDay(date: Date) {
-  const day = date.getDay();
-  return day >= 1 && day <= 5;
-}
-
-function getNthBusinessDay(year: number, month: number, n: number) {
-  let found = 0;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  for (let day = 1; day <= lastDay; day++) {
-    const date = new Date(year, month, day);
-    if (!isBusinessDay(date)) continue;
-    found += 1;
-    if (found === n) return date;
-  }
-  return new Date(year, month, lastDay);
-}
-
-function getLastBusinessDay(year: number, month: number) {
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  for (let day = lastDay; day >= 1; day--) {
-    const date = new Date(year, month, day);
-    if (isBusinessDay(date)) return date;
-  }
-  return new Date(year, month, lastDay);
-}
+import { appNow, financialMonth, parseFinancialMonth } from "@/lib/finance";
+import {
+  getLastBusinessDay,
+  getNthBusinessDay,
+  normalizePayDateMode,
+  safeDayInMonth,
+  type PayDateMode,
+} from "@/lib/financial-preferences";
 
 function toISODate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function normalizePayDateMode(value: unknown): PayDateMode {
-  if (
-    value === "first_business_day" ||
-    value === "second_business_day" ||
-    value === "third_business_day" ||
-    value === "last_business_day" ||
-    value === "variable"
-  ) {
-    return value;
-  }
-  return "fixed_day";
-}
-
-export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
+export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, referenceDate = appNow()) {
   // Anclamos el cálculo al mes calendario donde arrancó el período financiero
   // ACTUAL (no el mes calendario de "hoy"): si todavía no llegó el día de cobro
   // de este mes, el período financiero vigente empezó el mes anterior, y el
@@ -59,7 +25,7 @@ export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, r
   if (payDateMode === "second_business_day") return getNthBusinessDay(year, month, 2);
   if (payDateMode === "third_business_day") return getNthBusinessDay(year, month, 3);
   if (payDateMode === "last_business_day") return getLastBusinessDay(year, month);
-  return new Date(year, month, Math.max(1, Math.min(31, payDay)));
+  return new Date(year, month, safeDayInMonth(year, month, payDay));
 }
 
 /**
@@ -69,7 +35,7 @@ export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, r
  * desactualizado en esos modos y romper el cálculo de mes financiero en toda
  * la app).
  */
-export function resolveEffectivePayDay(rawPayDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
+export function resolveEffectivePayDay(rawPayDay: number, payDateMode: PayDateMode, referenceDate = appNow()) {
   const payDate = resolveSalaryPayDate(rawPayDay, payDateMode, referenceDate);
   const payDay = payDateMode === "fixed_day" ? rawPayDay : payDate.getDate();
   return { payDate, payDay };
@@ -80,9 +46,13 @@ export const updateSavingTarget = createServerFn({ method: "POST" })
   .inputValidator((data: { savingTarget: number }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Antes solo lo limitaba el <Slider min={0} max={60}> del cliente; sin
+    // clamp acá, cualquiera podía mandar un valor fuera de rango directo al
+    // server function. Mismo límite que updateFinancialProfile.
+    const savingTarget = Math.max(0, Math.min(80, Math.round(Number(data.savingTarget) || 0)));
     const { error } = await supabase
       .from("profiles")
-      .update({ saving_target: data.savingTarget })
+      .update({ saving_target: savingTarget })
       .eq("id", userId);
     if (error) throw error;
     return { ok: true };
@@ -116,13 +86,18 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
       const fechaCobro = toISODate(payDate);
       const mesFinanciero = financialMonth(payDate, payDay);
 
+      // Solo se filtra por tipo="Sueldo" + mes_financiero, sin exigir
+      // concepto="Sueldo" exacto: el usuario puede haber cargado el sueldo de
+      // ese mes a mano con otro texto (ej. "Sueldo julio") vía ConceptCombo.
+      // Si el match también exigía el concepto literal, esa fila no se
+      // encontraba y quedaba un duplicado cada vez que se guardaba
+      // Configuración.
       const { data: existingRows, error: findError } = await supabase
         .from("ingresos")
         .select("id")
         .eq("user_id", userId)
         .eq("activo", true)
         .eq("mes_financiero", mesFinanciero)
-        .eq("concepto", "Sueldo")
         .eq("tipo", "Sueldo")
         .order("created_at", { ascending: false })
         .limit(1);
@@ -141,18 +116,48 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
           .eq("id", existing.id)
           .eq("user_id", userId);
         if (updateIncomeError) throw updateIncomeError;
-      } else {
-        const { error: createIncomeError } = await supabase
-          .from("ingresos")
-          .insert({
+
+        // Mantiene sincronizado el movimiento espejo (tipo "Ingreso") que
+        // hace que este sueldo impacte en Movimientos/Insights/Proyecciones,
+        // no solo en la pantalla Ingresos. Si por algún motivo no existe
+        // (ej. fila vieja creada antes de este fix, sin su espejo), se crea
+        // acá en vez de dejar el ingreso huérfano indefinidamente.
+        const { data: updatedMov, error: updateMovError } = await supabase
+          .from("movimientos")
+          .update({ monto: salary, fecha: fechaCobro, mes_financiero: mesFinanciero, activo: true })
+          .eq("ingreso_id", existing.id)
+          .eq("user_id", userId)
+          .select("id");
+        if (updateMovError) throw updateMovError;
+        if (!updatedMov || updatedMov.length === 0) {
+          const { error: insertMovError } = await supabase.from("movimientos").insert({
             user_id: userId,
-            concepto: "Sueldo",
-            tipo: "Sueldo",
+            tipo: "Ingreso",
+            descripcion: "Sueldo",
             monto: salary,
-            fecha_cobro: fechaCobro,
+            fecha: fechaCobro,
             mes_financiero: mesFinanciero,
+            categoria: "Sueldo",
             activo: true,
+            ingreso_id: existing.id,
           });
+          if (insertMovError) throw insertMovError;
+        }
+      } else {
+        // Alta atómica ingreso + movimiento espejo (misma RPC que usa
+        // ingresos.tsx): un insert directo a `ingresos` acá dejaba el sueldo
+        // del onboarding/Configuración invisible en Movimientos, Insights y
+        // Proyecciones (que leen de `movimientos`), aunque sí apareciera en
+        // la pantalla Ingresos y en el Dashboard (que mergea ambas tablas
+        // como workaround).
+        const { error: createIncomeError } = await supabase.rpc("create_income_with_movement", {
+          p_user_id: userId,
+          p_concepto: "Sueldo",
+          p_monto: salary,
+          p_fecha_cobro: fechaCobro,
+          p_mes_financiero: mesFinanciero,
+          p_tipo: "Sueldo",
+        });
         if (createIncomeError) throw createIncomeError;
       }
     }

@@ -38,15 +38,18 @@ export type BalanceRow = {
   pctPortfolio: number;
 };
 
+export type BalanceWarning = { activoId: string; ventaId: string; message: string };
+
 export function computeBalance(
   activos: Activo[],
   compras: Compra[],
   ventas: Venta[],
   dividendos: Dividendo[],
   tcActual: number,
-): BalanceRow[] {
+): { rows: BalanceRow[]; warnings: BalanceWarning[] } {
   const today = Date.now();
   const rows: BalanceRow[] = [];
+  const warnings: BalanceWarning[] = [];
 
   for (const a of activos) {
     const cs = compras.filter((c) => c.activo_id === a.id);
@@ -80,9 +83,33 @@ export function computeBalance(
         totalCompradoARS += q * usd * arsTc;
       } else {
         const v = event.row;
-        const q = Math.max(0, Math.min(Number(v.cantidad), cantidad));
+        const solicitada = Math.max(0, Number(v.cantidad));
+        const q = Math.min(solicitada, cantidad);
         const usd = Math.max(0, Number(v.precio_usd));
-        if (q <= 0 || usd <= 0 || cantidad <= 0) continue;
+        if (q <= 0 || usd <= 0 || cantidad <= 0) {
+          // No hay tenencia disponible para esta venta (ej: la compra que la
+          // respaldaba se borró). Antes se salteaba en silencio; ahora se
+          // reporta como inconsistencia en vez de perderse sin dejar rastro.
+          if (solicitada > 0) {
+            warnings.push({
+              activoId: a.id,
+              ventaId: v.id,
+              message: `Venta del ${v.fecha} de ${a.nombre} no tiene tenencia disponible para respaldarla.`,
+            });
+          }
+          continue;
+        }
+        // Venta parcialmente respaldada (ej: vendio 10 pero solo quedaban 5
+        // tras borrar una compra vieja): antes se truncaba en silencio a lo
+        // disponible, perdiendo el resto de la ganancia/perdida realizada sin
+        // avisar que la venta quedo inconsistente con el historial de compras.
+        if (solicitada > q) {
+          warnings.push({
+            activoId: a.id,
+            ventaId: v.id,
+            message: `Venta del ${v.fecha} de ${a.nombre} vendió ${solicitada} pero solo había ${q} disponibles: la diferencia no se contabilizó.`,
+          });
+        }
         const pMedioUSDAntes = costoUSD / cantidad;
         const pMedioARSAntes = costoARS / cantidad;
         realizadaUSD += (usd - pMedioUSDAntes) * q;
@@ -120,7 +147,7 @@ export function computeBalance(
   const totalValor = rows.reduce((s, r) => s + r.valorUSD, 0);
   for (const r of rows) r.pctPortfolio = totalValor > 0 ? r.valorUSD / totalValor : 0;
 
-  return rows.sort((a, b) => b.valorUSD - a.valorUSD);
+  return { rows: rows.sort((a, b) => b.valorUSD - a.valorUSD), warnings };
 }
 
 export function formatPct(n: number, digits = 1) {

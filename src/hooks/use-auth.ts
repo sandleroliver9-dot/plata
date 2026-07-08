@@ -16,6 +16,11 @@ export function useAuth() {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
+    }).catch(() => {
+      // Si getSession() rechaza (storage corrupto, error de red), loading
+      // se quedaba en true para siempre y cualquier UI que dependiera de
+      // este flag colgaba sin mostrar nunca la app ni el login.
+      setLoading(false);
     });
     return () => subscription.unsubscribe();
   }, []);

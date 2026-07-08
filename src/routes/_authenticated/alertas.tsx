@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, todayISO } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, detectUnusualSpending, getMonthlyCashflow } from "@/lib/financial-centers";
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery } from "@/lib/supabase-queries";
@@ -53,6 +53,24 @@ function AlertasPage() {
   const sensitivity = riskProfileSettings(preferences.riskProfile);
 
   const alerts: Alert[] = [];
+
+  // buildUpcomingEvents descarta eventos con fecha pasada (solo mira "proximos
+  // N dias"), asi que un vencimiento manual ya vencido y no pagado -el caso
+  // mas urgente- no generaba ninguna alerta acá aunque sí aparecía como
+  // "vencido" en la pantalla de Vencimientos.
+  const todayIso = todayISO();
+  (data?.vencimientos ?? [])
+    .filter((v: any) => !v.pagado && v.fecha < todayIso)
+    .slice(0, 4)
+    .forEach((v: any) => {
+      alerts.push({
+        title: "Pago vencido",
+        message: `${v.concepto} venció el ${v.fecha} y todavía no está marcado como pagado (${formatMoney(Number(v.monto), currency)}).`,
+        tone: "destructive",
+        icon: CalendarClock,
+      });
+    });
+
   upcoming
     .filter((event) => event.type !== "cobro" && daysUntil(event.date) <= sensitivity.alertDays)
     .slice(0, 4)
@@ -68,8 +86,14 @@ function AlertasPage() {
 
   const nextIncome = upcoming.find((event) => event.type === "cobro");
   if (nextIncome) {
+    // cash.disponible ya descuenta las cuotas de tarjeta/prestamo y los
+    // gastos fijos pendientes de TODO el mes financiero (getMonthlyCashflow).
+    // Sumar de nuevo esos mismos eventos (type "cuota"/"prestamo"/"gasto_fijo")
+    // acá duplicaba el descuento. Los unicos eventos que no estan reflejados
+    // en cash.disponible son los vencimientos manuales, asi que son los
+    // unicos que hay que restar para esta alerta especifica.
     const paymentsBeforeIncome = upcoming
-      .filter((event) => event.type !== "cobro" && event.date <= nextIncome.date)
+      .filter((event) => event.type === "vencimiento" && event.date <= nextIncome.date)
       .reduce((sum, event) => sum + Number(event.amount), 0);
     const remainingBeforeIncome = cash.disponible - paymentsBeforeIncome;
     if (paymentsBeforeIncome > 0 && cash.ingresos > 0 && remainingBeforeIncome < cash.ingresos * sensitivity.liquidityRatio) {
@@ -132,6 +156,9 @@ function AlertasPage() {
           <Metric label="Gastos estimados" value={formatMoney(cash.gastos, currency)} />
           <Metric label="Disponible" value={formatMoney(cash.disponible, currency)} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
         </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          "Gastos estimados" suma lo que ya registraste más las cuotas y gastos fijos pendientes de pago este mes: puede diferir del total de Movimientos, que solo cuenta lo ya registrado.
+        </p>
       </Card>
 
       {isLoading ? (

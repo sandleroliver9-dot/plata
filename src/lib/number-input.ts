@@ -25,7 +25,11 @@ export function parseNumberInput(value: unknown): number {
     normalized = cleaned.replace(/\./g, "").replace(",", ".");
   } else if (lastDot >= 0) {
     const parts = cleaned.split(".");
-    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3 && parts[0].length <= 3)) {
+    // "0.005" nunca es una separacion de miles (nadie escribe "0,005" para
+    // decir "5"): tratarlo como tal convertia cantidades fraccionarias de
+    // cripto en compras 1000 veces mas grandes que las reales.
+    const looksLikeThousands = parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1 && parts[0].length <= 3 && parts[0] !== "0";
+    if (parts.length > 2 || looksLikeThousands) {
       normalized = cleaned.replace(/\./g, "");
     }
   }

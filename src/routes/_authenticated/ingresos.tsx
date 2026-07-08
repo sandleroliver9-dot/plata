@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { formatMoney, currentFinancialMonth, listFinancialMonths, financialMonth, todayISO } from "@/lib/finance";
+import { formatMoney, listFinancialMonths, financialMonth, todayISO } from "@/lib/finance";
+import { parseISODate } from "@/lib/financial-centers";
+import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,7 +32,7 @@ function IngresosPage() {
   const qc = useQueryClient();
   const currency = profile?.currency ?? "ARS";
   const payDay = profile?.pay_day ?? 1;
-  const [mes, setMes] = useState(currentFinancialMonth(payDay));
+  const [mes, setMes] = useDefaultFinancialMonth(payDay);
   const meses = listFinancialMonths(payDay, 12, 1);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ concepto: "", monto: "", fecha_cobro: todayISO(), tipo: "Sueldo" });
@@ -54,26 +57,23 @@ function IngresosPage() {
       if (!user) throw new Error();
       if (!form.concepto.trim()) throw new Error("Falta concepto");
       const monto = parsePositiveNumberInput(form.monto, "Monto");
-      const mesIngreso = financialMonth(new Date(form.fecha_cobro), payDay);
-      const { error } = await supabase.from("ingresos").insert({
-        user_id: user.id,
-        concepto: form.concepto.trim().slice(0, 100),
-        monto,
-        fecha_cobro: form.fecha_cobro,
-        mes_financiero: mesIngreso,
-        tipo: form.tipo,
+      // parseISODate interpreta "YYYY-MM-DD" en hora local, no UTC: con
+      // `new Date(string)` un ingreso cargado justo el dia de cobro podia
+      // correrse un dia hacia atras en husos horarios negativos (Argentina).
+      const mesIngreso = financialMonth(parseISODate(form.fecha_cobro) ?? new Date(form.fecha_cobro), payDay);
+      // RPC atomica (ver migracion create_income_with_movement_rpc): antes
+      // esto eran dos inserts separados (ingresos + movimientos) sin
+      // transaccion, asi que si el segundo fallaba quedaba el ingreso
+      // huerfano sin su movimiento espejo.
+      const { error } = await supabase.rpc("create_income_with_movement", {
+        p_user_id: user.id,
+        p_concepto: form.concepto.trim().slice(0, 100),
+        p_monto: monto,
+        p_fecha_cobro: form.fecha_cobro,
+        p_mes_financiero: mesIngreso,
+        p_tipo: form.tipo,
       });
       if (error) throw error;
-      // También crea movimiento para que impacte en dashboard
-      await supabase.from("movimientos").insert({
-        user_id: user.id,
-        tipo: "Ingreso",
-        descripcion: form.concepto.trim().slice(0, 100),
-        monto,
-        fecha: form.fecha_cobro,
-        mes_financiero: mesIngreso,
-        categoria: form.tipo === "Sueldo" ? "Sueldo" : "Extra",
-      });
     },
     onSuccess: () => {
       toast.success("Ingreso registrado");
@@ -87,24 +87,15 @@ function IngresosPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (item: { id: string; concepto: string; monto: number; fecha_cobro: string }) => {
-      await supabase.from("ingresos").update({ activo: false }).eq("id", item.id);
-      if (!user) return;
-      const { data: mov } = await supabase
-        .from("movimientos")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("tipo", "Ingreso")
-        .eq("descripcion", item.concepto)
-        .eq("monto", item.monto)
-        .eq("fecha", item.fecha_cobro)
-        .eq("activo", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (mov?.id) {
-        await supabase.from("movimientos").update({ activo: false }).eq("id", mov.id);
-      }
+    mutationFn: async (item: { id: string }) => {
+      if (!user) throw new Error();
+      // RPC atomica (misma razon que create_income_with_movement): antes eran
+      // dos updates separados sin transaccion.
+      const { error } = await supabase.rpc("delete_income_with_movement", {
+        p_user_id: user.id,
+        p_ingreso_id: item.id,
+      });
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Eliminado");
@@ -112,6 +103,7 @@ function IngresosPage() {
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const total = (items ?? []).reduce((s, i) => s + Number(i.monto), 0);
@@ -152,7 +144,11 @@ function IngresosPage() {
                   </div>
                 </div>
                 <div className="num font-semibold text-success">{formatMoney(Number(i.monto), currency)}</div>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate({ id: i.id, concepto: i.concepto, monto: Number(i.monto), fecha_cobro: i.fecha_cobro })}><Trash2 className="size-4" /></Button>
+                <ConfirmDeleteButton
+                  title="¿Eliminar este ingreso?"
+                  description={`${i.concepto} por ${formatMoney(Number(i.monto), currency)} se va a borrar.`}
+                  onConfirm={() => del.mutate({ id: i.id })}
+                />
               </div>
             ))}
           </div>

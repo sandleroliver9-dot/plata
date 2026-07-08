@@ -54,16 +54,14 @@ export function OnboardingWizard() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
-      display_name: form.display_name || null,
-      currency: form.currency,
-      onboarding_done: true,
-    }).eq("id", user.id);
-    if (error) { setSaving(false); toast.error(error.message); return; }
     try {
       // Reutiliza la misma sincronización de Configuración: guarda pay_day/salary
       // y crea el ingreso "Sueldo" correspondiente, para que el Dashboard lo vea
       // desde el primer momento en vez de recién después de pasar por Configuración.
+      // Va ANTES de marcar onboarding_done: si esto falla y igual marcamos
+      // onboarding_done=true, el wizard nunca vuelve a abrirse (el efecto de
+      // arriba solo dispara con onboarding_done=false) y el usuario queda sin
+      // pay_day/salario/ingreso "Sueldo" cargados, sin forma de reintentar.
       await saveFinancialProfile({
         data: { payDay, salary, savingTarget: Number(profile?.saving_target ?? 20) },
       });
@@ -72,7 +70,13 @@ export function OnboardingWizard() {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar el sueldo");
       return;
     }
+    const { error } = await supabase.from("profiles").update({
+      display_name: form.display_name || null,
+      currency: form.currency,
+      onboarding_done: true,
+    }).eq("id", user.id);
     setSaving(false);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["profile"] });
     setOpen(false);
     toast.success("¡Listo! Bienvenido a Plata 🎉");
@@ -131,6 +135,20 @@ export function OnboardingWizard() {
   const Icon = cur.icon;
   const pct = ((step + 1) / steps.length) * 100;
 
+  const PAY_DAY_STEP = 2;
+  function handleNext() {
+    // Antes el dia de cobro (1-31) solo se validaba al final del wizard: el
+    // usuario podia llegar al ultimo paso y recien ahi enterarse del error.
+    if (step === PAY_DAY_STEP) {
+      const day = Number(form.pay_day);
+      if (!Number.isFinite(day) || day < 1 || day > 31) {
+        toast.error("El día de cobro tiene que estar entre 1 y 31");
+        return;
+      }
+    }
+    setStep(step + 1);
+  }
+
   return (
     <Dialog open={open} onOpenChange={() => { /* no close on outside click */ }}>
       <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
@@ -150,7 +168,7 @@ export function OnboardingWizard() {
         <div className="flex gap-2 mt-4">
           {step > 0 && <Button variant="outline" className="flex-1" onClick={() => setStep(step - 1)}>Atrás</Button>}
           {step < steps.length - 1 ? (
-            <Button className="flex-1" onClick={() => setStep(step + 1)}>Siguiente</Button>
+            <Button className="flex-1" onClick={handleNext}>Siguiente</Button>
           ) : (
             <Button className="flex-1" onClick={finish} disabled={saving}>
               <Check className="size-4 mr-2" /> Listo, empezar

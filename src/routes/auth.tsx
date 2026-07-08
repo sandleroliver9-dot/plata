@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet } from "lucide-react";
+import { Wallet, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { passwordIssue, PASSWORD_RULES } from "@/lib/password";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Ingresar · Plata" }] }),
@@ -28,6 +29,8 @@ function AuthPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
 
+  const pwChecks = PASSWORD_RULES.map((rule) => ({ label: rule.label, ok: rule.test(password) }));
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.removeItem("plata_preview_mode");
@@ -40,14 +43,6 @@ function AuthPage() {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  function passwordIssue(value: string): string | null {
-    if (value.length < 8) return "La contraseña necesita al menos 8 caracteres.";
-    if (!/[A-Z]/.test(value)) return "Agregá al menos una mayúscula.";
-    if (!/[0-9]/.test(value)) return "Agregá al menos un número.";
-    if (!/[^A-Za-z0-9]/.test(value)) return "Agregá al menos un símbolo, por ejemplo !";
-    return null;
-  }
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
@@ -110,23 +105,19 @@ function AuthPage() {
     if (googleLoading) return;
     setGoogleLoading(true);
 
-    try {
-      const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? "").replace(/^["']|["']$/g, "");
-      if (!supabaseUrl) {
-        toast.error("Falta configurar Supabase para iniciar sesión con Google");
-        return;
-      }
-      const params = new URLSearchParams({
-        provider: "google",
-        redirect_to: `${window.location.origin}/dashboard`,
-        prompt: "select_account",
-      });
-      window.location.assign(`${supabaseUrl}/auth/v1/authorize?${params.toString()}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo iniciar sesión con Google");
-    } finally {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error) {
+      toast.error(error.message);
       setGoogleLoading(false);
     }
+    // En éxito, signInWithOAuth redirige el navegador a Google: no hace falta
+    // apagar el loading, la página se va a ir de acá.
   }
 
   return (
@@ -184,7 +175,18 @@ function AuthPage() {
                 <div className="space-y-2">
                   <Label htmlFor="pw-up">Contraseña</Label>
                   <Input id="pw-up" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
-                  <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                  {password ? (
+                    <ul className="text-xs space-y-0.5 mt-1">
+                      {pwChecks.map((c) => (
+                        <li key={c.label} className={`flex items-center gap-1.5 ${c.ok ? "text-success" : "text-muted-foreground"}`}>
+                          {c.ok ? <Check className="size-3" /> : <X className="size-3" />}
+                          {c.label}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                  )}
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Crear cuenta</Button>
               </form>

@@ -1,10 +1,11 @@
-import { currentFinancialMonth, installmentForFinancialMonth } from "@/lib/finance";
+import { appNow, currentFinancialMonth, installmentForFinancialMonth } from "@/lib/finance";
 import {
   DEFAULT_FINANCIAL_PREFERENCES,
   clampDay,
   getPayDateForMonth,
   recurringFrequencyLabel,
   riskProfileSettings,
+  safeDayInMonth,
   type FinancialPreferences,
   type IncomeFrequency,
   type RecurringFrequency,
@@ -76,11 +77,38 @@ function lastDayOfMonth(year: number, month: number) {
 }
 
 function dateWithDay(year: number, month: number, day: number) {
-  return new Date(year, month, Math.min(clampDay(day), lastDayOfMonth(year, month)));
+  return new Date(year, month, safeDayInMonth(year, month, day));
+}
+
+// Fecha base de la proxima cuota sin pagar de un prestamo: la primera
+// ocurrencia (desde `today`) del dia configurado (`dia_pago`, o si no esta
+// seteado, el dia de `inicio`). Nunca "inicio + cuotas_pagadas meses": eso
+// asume que `inicio` es la fecha real de la primera cuota, cuando en
+// realidad siempre es la fecha en que el prestamo se cargo a la app (puede
+// estar muy lejos de cuando arranco de verdad). Compartida entre
+// buildUpcomingEvents (Alertas/Insights/Proyecciones/Calendario) y
+// vencimientos.tsx para que no vuelvan a divergir como paso antes.
+export function nextLoanInstallmentBase(p: Row, today: Date) {
+  const diaBase = p.dia_pago ? Number(p.dia_pago) : (parseISODate(p.inicio)?.getDate() ?? today.getDate());
+  let base = dateWithDay(today.getFullYear(), today.getMonth(), diaBase);
+  if (base < today) base = addMonths(base, 1);
+  return base;
+}
+
+// Dia del mes en que se debita un gasto fijo: la preferencia guardada
+// (recurringSettings, seteada en el alta o en Configuracion) gana sobre el
+// dia de `inicio`, que a su vez gana sobre el default (dia 1). Compartida
+// entre buildUpcomingEvents (Alertas/Insights/Proyecciones/Calendario) y
+// vencimientos.tsx: antes cada uno tenia su propia copia de esta prioridad,
+// y vencimientos.tsx ni siquiera miraba la preferencia guardada.
+export function resolveGastoFijoDebitDay(g: Row, recurringSettings: Record<string, { debitDay?: number }>) {
+  const pref = recurringSettings[String(g.id)];
+  if (pref?.debitDay) return pref.debitDay;
+  return parseISODate(g.inicio)?.getDate() ?? 1;
 }
 
 export function daysUntil(dateISO: string) {
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const date = parseISODate(dateISO);
   if (!date) return Number.POSITIVE_INFINITY;
@@ -100,13 +128,40 @@ export function getBaseMonthlyIncome(profile: Row | null | undefined, ingresos: 
   return fromIncome > 0 ? fromIncome : Math.max(0, fromProfile);
 }
 
-function hasSimilarMovement(movs: Row[], descripcion: string, monto: number, mes: string) {
+export function hasSimilarMovement(movs: Row[], descripcion: string, monto: number, mes: string) {
   const desc = descripcion.toLowerCase();
   return movs.some((mov) => {
     if (mov.tipo !== "Gasto" || mov.mes_financiero !== mes) return false;
     const sameAmount = Math.abs(Number(mov.monto) - monto) < 0.01;
     const movDesc = String(mov.descripcion ?? "").toLowerCase();
     return sameAmount && (movDesc === desc || movDesc.includes(desc) || desc.includes(movDesc));
+  });
+}
+
+/**
+ * Si una cuota de tarjeta de un mes ya quedó registrada como movimiento real
+ * (ya sea via el pago agrupado "Pago tarjeta X" o via la cuota individual).
+ * Esta misma regla vivia copiada de forma identica en Dashboard, Movimientos
+ * y Vencimientos: quedar en un solo lugar evita que un cambio futuro (ej. el
+ * texto del pago agrupado) se aplique en un lugar y se olvide en los otros.
+ */
+export function isCardInstallmentRecorded(
+  movs: Row[],
+  mesFinanciero: string,
+  params: { tarjeta: string; compra?: string | null; cuotaOrigenId?: string | null },
+) {
+  const pagoTarjetaDelMes = movs.some((mov) => {
+    if (mov.tipo !== "Gasto" || mov.mes_financiero !== mesFinanciero) return false;
+    if (mov.tarjeta !== params.tarjeta) return false;
+    return String(mov.descripcion ?? "").toLowerCase().startsWith("pago tarjeta");
+  });
+  if (pagoTarjetaDelMes) return true;
+
+  return movs.some((mov) => {
+    if (!mov.es_cuota || mov.mes_financiero !== mesFinanciero) return false;
+    if (params.cuotaOrigenId && mov.cuota_origen_id === params.cuotaOrigenId) return true;
+    if (!params.compra) return false;
+    return mov.tarjeta === params.tarjeta && String(mov.descripcion ?? "").toLowerCase().includes(String(params.compra).toLowerCase());
   });
 }
 
@@ -140,7 +195,7 @@ function buildRecurringDates({
 }) {
   if (frequency === "variable") return [];
 
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
   const windowStart = startDate ? maxDate(today, startDate) : today;
@@ -194,7 +249,7 @@ function buildIncomeDates({
 }) {
   if (frequency === "variable" || preferences.income.payDateMode === "variable") return [];
 
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
   const dates: Date[] = [];
@@ -258,7 +313,7 @@ export function getMonthlyCashflow({
     ...prefs,
     income: { ...prefs.income, payDay: prefs.income.payDay ?? Number(profile?.pay_day ?? 1) },
   };
-  const payDay = getPayDateForMonth(new Date().getFullYear(), new Date().getMonth(), incomePrefs).getDate();
+  const payDay = getPayDateForMonth(appNow().getFullYear(), appNow().getMonth(), incomePrefs).getDate();
   const mes = currentFinancialMonth(payDay);
   const movsMes = movimientos.filter((m) => m.mes_financiero === mes);
   const ingresoBase = getBaseMonthlyIncome(profile, ingresos);
@@ -279,6 +334,7 @@ export function getMonthlyCashflow({
       cuotaActual: Number(c.cuota_actual ?? 1),
       cuotasTotales: Number(c.cuotas_totales ?? 0),
       mesFinanciero: mes,
+      payDay,
     });
     if (!cuotaDelMes) return s;
     const monto = Number(c.valor_cuota ?? 0);
@@ -334,7 +390,7 @@ export function buildUpcomingEvents({
   preferences?: FinancialPreferences | null;
 }): CalendarEvent[] {
   const prefs = normalizePrefs(preferences);
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
   const events: CalendarEvent[] = [];
@@ -385,11 +441,10 @@ export function buildUpcomingEvents({
     const pagadas = Number(p.cuotas_pagadas ?? 0);
     const restantes = total - pagadas;
     if (restantes <= 0) continue;
-    const base = parseISODate(p.inicio) ?? today;
-    if (p.dia_pago) base.setDate(Math.min(Number(p.dia_pago), 28));
+    const base = nextLoanInstallmentBase(p, today);
     for (let i = 0; i < restantes; i++) {
       const cuota = pagadas + i + 1;
-      const date = addMonths(base, pagadas + i);
+      const date = addMonths(base, i);
       addIfInRange({
         id: `prestamo-${p.id}-${cuota}`,
         date: isoLocal(date),
@@ -402,15 +457,14 @@ export function buildUpcomingEvents({
   }
 
   for (const g of gastosFijos) {
-    const start = parseISODate(g.inicio);
     const pref = prefs.recurringSettings[String(g.id)] ?? {};
     const frequency = pref.frequency ?? "mensual";
-    const debitDay = pref.debitDay ?? start?.getDate() ?? 1;
+    const debitDay = resolveGastoFijoDebitDay(g, prefs.recurringSettings);
     const dates = buildRecurringDates({
       day: debitDay,
       frequency,
       horizonDays,
-      startDate: start,
+      startDate: parseISODate(g.inicio),
     });
     dates.forEach((date, index) => {
       addIfInRange({
@@ -485,12 +539,17 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
     ...prefs,
     income: { ...prefs.income, payDay: prefs.income.payDay ?? Number(profile?.pay_day ?? 1) },
   };
-  const payDay = getPayDateForMonth(new Date().getFullYear(), new Date().getMonth(), incomePrefs).getDate();
+  const payDay = getPayDateForMonth(appNow().getFullYear(), appNow().getMonth(), incomePrefs).getDate();
   const current = currentFinancialMonth(payDay);
   const currentRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero === current);
   const previousRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero !== current);
   const currentByCat = new Map<string, number>();
-  const previousByCat = new Map<string, { total: number; count: number }>();
+  // Se agrupa por mes_financiero (no por transaccion individual): el
+  // promedio tiene que ser "gasto mensual promedio en la categoria" para ser
+  // comparable contra `monto`, que ya es una suma mensual. Promediar por
+  // transaccion mezclaba dos unidades distintas y disparaba falsos positivos
+  // en categorias con muchas compras chicas (ej: supermercado).
+  const previousByCat = new Map<string, { total: number; months: Set<string> }>();
   const sensitivity = riskProfileSettings(prefs.riskProfile);
 
   currentRows.forEach((m) => {
@@ -499,14 +558,17 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
   });
   previousRows.forEach((m) => {
     const cat = String(m.categoria ?? "Sin categoria");
-    const prev = previousByCat.get(cat) ?? { total: 0, count: 0 };
-    previousByCat.set(cat, { total: prev.total + Number(m.monto ?? 0), count: prev.count + 1 });
+    const prev = previousByCat.get(cat) ?? { total: 0, months: new Set<string>() };
+    prev.total += Number(m.monto ?? 0);
+    prev.months.add(String(m.mes_financiero));
+    previousByCat.set(cat, prev);
   });
 
   return Array.from(currentByCat.entries())
     .map(([categoria, monto]) => {
       const prev = previousByCat.get(categoria);
-      const promedio = prev && prev.count >= 3 ? prev.total / prev.count : 0;
+      const mesesConDatos = prev?.months.size ?? 0;
+      const promedio = prev && mesesConDatos >= 2 ? prev.total / mesesConDatos : 0;
       return { categoria, monto, promedio };
     })
     .filter((item) => item.promedio > 0 && item.monto > item.promedio * sensitivity.unusualMultiplier && item.monto > 5000)
@@ -517,18 +579,38 @@ export function estimateNetWorth({
   inversionesValor = 0,
   inmuebles = [],
   prestamos = [],
+  tarjetas = [],
+  tc = 1,
 }: {
   inversionesValor?: number;
   inmuebles?: Row[];
   prestamos?: Row[];
+  tarjetas?: Row[];
+  tc?: number;
 }) {
   const inv = inversionesValor;
-  const inm = inmuebles.reduce((s, i) => s + Number(i.valor_estimado ?? 0) - Number(i.deuda_asociada ?? 0), 0);
+  // Cada inmueble puede estar cargado en USD o ARS (campo `moneda`), pero
+  // inversionesValor ya viene convertido a ARS (usePortfolioValue). Sin
+  // convertir acá, un inmueble en USD se sumaba tal cual a un total en ARS,
+  // igual que patrimonio.tsx ya evita con su propio toARS() -- pero esta
+  // funcion (la que usa insights.tsx) nunca lo hacia, mostrando un
+  // "Patrimonio estimado" muy distinto al de la pantalla Patrimonio para
+  // cualquier usuario con al menos un inmueble en moneda distinta a ARS.
+  const toARS = (monto: number, moneda: string | undefined) => (moneda === "USD" ? monto * tc : monto);
+  const inm = inmuebles.reduce((s, i) => s + toARS(Number(i.valor_estimado ?? 0) - Number(i.deuda_asociada ?? 0), i.moneda), 0);
   const deudaPrestamos = prestamos.reduce((s, p) => {
     const restantes = Math.max(0, Number(p.cuotas_totales ?? 0) - Number(p.cuotas_pagadas ?? 0));
     return s + restantes * Number(p.cuota_mensual ?? 0);
   }, 0);
-  return inv + inm - deudaPrestamos;
+  // Cuotas de tarjeta restantes (incluyendo la actual): sin esto, patrimonio.tsx
+  // y este calculo (usado por insights.tsx) mostraban dos patrimonios netos
+  // distintos para el mismo usuario, uno de ellos inflado por la deuda de
+  // tarjeta faltante.
+  const deudaTarjetas = tarjetas.reduce((s, t) => {
+    const restantes = Math.max(0, Number(t.cuotas_totales ?? 0) - Number(t.cuota_actual ?? 0) + 1);
+    return s + restantes * Number(t.valor_cuota ?? 0);
+  }, 0);
+  return inv + inm - deudaPrestamos - deudaTarjetas;
 }
 
 export function getEmergencyFundSummary(cash: CashflowSummary, preferences?: FinancialPreferences | null): EmergencyFundSummary {

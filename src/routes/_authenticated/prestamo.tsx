@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -76,6 +77,11 @@ function PrestamoPage() {
     onSuccess: () => {
       toast.success("Préstamo agregado");
       qc.invalidateQueries({ queryKey: ["prestamos"] });
+      // El préstamo participa en estimateNetWorth (dashboard) y en el
+      // calendario de próximos vencimientos: sin invalidar estos, quedaban
+      // desactualizados hasta el próximo refetch natural.
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
       setOpen(false);
       setForm({ descripcion: "", cuota_mensual: "", cuotas_totales: "12", cuotas_pagadas: "0", tasa: "", tasa_tipo: "anual", dia_pago: "" });
     },
@@ -83,8 +89,17 @@ function PrestamoPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("prestamos").update({ activo: false }).eq("id", id); },
-    onSuccess: () => { toast.success("Eliminado"); qc.invalidateQueries({ queryKey: ["prestamos"] }); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("prestamos").update({ activo: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Eliminado");
+      qc.invalidateQueries({ queryKey: ["prestamos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const pagarCuota = useMutation({
@@ -99,19 +114,23 @@ function PrestamoPage() {
         fecha: todayISO(),
         mes_financiero: currentFinancialMonth(payDay),
         categoria: "Préstamo",
+        es_cuota: true,
+        cuota_origen_id: p.id,
       });
       if (e1) throw e1;
       const next = p.cuotas_pagadas + 1;
-      await supabase.from("prestamos").update({
+      const { error: e2 } = await supabase.from("prestamos").update({
         cuotas_pagadas: next,
         activo: next < p.cuotas_totales,
       }).eq("id", p.id);
+      if (e2) throw e2;
     },
     onSuccess: () => {
       toast.success("Cuota registrada");
       qc.invalidateQueries({ queryKey: ["prestamos"] });
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -147,7 +166,11 @@ function PrestamoPage() {
                     <Button size="sm" variant="outline" onClick={() => pagarCuota.mutate(p)} disabled={pagarCuota.isPending}>
                       <CheckCircle2 className="size-4 mr-1" />Pagar cuota
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => del.mutate(p.id)}><Trash2 className="size-4" /></Button>
+                    <ConfirmDeleteButton
+                      title="¿Eliminar este préstamo?"
+                      description={`${p.descripcion} se va a borrar.`}
+                      onConfirm={() => del.mutate(p.id)}
+                    />
                   </div>
                 </div>
                 <Progress value={pct} className="mt-4 h-2" />

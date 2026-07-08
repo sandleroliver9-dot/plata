@@ -14,6 +14,17 @@ describe("resolveSalaryPayDate", () => {
     const payDate = resolveSalaryPayDate(5, "fixed_day", today);
     expect(financialMonth(payDate, 5)).toBe(financialMonth(today, 5));
   });
+
+  it("clamps pay day 31 against the actual days in the resolved month instead of overflowing", () => {
+    // Feb 1, 2026 (not a leap year, 28 days) is still within January's
+    // financial period for a payDay of 31. The salary date must land on
+    // Jan 31, not roll over into March like `new Date(y, m, 31)` would for
+    // a 28-day month.
+    const today = new Date(2026, 1, 1); // Feb 1
+    const payDate = resolveSalaryPayDate(31, "fixed_day", today);
+    expect(payDate.getMonth()).toBe(0); // January
+    expect(payDate.getDate()).toBe(31);
+  });
 });
 
 describe("resolveEffectivePayDay", () => {

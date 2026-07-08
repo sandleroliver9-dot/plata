@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Target, Trash2, Plus as PlusIcon } from "lucide-react";
+import { Plus, Target, Plus as PlusIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -13,8 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/finance";
+import { appNow, formatMoney } from "@/lib/finance";
+import { parseISODate } from "@/lib/financial-centers";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/metas")({
@@ -29,6 +31,7 @@ function Metas() {
   const { data: profile } = useProfile();
   const defaultCurrency = profile?.currency ?? "ARS";
   const qc = useQueryClient();
+  const [progressPending, setProgressPending] = useState<string | null>(null);
 
   const { data: metas } = useQuery({
     queryKey: ["metas", user?.id],
@@ -40,24 +43,26 @@ function Metas() {
     },
   });
 
-  async function addProgress(m: Meta) {
-    const v = prompt(`¿Cuánto sumar a "${m.meta}"?`);
-    if (!v) return;
-    let monto: number;
+  async function addProgress(m: Meta, monto: number) {
+    // El incremento se calcula en el cliente (ahorrado + monto), no es un
+    // update atomico en la base: dos envios rapidos seguidos (doble click)
+    // partirian del mismo `m.ahorrado` y el segundo pisaria al primero en
+    // vez de sumarse. Bloquear el boton mientras la meta tiene un guardado
+    // en curso evita el caso mas comun (no cubre ediciones simultaneas desde
+    // dos dispositivos distintos).
+    if (progressPending) return;
+    setProgressPending(m.id);
     try {
-      monto = parsePositiveNumberInput(v, "Monto");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Revisa el monto");
-      return;
+      const { error } = await supabase.from("metas").update({ ahorrado: Number(m.ahorrado) + monto }).eq("id", m.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Progreso actualizado");
+      await qc.invalidateQueries({ queryKey: ["metas"] });
+    } finally {
+      setProgressPending(null);
     }
-    const { error } = await supabase.from("metas").update({ ahorrado: Number(m.ahorrado) + monto }).eq("id", m.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Progreso actualizado");
-    qc.invalidateQueries({ queryKey: ["metas"] });
   }
 
   async function del(id: string) {
-    if (!confirm("¿Eliminar esta meta?")) return;
     const { error } = await supabase.from("metas").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["metas"] });
@@ -82,9 +87,19 @@ function Metas() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {(metas ?? []).map((m) => {
-            const pct = Math.min(100, (Number(m.ahorrado) / Number(m.objetivo)) * 100);
-            const falta = Math.max(0, Number(m.objetivo) - Number(m.ahorrado));
-            const dias = m.fecha_objetivo ? Math.ceil((new Date(m.fecha_objetivo).getTime() - Date.now()) / 86400000) : null;
+            const objetivo = Number(m.objetivo);
+            const pct = objetivo > 0 ? Math.min(100, (Number(m.ahorrado) / objetivo) * 100) : 0;
+            const falta = Math.max(0, objetivo - Number(m.ahorrado));
+            // parseISODate interpreta "YYYY-MM-DD" en hora local: con
+            // `new Date(string)` (UTC) los dias restantes se corrian en
+            // husos horarios negativos (Argentina), igual que el bug ya
+            // corregido en ingresos.tsx/movimiento-dialog.tsx.
+            const fechaObjetivo = m.fecha_objetivo ? parseISODate(m.fecha_objetivo) : null;
+            // Date.now() da el instante real (UTC); fechaObjetivo es medianoche
+            // en el huso horario del proceso que ejecuta el codigo. En SSR eso
+            // es UTC, no Argentina, asi que restar contra Date.now() corria
+            // "dias restantes" hasta un dia durante el render en servidor.
+            const dias = fechaObjetivo ? Math.ceil((fechaObjetivo.getTime() - appNow().getTime()) / 86400000) : null;
             return (
               <Card key={m.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -96,7 +111,12 @@ function Metas() {
                       </p>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => del(m.id)}><Trash2 className="size-4" /></Button>
+                  <ConfirmDeleteButton
+                    size="sm"
+                    title="¿Eliminar esta meta?"
+                    description={`"${m.meta}" se va a borrar, junto con el progreso guardado.`}
+                    onConfirm={() => del(m.id)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -109,15 +129,52 @@ function Metas() {
                     <span className="text-muted-foreground">Falta: <span className="num">{formatMoney(falta, m.moneda)}</span></span>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="w-full mt-4" onClick={() => addProgress(m)}>
-                  <PlusIcon className="size-4 mr-2" /> Sumar ahorro
-                </Button>
+                <AddProgressDialog meta={m} onConfirm={(monto) => addProgress(m, monto)} pending={progressPending === m.id} />
               </Card>
             );
           })}
         </div>
       )}
     </div>
+  );
+}
+
+function AddProgressDialog({ meta, onConfirm, pending }: { meta: Meta; onConfirm: (monto: number) => void; pending: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [monto, setMonto] = useState("");
+
+  function save() {
+    if (pending) return;
+    let parsed: number;
+    try {
+      parsed = parsePositiveNumberInput(monto, "Monto");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Revisá el monto");
+      return;
+    }
+    onConfirm(parsed);
+    setOpen(false);
+    setMonto("");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setMonto(""); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full mt-4" disabled={pending}>
+          <PlusIcon className="size-4 mr-2" /> Sumar ahorro
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Sumar ahorro a "{meta.meta}"</DialogTitle></DialogHeader>
+        <div className="grid gap-3">
+          <div>
+            <Label>Monto a sumar</Label>
+            <DecimalInput value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="Ej: 50000" autoFocus />
+          </div>
+        </div>
+        <DialogFooter><Button onClick={save} disabled={pending}>Sumar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getDolares } from "@/lib/quotes.functions";
 import { computeBalance, type Activo, type Compra, type Venta, type Dividendo } from "@/lib/portfolio";
+import { resolveTC } from "@/lib/finance";
 
 /**
  * Datos base compartidos por Alertas, Insights, Proyecciones, Calendario financiero
@@ -71,11 +72,13 @@ export function usePortfolioValue(userId: string | undefined) {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue ?? 1000;
+  const { tc, isFallback: tcIsFallback } = resolveTC(dolar);
 
-  const rows = data ? computeBalance(data.activos, data.compras, data.ventas, data.dividendos, tc) : [];
+  const { rows, warnings } = data
+    ? computeBalance(data.activos, data.compras, data.ventas, data.dividendos, tc)
+    : { rows: [], warnings: [] };
   const valorARS = rows.reduce((s, r) => s + r.valorARS, 0);
   const valorUSD = rows.reduce((s, r) => s + r.valorUSD, 0);
 
-  return { rows, valorARS, valorUSD, tc, isLoading, hasActivos: (data?.activos.length ?? 0) > 0 };
+  return { rows, warnings, valorARS, valorUSD, tc, tcIsFallback, isLoading, hasActivos: (data?.activos.length ?? 0) > 0 };
 }

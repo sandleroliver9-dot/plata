@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { passwordIssue } from "@/lib/password";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [{ title: "Restablecer contraseña · Plata" }] }),
@@ -25,7 +26,12 @@ function ResetPasswordPage() {
   const linkLooksLikeRecovery = useMemo(() => {
     if (typeof window === "undefined") return false;
     const hash = window.location.hash.toLowerCase();
-    return hash.includes("type=recovery") || hash.includes("access_token=");
+    // Supabase puede mandar el link de recuperación con el token en el hash
+    // (flujo implícito) o con `?code=` en la query (flujo PKCE, el que usan
+    // los proyectos nuevos). Solo revisar el hash mostraba "enlace inválido"
+    // en un link de PKCE válido que todavía no había terminado de procesarse.
+    const search = window.location.search.toLowerCase();
+    return hash.includes("type=recovery") || hash.includes("access_token=") || search.includes("code=");
   }, []);
 
   useEffect(() => {
@@ -38,6 +44,14 @@ function ResetPasswordPage() {
         setCheckingSession(false);
         if (!session) {
           setErrorMessage("El enlace es inválido o expiró. Pedí uno nuevo desde login.");
+        } else {
+          // getSession() (mas arriba) puede resolver ANTES de que Supabase
+          // termine de procesar el intercambio de codigo PKCE en la URL, y en
+          // ese caso marcaba error. Si despues este evento confirma una
+          // sesion valida, hay que limpiar ese error viejo: sin esto quedaba
+          // un "el enlace es invalido" pegado arriba del formulario que en
+          // realidad si funcionaba.
+          setErrorMessage(null);
         }
       }
     });
@@ -52,6 +66,7 @@ function ResetPasswordPage() {
       if (data.session) {
         setSessionValid(true);
         setCheckingSession(false);
+        setErrorMessage(null);
         return;
       }
       setSessionValid(false);
@@ -69,8 +84,9 @@ function ResetPasswordPage() {
 
   async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
+    const issue = passwordIssue(password);
+    if (issue) {
+      toast.error(issue);
       return;
     }
     if (password !== confirmPassword) {
@@ -128,6 +144,7 @@ function ResetPasswordPage() {
                   minLength={8}
                   autoComplete="new-password"
                 />
+                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pw-confirm">Repetir contraseña</Label>

@@ -9,9 +9,10 @@ import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney, formatCompact, currentFinancialMonth, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
+import { formatMoney, formatCompact, currentCalendarMonthLabel, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
 import { DolarWidget } from "@/components/app/dolar-widget";
-import { getSavingTargetPercent } from "@/lib/financial-centers";
+import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorded } from "@/lib/financial-centers";
+import { useFinancialPreferences } from "@/lib/financial-preferences";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Resumen · Plata" }] }),
@@ -21,8 +22,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
+  const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const payDay = profile?.pay_day ?? 1;
+  // `mes` sigue siendo el período financiero anclado al día de cobro (con el
+  // que se agrupan y suman ingresos/gastos: eso NO cambia acá). Lo que cambia
+  // es el título: mostrarle al usuario el nombre del período financiero (que
+  // puede seguir siendo "mayo" en pleno junio, hasta el próximo cobro) leía
+  // como que la app estaba atrasada. El saludo ahora siempre dice el mes
+  // calendario real de hoy; el subtítulo aclara qué período de cobro se está
+  // sumando por si no coincide.
   const mes = currentFinancialMonth(payDay);
+  const headerMes = currentCalendarMonthLabel();
+  const periodoRango = payDay > 1 && mes !== headerMes ? formatFinancialPeriodRange(mes, payDay) : null;
   const currency = profile?.currency ?? "ARS";
   const meses6 = listFinancialMonths(payDay, 5, 0);
 
@@ -99,21 +110,10 @@ function Dashboard() {
           cuotaActual: Number(c.cuota_actual),
           cuotasTotales: Number(c.cuotas_totales),
           mesFinanciero: m,
+          payDay,
         });
         if (!cuotaDelMes) return;
-        const pagoTarjetaDelMes = movsConCuotas.some((mov) => {
-          if (mov.tipo !== "Gasto" || mov.mes_financiero !== m) return false;
-          if (mov.tarjeta !== c.tarjeta) return false;
-          return (mov.descripcion ?? "").toLowerCase().startsWith("pago tarjeta");
-        });
-        if (pagoTarjetaDelMes) return;
-        const yaExiste = movsConCuotas.some((mov) => {
-          if (!mov.es_cuota) return false;
-          if (mov.mes_financiero !== m) return false;
-          if (mov.cuota_origen_id === c.id) return true;
-          return mov.tarjeta === c.tarjeta && (mov.descripcion ?? "").toLowerCase().includes(c.compra.toLowerCase());
-        });
-        if (yaExiste) return;
+        if (isCardInstallmentRecorded(movsConCuotas, m, { tarjeta: c.tarjeta, compra: c.compra, cuotaOrigenId: c.id })) return;
         movsConCuotas.push({
           tipo: "Gasto",
           monto: Number(c.valor_cuota),
@@ -198,28 +198,18 @@ function Dashboard() {
       };
     });
 
-    // Detección de gastos raros: por categoría, > 2× promedio histórico (meses previos)
-    const anomalias: Array<{ desc: string; cat: string; monto: number }> = [];
-    const previos = movsConCuotas.filter(m => m.mes_financiero !== mes && m.tipo === "Gasto");
-    const promPorCat = new Map<string, number>();
-    const countPorCat = new Map<string, number>();
-    previos.forEach(m => {
-      const k = m.categoria ?? "Sin categoría";
-      promPorCat.set(k, (promPorCat.get(k) ?? 0) + Number(m.monto));
-      countPorCat.set(k, (countPorCat.get(k) ?? 0) + 1);
-    });
-    enMes.filter(m => m.tipo === "Gasto").forEach(m => {
-      const k = m.categoria ?? "Sin categoría";
-      const c = countPorCat.get(k) ?? 0;
-      if (c < 3) return;
-      const prom = (promPorCat.get(k) ?? 0) / c;
-      if (Number(m.monto) > prom * 2.5 && Number(m.monto) > 5000) {
-        anomalias.push({ desc: m.descripcion ?? "(sin desc)", cat: k, monto: Number(m.monto) });
-      }
-    });
+    // Gastos fuera de patron: misma logica centralizada que usa Alertas
+    // (detectUnusualSpending), que compara el promedio MENSUAL historico por
+    // categoria contra el total del mes actual. Antes esta pantalla tenia su
+    // propia copia que promediaba por TRANSACCION individual (unidades
+    // distintas), disparando falsos positivos en categorias con muchas
+    // compras chicas.
+    const anomalias = detectUnusualSpending(movsConCuotas, profile, preferences)
+      .slice(0, 3)
+      .map((u) => ({ cat: u.categoria, monto: u.monto }));
 
-    return { ingresos, gastos, balance: ingresos - gastos, topCats, serie, anomalias: anomalias.slice(0, 3) };
-  }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6]);
+    return { ingresos, gastos, balance: ingresos - gastos, topCats, serie, anomalias };
+  }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6, profile, preferences]);
 
   const overdraft = Number(profile?.overdraft_allowed ?? 0);
   const score = financialScore(ingresos, gastos, overdraft);
@@ -232,7 +222,10 @@ function Dashboard() {
     <div className="space-y-8">
       <header>
         <p className="text-sm text-muted-foreground">Hola{profile?.display_name ? `, ${profile.display_name}` : ""} 👋</p>
-        <h1 className="text-3xl font-bold tracking-tight mt-1">Tu resumen de {mes}</h1>
+        <h1 className="text-3xl font-bold tracking-tight mt-1">Tu resumen de {headerMes}</h1>
+        {periodoRango && (
+          <p className="text-xs text-muted-foreground mt-1">Incluye tus movimientos desde tu último cobro ({periodoRango}), hasta el próximo</p>
+        )}
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -313,7 +306,7 @@ function Dashboard() {
           <ul className="space-y-2 text-sm">
             {anomalias.map((a, i) => (
               <li key={i} className="flex justify-between">
-                <span><span className="font-medium">{a.desc}</span> <span className="text-muted-foreground">· {a.cat}</span></span>
+                <span className="font-medium">{a.cat}</span>
                 <span className="num font-semibold text-warning">{formatMoney(a.monto, currency)}</span>
               </li>
             ))}

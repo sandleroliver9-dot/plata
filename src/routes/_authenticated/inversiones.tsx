@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useMemo } from "react";
-import { Plus, Trash2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -16,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, resolveTC, todayISO } from "@/lib/finance";
 import { getCryptoQuotes, getStockQuotes, getDolares } from "@/lib/quotes.functions";
 import { computeBalance, formatPct, type Activo, type Compra, type Venta, type Dividendo, type BalanceRow } from "@/lib/portfolio";
 import { MercadoWidget } from "@/components/app/mercado-widget";
@@ -75,12 +76,21 @@ function Inversiones() {
     staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false,
   });
 
-  const tc = dolar?.mep ?? dolar?.ccl ?? dolar?.blue ?? 1000;
+  const { tc, isFallback: tcIsFallback } = resolveTC(dolar);
 
-  const rows = useMemo(() => {
-    if (!activos) return [] as BalanceRow[];
-    return computeBalance(activos, compras ?? [], ventas ?? [], dividendos ?? [], tc).filter(r => r.cantidad > 0.000001);
+  const { rows, warnings } = useMemo(() => {
+    if (!activos) return { rows: [] as BalanceRow[], warnings: [] };
+    const result = computeBalance(activos, compras ?? [], ventas ?? [], dividendos ?? [], tc);
+    return { rows: result.rows.filter(r => r.cantidad > 0.000001), warnings: result.warnings };
   }, [activos, compras, ventas, dividendos, tc]);
+
+  useEffect(() => {
+    // Antes una venta sin tenencia disponible (ej: se borró la compra que la
+    // respaldaba) se ignoraba en silencio en el cálculo de balance.
+    if (warnings.length > 0) {
+      toast.warning(`${warnings.length === 1 ? "Hay una venta" : `Hay ${warnings.length} ventas`} sin compra que la respalde. Revisá la sección Ventas.`);
+    }
+  }, [warnings]);
 
   const totals = useMemo(() => {
     const invertidoUSD = rows.reduce((s, r) => s + r.cantidad * r.pMedioUSD, 0);
@@ -112,6 +122,7 @@ function Inversiones() {
       stockTickers.length ? stockFn({ data: { tickers: stockTickers } }) : Promise.resolve([]),
     ]);
     let updated = 0;
+    let failed = 0;
     const now = new Date().toISOString();
     for (const a of activos) {
       if (!a.ticker) continue;
@@ -119,12 +130,19 @@ function Inversiones() {
       if (CRYPTO_TIPOS.has(a.tipo)) price = cQ.find(q => q.symbol === a.ticker!.toUpperCase())?.usd;
       else if (STOCK_TIPOS.has(a.tipo)) price = sQ.find(q => q.symbol === a.ticker!.toUpperCase())?.usd;
       if (price && price > 0) {
-        await supabase.from("inversiones_activos").update({ valor_actual_usd: price, precio_actualizado_en: now }).eq("id", a.id);
-        updated++;
+        // El error de Supabase se ignoraba: un update rechazado (RLS, red)
+        // sumaba igual al contador de "actualizadas" y el toast final
+        // mentia que todo salio bien.
+        const { error } = await supabase.from("inversiones_activos").update({ valor_actual_usd: price, precio_actualizado_en: now }).eq("id", a.id);
+        if (error) failed++; else updated++;
       }
     }
     qc.invalidateQueries({ queryKey: ["inv-activos"] });
-    toast.success(`${updated} cotizaciones actualizadas`, { id: "prices" });
+    if (failed > 0) {
+      toast.error(`${updated} cotizaciones actualizadas, ${failed} fallaron`, { id: "prices" });
+    } else {
+      toast.success(`${updated} cotizaciones actualizadas`, { id: "prices" });
+    }
   }
 
   return (
@@ -133,6 +151,11 @@ function Inversiones() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Inversiones</h1>
           <p className="text-muted-foreground text-sm">Portfolio con compras, ventas y dividendos.</p>
+          {tcIsFallback && (
+            <p className="text-xs text-warning mt-1">
+              No se pudo obtener la cotización del dólar del día: los montos en ARS usan un tipo de cambio de referencia y pueden no ser exactos.
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={refreshPrices}><RefreshCw className="size-4 mr-2" />Actualizar precios</Button>
@@ -322,7 +345,14 @@ function CompraSection({ activos, compras, userId, tc, onChange }: { activos: Ac
                     <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
                     <TableCell className="text-xs">{c.broker ?? "—"}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" onClick={() => del(c.id)}><Trash2 className="size-4" /></Button></TableCell>
+                    <TableCell>
+                      <ConfirmDeleteButton
+                        size="sm"
+                        title="¿Eliminar esta compra?"
+                        description={`Compra de ${a?.nombre ?? "este activo"} del ${c.fecha} se va a borrar.`}
+                        onConfirm={() => del(c.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -356,15 +386,18 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
               <TableHead className="text-right">PMedio USD</TableHead>
               <TableHead className="text-right">G/P USD</TableHead>
               <TableHead className="text-right">Total USD</TableHead>
+              <TableHead className="text-right">Total ARS</TableHead>
               <TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {ventas.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Sin ventas.</TableCell></TableRow>}
+              {ventas.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Sin ventas.</TableCell></TableRow>}
               {ventas.map((v) => {
                 const a = activoById.get(v.activo_id);
                 const r = rowById.get(v.activo_id);
                 const pMed = r?.pMedioUSD ?? 0;
                 const gp = (Number(v.precio_usd) - pMed) * Number(v.cantidad);
+                const totalUSD = Number(v.cantidad) * Number(v.precio_usd);
+                const totalARS = totalUSD * Number(v.tc || tc);
                 return (
                   <TableRow key={v.id}>
                     <TableCell className="text-xs">{v.fecha}</TableCell>
@@ -373,8 +406,16 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
                     <TableCell className="text-right num">{formatMoney(Number(v.precio_usd), "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(pMed, "USD")}</TableCell>
                     <TableCell className={`text-right num ${gp >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(gp, "USD")}</TableCell>
-                    <TableCell className="text-right num">{formatMoney(Number(v.cantidad) * Number(v.precio_usd), "USD")}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" onClick={() => del(v.id)}><Trash2 className="size-4" /></Button></TableCell>
+                    <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
+                    <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
+                    <TableCell>
+                      <ConfirmDeleteButton
+                        size="sm"
+                        title="¿Eliminar esta venta?"
+                        description={`Venta de ${a?.nombre ?? "este activo"} del ${v.fecha} se va a borrar.`}
+                        onConfirm={() => del(v.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -416,7 +457,14 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
                     <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-muted-foreground">({a.ticker})</span>}</TableCell>
                     <TableCell className="text-right num">{formatMoney(Number(d.monto_usd), "USD")}</TableCell>
                     <TableCell className="text-right num text-muted-foreground">{formatMoney(Number(d.monto_usd) * Number(d.tc || tc), "ARS")}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" onClick={() => del(d.id)}><Trash2 className="size-4" /></Button></TableCell>
+                    <TableCell>
+                      <ConfirmDeleteButton
+                        size="sm"
+                        title="¿Eliminar este dividendo?"
+                        description={`Dividendo de ${a?.nombre ?? "este activo"} del ${d.fecha} se va a borrar.`}
+                        onConfirm={() => del(d.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -431,7 +479,7 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
 /* ---------- Universal mov dialog ---------- */
 function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "compra" | "venta" | "dividendo"; activos: Activo[]; userId?: string; tc: number; rows?: BalanceRow[]; onCreated: () => void }) {
   const [open, setOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const [form, setForm] = useState({ activo_id: "", fecha: today, cantidad: "", precio: "", monto: "", tc: tc ? String(Math.round(tc)) : "", broker: "" });
 
   const titles = { compra: "Nueva compra", venta: "Nueva venta", dividendo: "Nuevo dividendo" };

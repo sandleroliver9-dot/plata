@@ -66,7 +66,7 @@ export function MercadoWidget() {
 
         <TabsContent value="acciones" className="mt-3 space-y-3">
           <form onSubmit={addStock} className="flex gap-2">
-            <Input value={customStock} onChange={(e) => setCustomStock(e.target.value)} placeholder="Agregar ticker (ej: AMD)" className="h-8" />
+            <Input value={customStock} onChange={(e) => setCustomStock(e.target.value)} placeholder="Agregar ticker (ej: AMD)" className="h-8 min-w-0 flex-1" />
             <Button type="submit" size="sm" variant="secondary">Agregar</Button>
           </form>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { currentFinancialMonth } from "./finance";
 
 export type IncomeFrequency = "mensual" | "quincenal" | "semanal" | "variable";
 export type PayDateMode = "fixed_day" | "first_business_day" | "second_business_day" | "third_business_day" | "last_business_day" | "variable";
@@ -70,7 +71,22 @@ export function clampDay(value: unknown, fallback = 1) {
   return Math.max(1, Math.min(31, parsed));
 }
 
-function normalizePayDateMode(value: unknown): PayDateMode {
+function lastDayOfMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/**
+ * Clampea contra los dias reales de ESE mes especifico (no solo [1,31]).
+ * `new Date(year, month, 31)` en febrero desborda a marzo si no se hace esto:
+ * es el mismo bug de "dia de cobro 31" que ya se arreglo una vez en
+ * financialMonth() y volvio a aparecer en los call-sites que construian la
+ * fecha de cobro sin pasar por este clamp.
+ */
+export function safeDayInMonth(year: number, month: number, day: unknown) {
+  return Math.min(clampDay(day), lastDayOfMonth(year, month));
+}
+
+export function normalizePayDateMode(value: unknown): PayDateMode {
   if (
     value === "first_business_day" ||
     value === "second_business_day" ||
@@ -262,7 +278,7 @@ export function getPayDateForMonth(year: number, month: number, preferences: Fin
   if (income.payDateMode === "second_business_day") return getNthBusinessDay(year, month, 2);
   if (income.payDateMode === "third_business_day") return getNthBusinessDay(year, month, 3);
   if (income.payDateMode === "last_business_day") return getLastBusinessDay(year, month);
-  return new Date(year, month, clampDay(income.payDay ?? 1));
+  return new Date(year, month, safeDayInMonth(year, month, income.payDay ?? 1));
 }
 
 export function recurringFrequencyLabel(value: RecurringFrequency) {
@@ -280,4 +296,25 @@ export function riskProfileSettings(profile: FinancialProfileType) {
     return { alertDays: 4, liquidityRatio: 0.05, unusualMultiplier: 3 };
   }
   return { alertDays: 7, liquidityRatio: 0.1, unusualMultiplier: 2.5 };
+}
+
+/**
+ * Selector de "mes financiero" con default = mes actual, que se resincroniza
+ * si `payDay` cambia (ej: el perfil todavia no habia cargado y usaba el
+ * fallback payDay=1) siempre que el usuario no haya elegido otro mes a mano.
+ * Sin esto, ingresos.tsx/movimientos.tsx fijaban el mes inicial con el
+ * fallback y se quedaban mostrando el mes financiero equivocado hasta que el
+ * usuario tocaba el selector.
+ */
+export function useDefaultFinancialMonth(payDay: number): [string, (mes: string) => void] {
+  const mesActual = currentFinancialMonth(payDay);
+  const [mes, setMes] = useState(mesActual);
+  const prevMesActual = useRef(mesActual);
+  useEffect(() => {
+    if (mes === prevMesActual.current && mesActual !== prevMesActual.current) {
+      setMes(mesActual);
+    }
+    prevMesActual.current = mesActual;
+  }, [mesActual, mes]);
+  return [mes, setMes];
 }

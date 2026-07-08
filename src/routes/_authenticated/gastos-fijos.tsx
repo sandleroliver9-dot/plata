@@ -2,7 +2,8 @@ import { ConceptCombo } from "@/components/app/concept-combo";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,12 +13,13 @@ import { formatMoney } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { DecimalInput } from "@/components/ui/number-input";
+import { DecimalInput, IntegerInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { categoryNamesFor } from "@/lib/categories";
 import { parsePositiveNumberInput } from "@/lib/number-input";
+import { clampDay, useFinancialPreferences } from "@/lib/financial-preferences";
 
 export const Route = createFileRoute("/_authenticated/gastos-fijos")({
   head: () => ({ meta: [{ title: "Gastos fijos · Plata" }] }),
@@ -28,10 +30,11 @@ function GastosFijosPage() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const { data: cats } = useQuery(categoriasQuery(user?.id));
+  const [, setPreferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const qc = useQueryClient();
   const currency = profile?.currency ?? "ARS";
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ gasto: "", monto_mensual: "", categoria: "", medio: "" });
+  const [form, setForm] = useState({ gasto: "", monto_mensual: "", categoria: "", medio: "", dia_debito: "" });
 
   const { data: items } = useQuery({
     queryKey: ["gastos-fijos", user?.id],
@@ -58,14 +61,28 @@ function GastosFijosPage() {
       if (!user) throw new Error();
       if (!form.gasto.trim()) throw new Error("Falta nombre");
       const monto = parsePositiveNumberInput(form.monto_mensual, "Monto mensual");
-      const { error } = await supabase.from("gastos_fijos").insert({
+      const { data: fijo, error } = await supabase.from("gastos_fijos").insert({
         user_id: user.id,
         gasto: form.gasto.trim().slice(0, 100),
         monto_mensual: monto,
         categoria: form.categoria || null,
         medio: form.medio || null,
-      });
+      }).select("id").single();
       if (error) throw error;
+      // El dia de debito no vive en la tabla gastos_fijos: se guarda como
+      // preferencia (mismo mecanismo que ya usa Configuracion) para no cargar
+      // dos formas distintas de resolverlo en buildUpcomingEvents. Sin este
+      // campo en el alta, todo gasto fijo nuevo asumia dia 1 hasta que el
+      // usuario lo fuera a corregir a mano en Configuracion.
+      if (form.dia_debito && fijo) {
+        setPreferences((prev) => ({
+          ...prev,
+          recurringSettings: {
+            ...prev.recurringSettings,
+            [fijo.id]: { ...prev.recurringSettings[fijo.id], debitDay: clampDay(form.dia_debito) },
+          },
+        }));
+      }
     },
     onSuccess: () => {
       toast.success("Gasto fijo agregado");
@@ -73,19 +90,23 @@ function GastosFijosPage() {
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       setOpen(false);
-      setForm({ gasto: "", monto_mensual: "", categoria: "", medio: "" });
+      setForm({ gasto: "", monto_mensual: "", categoria: "", medio: "", dia_debito: "" });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("gastos_fijos").update({ activo: false }).eq("id", id); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("gastos_fijos").update({ activo: false }).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       toast.success("Eliminado");
       qc.invalidateQueries({ queryKey: ["gastos-fijos"] });
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const totalFijos = (items ?? []).reduce((s, i) => s + Number(i.monto_mensual), 0);
@@ -125,7 +146,11 @@ function GastosFijosPage() {
                   <div className="text-xs text-muted-foreground">{i.categoria ?? "Sin categoría"}{i.medio ? ` · ${i.medio}` : ""}</div>
                 </div>
                 <div className="num font-semibold">{formatMoney(Number(i.monto_mensual), currency)}</div>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => del.mutate(i.id)}><Trash2 className="size-4" /></Button>
+                <ConfirmDeleteButton
+                  title="¿Eliminar este gasto fijo?"
+                  description={`${i.gasto} (${formatMoney(Number(i.monto_mensual), currency)}/mes) se va a borrar.`}
+                  onConfirm={() => del.mutate(i.id)}
+                />
               </div>
             ))}
             {(cuotasActivas ?? []).filter(c => c.cuota_actual <= c.cuotas_totales).map(c => (
@@ -146,7 +171,14 @@ function GastosFijosPage() {
           <DialogHeader><DialogTitle>Nuevo gasto fijo</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Gasto</Label><ConceptCombo kind="GastoFijo" value={form.gasto} onChange={(v) => setForm({ ...form, gasto: v })} placeholder="Alquiler, Netflix..." /></div>
-            <div><Label>Monto mensual</Label><DecimalInput value={form.monto_mensual} onChange={(e) => setForm({ ...form, monto_mensual: e.target.value })} placeholder="Ej: 35000" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Monto mensual</Label><DecimalInput value={form.monto_mensual} onChange={(e) => setForm({ ...form, monto_mensual: e.target.value })} placeholder="Ej: 35000" /></div>
+              <div>
+                <Label>Día de débito</Label>
+                <IntegerInput placeholder="Ej: 10" value={form.dia_debito} onChange={(e) => setForm({ ...form, dia_debito: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">Opcional. Sin esto, se asume el día 1 de cada mes.</p>
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Categoría</Label>
