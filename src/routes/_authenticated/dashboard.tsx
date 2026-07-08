@@ -106,6 +106,7 @@ function Dashboard() {
           cuotaActual: Number(c.cuota_actual),
           cuotasTotales: Number(c.cuotas_totales),
           mesFinanciero: m,
+          payDay,
         });
         if (!cuotaDelMes) return;
         if (isCardInstallmentRecorded(movsConCuotas, m, { tarjeta: c.tarjeta, compra: c.compra, cuotaOrigenId: c.id })) return;

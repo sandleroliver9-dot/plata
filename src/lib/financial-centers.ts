@@ -307,6 +307,7 @@ export function getMonthlyCashflow({
       cuotaActual: Number(c.cuota_actual ?? 1),
       cuotasTotales: Number(c.cuotas_totales ?? 0),
       mesFinanciero: mes,
+      payDay,
     });
     if (!cuotaDelMes) return s;
     const monto = Number(c.valor_cuota ?? 0);

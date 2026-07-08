@@ -44,6 +44,14 @@ function ResetPasswordPage() {
         setCheckingSession(false);
         if (!session) {
           setErrorMessage("El enlace es inválido o expiró. Pedí uno nuevo desde login.");
+        } else {
+          // getSession() (mas arriba) puede resolver ANTES de que Supabase
+          // termine de procesar el intercambio de codigo PKCE en la URL, y en
+          // ese caso marcaba error. Si despues este evento confirma una
+          // sesion valida, hay que limpiar ese error viejo: sin esto quedaba
+          // un "el enlace es invalido" pegado arriba del formulario que en
+          // realidad si funcionaba.
+          setErrorMessage(null);
         }
       }
     });
@@ -58,6 +66,7 @@ function ResetPasswordPage() {
       if (data.session) {
         setSessionValid(true);
         setCheckingSession(false);
+        setErrorMessage(null);
         return;
       }
       setSessionValid(false);

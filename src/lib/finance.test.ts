@@ -129,4 +129,31 @@ describe("installmentForFinancialMonth", () => {
     });
     expect(cuota).toBeNull();
   });
+
+  it("accounts for payDay when inicio falls before the pay day (regression)", () => {
+    // Compra en tarjeta: la primer cuota siempre cae el dia 1 del mes
+    // siguiente (ver tarjetas.tsx). Con payDay=10, el 1 de agosto todavia
+    // pertenece al mes financiero "jul 2026" (el periodo va del 10 de julio
+    // al 9 de agosto), NO a "ago 2026" como daria asumir el mes calendario
+    // de `inicio` directamente. Antes de este fix, la cuota 1 se contaba dos
+    // veces: una como movimiento real en "jul 2026" y otra como cuota
+    // sintetica todavia-no-registrada en "ago 2026".
+    const cuota1EnJulio = installmentForFinancialMonth({
+      inicio: "2026-08-01",
+      cuotaActual: 1,
+      cuotasTotales: 12,
+      mesFinanciero: "jul 2026",
+      payDay: 10,
+    });
+    expect(cuota1EnJulio).toBe(1);
+
+    const cuota2EnAgosto = installmentForFinancialMonth({
+      inicio: "2026-08-01",
+      cuotaActual: 1,
+      cuotasTotales: 12,
+      mesFinanciero: "ago 2026",
+      payDay: 10,
+    });
+    expect(cuota2EnAgosto).toBe(2);
+  });
 });

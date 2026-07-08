@@ -116,18 +116,28 @@ export function installmentForFinancialMonth({
   cuotaActual,
   cuotasTotales,
   mesFinanciero,
-  referenceDate = new Date(),
+  payDay = 1,
 }: {
   inicio: string | null | undefined;
   cuotaActual: number;
   cuotasTotales: number;
   mesFinanciero: string;
-  referenceDate?: Date;
+  payDay?: number;
 }): number | null {
   const target = parseFinancialMonth(mesFinanciero);
   if (!target) return null;
-  const startDate = inicio ? new Date(`${inicio}T00:00:00`) : target;
-  const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  // El mes financiero de `inicio` no siempre coincide con su mes calendario:
+  // si el usuario cobra el 10 y la primera cuota cae el dia 1 (como siempre
+  // pasa, ver tarjetas.tsx), ese dia 1 pertenece al mes financiero ANTERIOR
+  // (mismo criterio que financialMonth() aplica a cualquier otra fecha).
+  // Asumir que el mes calendario de `inicio` es directamente el mes
+  // financiero de la cuota 1 corria todo el cronograma un mes financiero
+  // hacia adelante y hacia que la cuota 1 se contara dos veces: una vez como
+  // el movimiento real (en el mes financiero anterior, correcto) y otra vez
+  // como cuota sintetica "todavia no registrada" en el mes financiero
+  // siguiente (incorrecto, ya estaba registrada).
+  const startMonth = inicio ? parseFinancialMonth(financialMonth(new Date(`${inicio}T00:00:00`), payDay)) : target;
+  if (!startMonth) return null;
   if (monthsBetween(startMonth, target) < 0) return null;
   const cuota = Number(cuotaActual || 1) + monthsBetween(startMonth, target);
   const total = Number(cuotasTotales || 0);

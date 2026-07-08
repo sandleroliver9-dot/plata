@@ -92,6 +92,7 @@ function MovimientosPage() {
         cuotaActual: Number(c.cuota_actual),
         cuotasTotales: Number(c.cuotas_totales),
         mesFinanciero: mes,
+        payDay,
       });
       if (!cuotaDelMes) return [];
       if (isCardInstallmentRecorded(base, mes, { tarjeta: c.tarjeta, compra: c.compra, cuotaOrigenId: c.id })) return [];

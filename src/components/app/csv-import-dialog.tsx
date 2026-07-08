@@ -8,26 +8,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { financialMonth } from "@/lib/finance";
 import { parseISODate } from "@/lib/financial-centers";
+import { parseNumberInput } from "@/lib/number-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 type Row = { fecha: string; descripcion: string; monto: number; tipo: string; categoria?: string; medio?: string };
-
-function parseImportAmount(value: unknown): number | null {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const cleaned = raw.replace(/[^\d.,-]/g, "");
-  const lastComma = cleaned.lastIndexOf(",");
-  const lastDot = cleaned.lastIndexOf(".");
-  const decimalSep = lastComma > lastDot ? "," : lastDot > -1 ? "." : "";
-  const normalized = cleaned
-    .replace(/[.,]/g, (ch) => (ch === decimalSep ? "." : ""))
-    .replace(/(?!^)-/g, "");
-  const n = Number(normalized);
-  return Number.isFinite(n) ? n : null;
-}
 
 export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { user } = useAuth();
@@ -47,16 +34,27 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
       complete: (res) => {
         const rows: Row[] = [];
         const errs: string[] = [];
+        const totalRows = (res.data as any[]).length;
         (res.data as any[]).slice(0, 500).forEach((r, i) => {
           const fecha = (r.fecha || r.Fecha || r.date || "").toString().slice(0, 10);
           const descripcion = (r.descripcion || r.Descripcion || r.description || r.detalle || "").toString().trim().slice(0, 200);
-          const montoParsed = parseImportAmount(r.monto || r.Monto || r.amount);
-          const monto = Math.abs(Number(montoParsed));
+          const montoParsed = parseNumberInput(r.monto || r.Monto || r.amount);
+          const monto = Math.abs(montoParsed);
           let tipo = (r.tipo || r.Tipo || "").toString();
-          if (!tipo) tipo = Number(montoParsed ?? 0) < 0 ? "Gasto" : "Ingreso";
+          if (!tipo) tipo = montoParsed < 0 ? "Gasto" : "Ingreso";
           tipo = tipo.toLowerCase().startsWith("i") ? "Ingreso" : "Gasto";
           if (!fecha || !descripcion || !Number.isFinite(monto) || monto <= 0) {
             errs.push(`Fila ${i + 2}: datos incompletos`);
+            return;
+          }
+          // Una fecha con formato invalido (ej: DD/MM/YYYY en vez de
+          // YYYY-MM-DD) pasaba el chequeo de arriba (string no vacio) y mas
+          // adelante financialMonth() la convertia en un Invalid Date sin
+          // tirar error, insertando la fila con mes_financiero = "undefined
+          // NaN" y haciendola desaparecer de todas las pantallas mensuales
+          // sin ningun aviso.
+          if (!parseISODate(fecha)) {
+            errs.push(`Fila ${i + 2}: fecha inválida (esperado AAAA-MM-DD)`);
             return;
           }
           rows.push({
@@ -68,6 +66,9 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
         setParsed(rows);
         setErrors(errs.slice(0, 5));
         setErrorCount(errs.length);
+        if (totalRows > 500) {
+          toast.warning(`El archivo tiene ${totalRows} filas: solo se importan las primeras 500.`);
+        }
       },
       error: () => toast.error("No pude leer el archivo"),
     });
