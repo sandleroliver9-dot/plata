@@ -60,33 +60,19 @@ function IngresosPage() {
       // `new Date(string)` un ingreso cargado justo el dia de cobro podia
       // correrse un dia hacia atras en husos horarios negativos (Argentina).
       const mesIngreso = financialMonth(parseISODate(form.fecha_cobro) ?? new Date(form.fecha_cobro), payDay);
-      const { data: ingreso, error } = await supabase
-        .from("ingresos")
-        .insert({
-          user_id: user.id,
-          concepto: form.concepto.trim().slice(0, 100),
-          monto,
-          fecha_cobro: form.fecha_cobro,
-          mes_financiero: mesIngreso,
-          tipo: form.tipo,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      // También crea movimiento para que impacte en dashboard, vinculado por
-      // ingreso_id (no por heurística de descripcion+monto+fecha) para poder
-      // borrarlo con certeza si se borra el ingreso.
-      const { error: movError } = await supabase.from("movimientos").insert({
-        user_id: user.id,
-        tipo: "Ingreso",
-        descripcion: form.concepto.trim().slice(0, 100),
-        monto,
-        fecha: form.fecha_cobro,
-        mes_financiero: mesIngreso,
-        categoria: form.tipo === "Sueldo" ? "Sueldo" : "Extra",
-        ingreso_id: ingreso.id,
+      // RPC atomica (ver migracion create_income_with_movement_rpc): antes
+      // esto eran dos inserts separados (ingresos + movimientos) sin
+      // transaccion, asi que si el segundo fallaba quedaba el ingreso
+      // huerfano sin su movimiento espejo.
+      const { error } = await supabase.rpc("create_income_with_movement", {
+        p_user_id: user.id,
+        p_concepto: form.concepto.trim().slice(0, 100),
+        p_monto: monto,
+        p_fecha_cobro: form.fecha_cobro,
+        p_mes_financiero: mesIngreso,
+        p_tipo: form.tipo,
       });
-      if (movError) throw movError;
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Ingreso registrado");
@@ -101,13 +87,14 @@ function IngresosPage() {
 
   const del = useMutation({
     mutationFn: async (item: { id: string }) => {
-      const { error } = await supabase.from("ingresos").update({ activo: false }).eq("id", item.id);
+      if (!user) throw new Error();
+      // RPC atomica (misma razon que create_income_with_movement): antes eran
+      // dos updates separados sin transaccion.
+      const { error } = await supabase.rpc("delete_income_with_movement", {
+        p_user_id: user.id,
+        p_ingreso_id: item.id,
+      });
       if (error) throw error;
-      // Vinculado por ingreso_id (FK real): ya no hace falta adivinar cual
-      // movimiento es por descripcion+monto+fecha, lo que podia borrar el
-      // movimiento equivocado si habia otro similar el mismo dia.
-      const { error: movError } = await supabase.from("movimientos").update({ activo: false }).eq("ingreso_id", item.id);
-      if (movError) throw movError;
     },
     onSuccess: () => {
       toast.success("Eliminado");

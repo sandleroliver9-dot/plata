@@ -558,10 +558,12 @@ export function estimateNetWorth({
   inversionesValor = 0,
   inmuebles = [],
   prestamos = [],
+  tarjetas = [],
 }: {
   inversionesValor?: number;
   inmuebles?: Row[];
   prestamos?: Row[];
+  tarjetas?: Row[];
 }) {
   const inv = inversionesValor;
   const inm = inmuebles.reduce((s, i) => s + Number(i.valor_estimado ?? 0) - Number(i.deuda_asociada ?? 0), 0);
@@ -569,7 +571,15 @@ export function estimateNetWorth({
     const restantes = Math.max(0, Number(p.cuotas_totales ?? 0) - Number(p.cuotas_pagadas ?? 0));
     return s + restantes * Number(p.cuota_mensual ?? 0);
   }, 0);
-  return inv + inm - deudaPrestamos;
+  // Cuotas de tarjeta restantes (incluyendo la actual): sin esto, patrimonio.tsx
+  // y este calculo (usado por insights.tsx) mostraban dos patrimonios netos
+  // distintos para el mismo usuario, uno de ellos inflado por la deuda de
+  // tarjeta faltante.
+  const deudaTarjetas = tarjetas.reduce((s, t) => {
+    const restantes = Math.max(0, Number(t.cuotas_totales ?? 0) - Number(t.cuota_actual ?? 0) + 1);
+    return s + restantes * Number(t.valor_cuota ?? 0);
+  }, 0);
+  return inv + inm - deudaPrestamos - deudaTarjetas;
 }
 
 export function getEmergencyFundSummary(cash: CashflowSummary, preferences?: FinancialPreferences | null): EmergencyFundSummary {

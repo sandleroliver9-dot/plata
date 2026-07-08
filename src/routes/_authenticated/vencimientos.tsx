@@ -145,8 +145,18 @@ function Vencimientos() {
       for (const g of gastos.data ?? []) {
         const baseDay = g.inicio ? new Date(g.inicio + "T00:00:00").getDate() : 1;
         const fin = g.fin ? new Date(g.fin + "T00:00:00") : null;
+        // Si la ocurrencia de este mes calendario ya paso (ej: se cobra/paga
+        // el dia 5 y hoy es 20), arrancar desde el mes que viene: mismo
+        // criterio de "proxima fecha desde hoy" que la rama de prestamos de
+        // arriba. Sin esto, "Proximo: {fecha}" en la tarjeta del gasto fijo
+        // podia mostrar una fecha ya pasada, sin ningun indicador de vencido.
+        let monthOffset = 0;
+        const primerDelMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const diasEsteMes = new Date(primerDelMes.getFullYear(), primerDelMes.getMonth() + 1, 0).getDate();
+        primerDelMes.setDate(Math.min(baseDay, diasEsteMes));
+        if (primerDelMes < hoy) monthOffset = 1;
         for (let i = 0; i < 12; i++) {
-          const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+          const d = new Date(hoy.getFullYear(), hoy.getMonth() + monthOffset + i, 1);
           const dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
           d.setDate(Math.min(baseDay, dim));
           if (fin && d > fin) break;

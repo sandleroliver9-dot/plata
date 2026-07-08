@@ -88,7 +88,15 @@ export function financialPeriodRange(label: string, payDay = 1): { start: Date; 
   const daysInStartMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
   const safePayDay = Math.max(1, Math.min(daysInStartMonth, Number(payDay) || 1));
   const start = new Date(monthStart.getFullYear(), monthStart.getMonth(), safePayDay);
-  const end = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, safePayDay - 1);
+  // El dia de pago se clampea contra CADA mes por separado (mismo patron que
+  // safeDayInMonth en financial-preferences.ts): si el mes de inicio tiene 31
+  // dias pero el siguiente solo 28/30, clampear una sola vez contra el mes de
+  // inicio corria el `end` varios dias de mas (ej: payDay 31 en enero daba
+  // "fin" el 2 de marzo en vez del 27 de febrero).
+  const nextMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+  const daysInNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+  const safePayDayNext = Math.max(1, Math.min(daysInNextMonth, Number(payDay) || 1));
+  const end = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), safePayDayNext - 1);
   return { start, end };
 }
 
@@ -135,12 +143,6 @@ export function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function addMonths(date: Date, n: number): Date {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + n);
-  return d;
-}
-
 /**
  * Score financiero 0-100 basado en tasa de ahorro y disciplina con descubierto.
  */
@@ -163,7 +165,16 @@ export function smartMessage(ingresos: number, gastos: number, overdraft: number
   const now = new Date();
   const day = now.getDate();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const diasRestantes = payDay > day ? payDay - day : daysInMonth - day + payDay;
+  // payDay puede ser 29/30/31 y no existir en el mes actual o el siguiente
+  // (ej: 31 en febrero): clampear contra cada mes por separado, mismo patron
+  // que safeDayInMonth, para no desalinearse con el resto de la app (que sí
+  // clampea) en cuántos días faltan para el próximo cobro.
+  const daysInNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0).getDate();
+  const safePayDayThisMonth = Math.max(1, Math.min(daysInMonth, Number(payDay) || 1));
+  const safePayDayNextMonth = Math.max(1, Math.min(daysInNextMonth, Number(payDay) || 1));
+  const diasRestantes = safePayDayThisMonth > day
+    ? safePayDayThisMonth - day
+    : daysInMonth - day + safePayDayNextMonth;
   if (balance < -overdraft) return `Estás sobregirado por ${Math.abs(balance + overdraft).toFixed(0)}. Bajá gastos no esenciales este mes.`;
   if (balance < 0) return `Vas usando el descubierto. Te quedan ${diasRestantes} días hasta tu próximo cobro.`;
   if (ahorroPct >= 0.3) return `Muy bien: estás ahorrando ${(ahorroPct * 100).toFixed(0)}% de tus ingresos. Considerá invertir el excedente.`;

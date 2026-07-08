@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, todayISO } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, detectUnusualSpending, getMonthlyCashflow } from "@/lib/financial-centers";
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery } from "@/lib/supabase-queries";
@@ -53,6 +53,24 @@ function AlertasPage() {
   const sensitivity = riskProfileSettings(preferences.riskProfile);
 
   const alerts: Alert[] = [];
+
+  // buildUpcomingEvents descarta eventos con fecha pasada (solo mira "proximos
+  // N dias"), asi que un vencimiento manual ya vencido y no pagado -el caso
+  // mas urgente- no generaba ninguna alerta acá aunque sí aparecía como
+  // "vencido" en la pantalla de Vencimientos.
+  const todayIso = todayISO();
+  (data?.vencimientos ?? [])
+    .filter((v: any) => !v.pagado && v.fecha < todayIso)
+    .slice(0, 4)
+    .forEach((v: any) => {
+      alerts.push({
+        title: "Pago vencido",
+        message: `${v.concepto} venció el ${v.fecha} y todavía no está marcado como pagado (${formatMoney(Number(v.monto), currency)}).`,
+        tone: "destructive",
+        icon: CalendarClock,
+      });
+    });
+
   upcoming
     .filter((event) => event.type !== "cobro" && daysUntil(event.date) <= sensitivity.alertDays)
     .slice(0, 4)

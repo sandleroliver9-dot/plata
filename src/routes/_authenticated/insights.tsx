@@ -65,6 +65,7 @@ function InsightsPage() {
     inversionesValor,
     inmuebles: data?.inmuebles,
     prestamos: data?.prestamos,
+    tarjetas: data?.tarjetas,
   });
 
   const fixedRatio = cash.ingresos > 0 ? (cash.gastosFijos / cash.ingresos) * 100 : 0;
