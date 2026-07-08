@@ -156,6 +156,9 @@ function AlertasPage() {
           <Metric label="Gastos estimados" value={formatMoney(cash.gastos, currency)} />
           <Metric label="Disponible" value={formatMoney(cash.disponible, currency)} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
         </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          "Gastos estimados" suma lo que ya registraste más las cuotas y gastos fijos pendientes de pago este mes: puede diferir del total de Movimientos, que solo cuenta lo ya registrado.
+        </p>
       </Card>
 
       {isLoading ? (
