@@ -104,6 +104,12 @@ function ProyeccionesPage() {
     const events = buildUpcomingEvents({
       profile,
       ingresos: data.ingresos,
+      // Sin esto, los vencimientos manuales (ABL, expensas, seguro...)
+      // quedaban completamente afuera de las proyecciones de los 12 meses:
+      // ni el total de "Gastos" del mes ni el grafico los contaban, a
+      // diferencia de Alertas/Insights/Calendario financiero, que si pasan
+      // este mismo dato a buildUpcomingEvents.
+      vencimientos: data.vencimientos,
       tarjetas: data.tarjetas,
       prestamos: data.prestamos,
       gastosFijos: data.fijos,
