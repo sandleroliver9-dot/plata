@@ -13,7 +13,11 @@ const transactionTipoEnum = z.enum(['Ingreso', 'Gasto']);
 export const transactionCreateSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'fecha debe tener formato YYYY-MM-DD'),
   descripcion: z.string().nullable().optional(),
-  monto: z.number(),
+  // .min(0), como income/bills: sin esto un monto negativo se guardaba tal
+  // cual, y dashboard.tsx suma "Gasto".monto directo al total de gastos, asi
+  // que un movimiento negativo restaba en vez de sumar y subestimaba el gasto
+  // real del mes.
+  monto: z.number().min(0),
   tipo: transactionTipoEnum,
   categoria: z.string().nullable().optional(),
   medio: z.string().nullable().optional(),
@@ -26,7 +30,7 @@ export const transactionCreateSchema = z.object({
 const transactionUpdateSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   descripcion: z.string().nullable().optional(),
-  monto: z.number().optional(),
+  monto: z.number().min(0).optional(),
   tipo: transactionTipoEnum.optional(),
   categoria: z.string().nullable().optional(),
   medio: z.string().nullable().optional(),

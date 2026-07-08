@@ -48,7 +48,8 @@ export const apiClient = {
 
   // Transactions
   transactions: {
-    list: (month?: string) => apiFetch(`/transactions${month ? `?month=${month}` : ''}`),
+    // El backend lee `mes` (financialMonth.ts), no `month`.
+    list: (mes?: string) => apiFetch(`/transactions${mes ? `?mes=${encodeURIComponent(mes)}` : ''}`),
     create: (data: any) => apiFetch('/transactions', { method: 'POST', body: data }),
     update: (id: string, data: any) => apiFetch(`/transactions/${id}`, { method: 'PUT', body: data }),
     delete: (id: string) => apiFetch(`/transactions/${id}`, { method: 'DELETE' }),
@@ -76,8 +77,9 @@ export const apiClient = {
     list: () => apiFetch('/goals'),
     create: (data: any) => apiFetch('/goals', { method: 'POST', body: data }),
     update: (id: string, data: any) => apiFetch(`/goals/${id}`, { method: 'PUT', body: data }),
-    updateProgress: (id: string, monto_actual: number) => 
-      apiFetch(`/goals/${id}/progress`, { method: 'PATCH', body: { monto_actual } }),
+    // El backend espera `ahorrado` (goalProgressSchema), no `monto_actual`.
+    updateProgress: (id: string, ahorrado: number) =>
+      apiFetch(`/goals/${id}/progress`, { method: 'PATCH', body: { ahorrado } }),
     delete: (id: string) => apiFetch(`/goals/${id}`, { method: 'DELETE' }),
   },
 
