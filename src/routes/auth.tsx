@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet } from "lucide-react";
+import { Wallet, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { passwordIssue } from "@/lib/password";
+import { passwordIssue, PASSWORD_RULES } from "@/lib/password";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Ingresar · Plata" }] }),
@@ -28,6 +28,8 @@ function AuthPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+
+  const pwChecks = PASSWORD_RULES.map((rule) => ({ label: rule.label, ok: rule.test(password) }));
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -173,7 +175,18 @@ function AuthPage() {
                 <div className="space-y-2">
                   <Label htmlFor="pw-up">Contraseña</Label>
                   <Input id="pw-up" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
-                  <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                  {password ? (
+                    <ul className="text-xs space-y-0.5 mt-1">
+                      {pwChecks.map((c) => (
+                        <li key={c.label} className={`flex items-center gap-1.5 ${c.ok ? "text-success" : "text-muted-foreground"}`}>
+                          {c.ok ? <Check className="size-3" /> : <X className="size-3" />}
+                          {c.label}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                  )}
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Crear cuenta</Button>
               </form>
