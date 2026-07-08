@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { toast } from "sonner";
 import { appNow, formatMoney, financialMonth, todayISO } from "@/lib/finance";
 import { hasSimilarMovement, isCardInstallmentRecorded, nextLoanInstallmentBase } from "@/lib/financial-centers";
+import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/vencimientos")({
@@ -39,6 +40,7 @@ function isoLocal(d: Date) {
 function Vencimientos() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
+  const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const currency = profile?.currency ?? "ARS";
   const payDay = profile?.pay_day ?? 1;
   const qc = useQueryClient();
@@ -58,7 +60,11 @@ function Vencimientos() {
   });
 
   const { data: autoVencs } = useQuery({
-    queryKey: ["vencimientos-auto", user?.id],
+    // preferences.recurringSettings en la key: sin esto, cambiar el "dia de
+    // debito" de un gasto fijo (en su alta o en Configuracion) no refrescaba
+    // esta pantalla, que quedaba mostrando la fecha vieja hasta el proximo
+    // refetch natural.
+    queryKey: ["vencimientos-auto", user?.id, preferences.recurringSettings],
     enabled: !!user,
     queryFn: async () => {
       const [prestamos, tarjetas, gastos, movs] = await Promise.all([
@@ -134,7 +140,13 @@ function Vencimientos() {
         }
       }
       for (const g of gastos.data ?? []) {
-        const baseDay = g.inicio ? new Date(g.inicio + "T00:00:00").getDate() : 1;
+        // Mismo orden de prioridad que buildUpcomingEvents (financial-centers.ts):
+        // preferencia guardada > dia de `inicio` > dia 1. Antes esta pantalla
+        // ignoraba recurringSettings por completo, asi que el "dia de debito"
+        // configurado en el alta o en Configuracion no se reflejaba aca --
+        // justo la pantalla donde mas importa la fecha exacta de vencimiento.
+        const debitPref = preferences.recurringSettings[String(g.id)]?.debitDay;
+        const baseDay = debitPref ?? (g.inicio ? new Date(g.inicio + "T00:00:00").getDate() : 1);
         const fin = g.fin ? new Date(g.fin + "T00:00:00") : null;
         // Si la ocurrencia de este mes calendario ya paso (ej: se cobra/paga
         // el dia 5 y hoy es 20), arrancar desde el mes que viene: mismo
