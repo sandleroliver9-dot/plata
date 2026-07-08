@@ -80,6 +80,21 @@ function dateWithDay(year: number, month: number, day: number) {
   return new Date(year, month, safeDayInMonth(year, month, day));
 }
 
+// Fecha base de la proxima cuota sin pagar de un prestamo: la primera
+// ocurrencia (desde `today`) del dia configurado (`dia_pago`, o si no esta
+// seteado, el dia de `inicio`). Nunca "inicio + cuotas_pagadas meses": eso
+// asume que `inicio` es la fecha real de la primera cuota, cuando en
+// realidad siempre es la fecha en que el prestamo se cargo a la app (puede
+// estar muy lejos de cuando arranco de verdad). Compartida entre
+// buildUpcomingEvents (Alertas/Insights/Proyecciones/Calendario) y
+// vencimientos.tsx para que no vuelvan a divergir como paso antes.
+export function nextLoanInstallmentBase(p: Row, today: Date) {
+  const diaBase = p.dia_pago ? Number(p.dia_pago) : (parseISODate(p.inicio)?.getDate() ?? today.getDate());
+  let base = dateWithDay(today.getFullYear(), today.getMonth(), diaBase);
+  if (base < today) base = addMonths(base, 1);
+  return base;
+}
+
 export function daysUntil(dateISO: string) {
   const today = appNow();
   today.setHours(0, 0, 0, 0);
@@ -414,16 +429,7 @@ export function buildUpcomingEvents({
     const pagadas = Number(p.cuotas_pagadas ?? 0);
     const restantes = total - pagadas;
     if (restantes <= 0) continue;
-    // El proximo pago es la primera fecha (desde hoy) con el dia configurado,
-    // no "fecha en que se cargo el prestamo + cuotas ya pagadas": eso empujaba
-    // el vencimiento meses hacia el futuro en prestamos ya empezados antes de
-    // cargarlos en la app (`inicio` siempre es la fecha de alta, no la fecha
-    // real de la primera cuota). Mismo fix que ya tiene vencimientos.tsx, que
-    // nunca se aplico a esta funcion compartida -- Alertas, Insights,
-    // Proyecciones y el Calendario financiero seguian con la cuenta vieja.
-    const diaBase = p.dia_pago ? Number(p.dia_pago) : (parseISODate(p.inicio)?.getDate() ?? today.getDate());
-    let base = dateWithDay(today.getFullYear(), today.getMonth(), diaBase);
-    if (base < today) base = addMonths(base, 1);
+    const base = nextLoanInstallmentBase(p, today);
     for (let i = 0; i < restantes; i++) {
       const cuota = pagadas + i + 1;
       const date = addMonths(base, i);

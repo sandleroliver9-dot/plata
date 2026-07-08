@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { appNow, formatMoney, financialMonth, todayISO } from "@/lib/finance";
-import { hasSimilarMovement, isCardInstallmentRecorded } from "@/lib/financial-centers";
+import { hasSimilarMovement, isCardInstallmentRecorded, nextLoanInstallmentBase } from "@/lib/financial-centers";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/vencimientos")({
@@ -100,23 +100,14 @@ function Vencimientos() {
       };
 
       for (const p of prestamos.data ?? []) {
-        if (!p.inicio) continue;
-        // El próximo pago es la primera fecha (desde hoy) con el día configurado,
-        // no "fecha en que se cargó el préstamo + cuotas ya pagadas": eso empujaba
-        // el vencimiento meses hacia el futuro en préstamos ya empezados antes de
-        // cargarlos en la app.
-        // Sin dia_pago configurado, se usa el dia del mes de `inicio` como
-        // dia de pago recurrente, con la misma logica de "proxima fecha desde
-        // hoy" que la rama de arriba. Antes esta rama usaba `inicio` tal cual
-        // como primera cuota: en un prestamo cargado hace varios meses sin
-        // mantener cuotas_pagadas al dia, esa fecha quedaba en el pasado y la
-        // cuota desaparecia (no entraba en "proximos" por estar vencida, ni en
-        // "vencidos" porque esa lista solo contempla origen === "manual").
-        const diaBase = Number(p.dia_pago) || new Date(p.inicio + "T00:00:00").getDate();
-        const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
-        let base = new Date(hoy.getFullYear(), hoy.getMonth(), Math.min(diaBase, diasEnMes));
-        if (base < hoy) base = addMonths(base, 1);
         const restantes = p.cuotas_totales - p.cuotas_pagadas;
+        if (restantes <= 0) continue;
+        // Misma logica que buildUpcomingEvents (financial-centers.ts): la
+        // proxima cuota es la primera fecha desde hoy con el dia configurado,
+        // no "inicio + cuotas_pagadas meses". Antes esta pantalla tenia su
+        // propia copia de este calculo, y el fix del bug se aplico aca pero
+        // nunca en la funcion compartida (o viceversa) -- ahora usan la misma.
+        const base = nextLoanInstallmentBase(p, hoy);
         for (let i = 0; i < restantes; i++) {
           const fecha = addMonths(base, i);
           if (yaRegistrado(fecha, p.descripcion, Number(p.cuota_mensual), { cuotaOrigenId: p.id })) continue;
