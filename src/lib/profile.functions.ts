@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { appNow, financialMonth, parseFinancialMonth } from "@/lib/finance";
+import { appNow, financialMonth, financialPeriodRange } from "@/lib/finance";
 import {
   getLastBusinessDay,
   getNthBusinessDay,
@@ -18,7 +18,12 @@ export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, r
   // ACTUAL (no el mes calendario de "hoy"): si todavía no llegó el día de cobro
   // de este mes, el período financiero vigente empezó el mes anterior, y el
   // sueldo debe quedar fechado ahí para no desaparecer del mes en curso.
-  const currentPeriodStart = parseFinancialMonth(financialMonth(referenceDate, payDay)) ?? referenceDate;
+  // OJO: con día de pago tardío (>=16) el mes del LABEL (ej: "jul 2026") ya no
+  // es el mes calendario donde arranca el período (arranca el mes anterior,
+  // ver financialMonth/financialPeriodRange) — por eso hay que resolver el
+  // inicio real del período vía financialPeriodRange en vez de parsear el
+  // label directo como si fuera el mes de arranque.
+  const currentPeriodStart = financialPeriodRange(financialMonth(referenceDate, payDay), payDay)?.start ?? referenceDate;
   const year = currentPeriodStart.getFullYear();
   const month = currentPeriodStart.getMonth();
   if (payDateMode === "first_business_day") return getNthBusinessDay(year, month, 1);

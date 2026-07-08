@@ -68,6 +68,16 @@ export function resolveTC(dolar?: { mep?: number; ccl?: number; blue?: number } 
 /**
  * Mes financiero: si el usuario cobra el dia 5, el periodo de "jun 2026"
  * va del 5 de junio al 4 de julio.
+ *
+ * El periodo se nombra por el mes donde caen la MAYORIA de sus dias, no por
+ * el mes en que arranca. Con dia de pago temprano (<16) ambos coinciden
+ * (ej: cobro el 5, el periodo vive casi entero en ese mismo mes calendario).
+ * Con dia de pago tardio (>=16) el periodo vive casi entero en el mes
+ * siguiente (ej: cobro el 30/6 -> el periodo 30/6 al 29/7 tiene 29 de sus
+ * ~30 dias en julio) y por eso tiene que llamarse "jul 2026", no "jun 2026":
+ * es la plata con la que el usuario vive en julio. Bug real reportado por un
+ * usuario con dia de pago 30 (ver financialPeriodRange, que aplica el mismo
+ * criterio en la direccion inversa).
  */
 export function financialMonth(date: Date, payDay = 1): string {
   const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -75,6 +85,9 @@ export function financialMonth(date: Date, payDay = 1): string {
   const period = new Date(date.getFullYear(), date.getMonth(), 1);
   if (safePayDay > 1 && date.getDate() < safePayDay) {
     period.setMonth(period.getMonth() - 1);
+  }
+  if ((Number(payDay) || 1) >= 16) {
+    period.setMonth(period.getMonth() + 1);
   }
   return `${monthsEs[period.getMonth()]} ${period.getFullYear()}`;
 }
@@ -121,14 +134,21 @@ export function parseFinancialMonth(label: string): Date | null {
 
 /**
  * Rango de fechas calendario que cubre un "mes financiero" (ej: si cobrás el
- * 25, el período "jun 2026" va del 25 de junio al 24 de julio). Sirve para
+ * 5, el período "jun 2026" va del 5 de junio al 4 de julio). Sirve para
  * aclarar en la UI que el mes financiero no coincide con el mes calendario
  * cuando payDay > 1, y así el usuario entienda por qué en julio puede seguir
  * viendo "jun 2026" (todavía no llegó su próximo cobro).
  */
 export function financialPeriodRange(label: string, payDay = 1): { start: Date; end: Date } | null {
-  const monthStart = parseFinancialMonth(label);
-  if (!monthStart) return null;
+  const labelMonth = parseFinancialMonth(label);
+  if (!labelMonth) return null;
+  // Mismo criterio que financialMonth(), invertido: con dia de pago tardio
+  // (>=16) el periodo nombrado "label" arranco en realidad el mes ANTERIOR
+  // (label es el mes donde vive la mayoria de sus dias, no el de arranque).
+  const monthStart = new Date(labelMonth);
+  if ((Number(payDay) || 1) >= 16) {
+    monthStart.setMonth(monthStart.getMonth() - 1);
+  }
   const daysInStartMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
   const safePayDay = Math.max(1, Math.min(daysInStartMonth, Number(payDay) || 1));
   const start = new Date(monthStart.getFullYear(), monthStart.getMonth(), safePayDay);

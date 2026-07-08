@@ -41,14 +41,14 @@ describe("financialMonth", () => {
     expect(financialMonth(new Date(2026, 5, 30), 1)).toBe("jun 2026");
   });
 
-  it("stays in the same financial month on and after pay day", () => {
-    expect(financialMonth(new Date(2026, 5, 25), 25)).toBe("jun 2026");
-    expect(financialMonth(new Date(2026, 5, 30), 25)).toBe("jun 2026");
+  it("stays in the same financial month on and after pay day, when pay day is early (<16)", () => {
+    expect(financialMonth(new Date(2026, 5, 10), 10)).toBe("jun 2026");
+    expect(financialMonth(new Date(2026, 5, 30), 10)).toBe("jun 2026");
   });
 
-  it("rolls back to the previous financial month before pay day", () => {
-    // Paid on the 25th: June 20 still belongs to May's financial period.
-    expect(financialMonth(new Date(2026, 5, 20), 25)).toBe("may 2026");
+  it("rolls back to the previous financial month before pay day, when pay day is early (<16)", () => {
+    // Paid on the 10th: June 5 still belongs to May's financial period.
+    expect(financialMonth(new Date(2026, 5, 5), 10)).toBe("may 2026");
   });
 
   it("rolls over the year boundary correctly", () => {
@@ -56,14 +56,30 @@ describe("financialMonth", () => {
     expect(financialMonth(new Date(2026, 0, 10), 15)).toBe("dic 2025");
   });
 
+  it("names the period after the month where most of its days fall, not the month it starts in, when pay day is late (>=16) (regression)", () => {
+    // Reportado en vivo por un usuario real con dia de pago 30: el periodo
+    // que arranca el 30/6 y termina el 29/7 tiene 1 solo dia en junio y 29
+    // en julio. Antes de este fix se etiquetaba "jun 2026" (el mes en que
+    // arranca), lo cual el usuario correctamente identifico como un error:
+    // "cobro el 30 de junio y con eso vivo en JULIO". Ahora se etiqueta por
+    // donde vive la mayoria de sus dias.
+    expect(financialMonth(new Date(2026, 5, 30), 30)).toBe("jul 2026");
+    expect(financialMonth(new Date(2026, 6, 10), 30)).toBe("jul 2026");
+    expect(financialMonth(new Date(2026, 6, 29), 30)).toBe("jul 2026");
+    // El dia anterior al cobro (29/6) todavia pertenece al periodo previo
+    // (30/5 al 29/6, casi entero en junio) -> "jun 2026".
+    expect(financialMonth(new Date(2026, 5, 29), 30)).toBe("jun 2026");
+  });
+
   it("treats pay day 31 as the last day of shorter months instead of losing the whole month", () => {
-    // 2026 is not a leap year: February has 28 days.
-    expect(financialMonth(new Date(2026, 1, 1), 31)).toBe("ene 2026");
-    expect(financialMonth(new Date(2026, 1, 27), 31)).toBe("ene 2026");
-    expect(financialMonth(new Date(2026, 1, 28), 31)).toBe("feb 2026");
+    // 2026 is not a leap year: February has 28 days. Pay day 31 is >=16, so
+    // every period is named after the month it rolls into (see test above).
+    expect(financialMonth(new Date(2026, 1, 1), 31)).toBe("feb 2026");
+    expect(financialMonth(new Date(2026, 1, 27), 31)).toBe("feb 2026");
+    expect(financialMonth(new Date(2026, 1, 28), 31)).toBe("mar 2026");
     // April has 30 days.
-    expect(financialMonth(new Date(2026, 3, 29), 31)).toBe("mar 2026");
-    expect(financialMonth(new Date(2026, 3, 30), 31)).toBe("abr 2026");
+    expect(financialMonth(new Date(2026, 3, 29), 31)).toBe("abr 2026");
+    expect(financialMonth(new Date(2026, 3, 30), 31)).toBe("may 2026");
   });
 });
 
@@ -129,19 +145,50 @@ describe("financialPeriodRange / formatFinancialPeriodRange", () => {
     expect(range?.end.getMonth()).toBe(5);
   });
 
-  it("spans from pay day to the day before next pay day when pay day > 1", () => {
-    // Paid on the 25th: "jun 2026" runs June 25 -> July 24.
-    const range = financialPeriodRange("jun 2026", 25);
+  it("spans from pay day to the day before next pay day when pay day > 1 but early (<16)", () => {
+    // Paid on the 10th: "jun 2026" runs June 10 -> July 9.
+    const range = financialPeriodRange("jun 2026", 10);
     expect(range?.start.getMonth()).toBe(5);
-    expect(range?.start.getDate()).toBe(25);
+    expect(range?.start.getDate()).toBe(10);
     expect(range?.end.getMonth()).toBe(6);
-    expect(range?.end.getDate()).toBe(24);
-    expect(formatFinancialPeriodRange("jun 2026", 25)).toBe("25 jun al 24 jul");
+    expect(range?.end.getDate()).toBe(9);
+    expect(formatFinancialPeriodRange("jun 2026", 10)).toBe("10 jun al 9 jul");
+  });
+
+  it("starts the period in the PREVIOUS month when pay day is late (>=16) (regression)", () => {
+    // Paid on the 30th: "jul 2026" (the financial month the user lives in
+    // with that paycheck) actually starts June 30, not July 30. Inverse of
+    // the financialMonth() regression above -- has to stay consistent with
+    // it, since movimientos.tsx stamps mes_financiero using financialMonth()
+    // but shows the human-readable range using this function.
+    const range = financialPeriodRange("jul 2026", 30);
+    expect(range?.start.getMonth()).toBe(5);
+    expect(range?.start.getDate()).toBe(30);
+    expect(range?.end.getMonth()).toBe(6);
+    expect(range?.end.getDate()).toBe(29);
+    expect(formatFinancialPeriodRange("jul 2026", 30)).toBe("30 jun al 29 jul");
   });
 
   it("returns null for an invalid label", () => {
     expect(financialPeriodRange("no-es-un-mes", 25)).toBeNull();
     expect(formatFinancialPeriodRange("no-es-un-mes", 25)).toBeNull();
+  });
+
+  it("stays consistent with financialMonth() for every day in a period, across a range of pay days (regression)", () => {
+    // Red de seguridad general: cualquier fecha dentro del rango que
+    // financialPeriodRange() calcula para un label tiene que volver a
+    // etiquetarse con ESE MISMO label al pasarla por financialMonth(). Si
+    // alguna vez se desalinean (como paso con el fix de dia de pago tardio),
+    // pantallas que arman el rango a mostrar (ej: "30 jun al 29 jul") y
+    // pantallas que filtran movimientos por mes_financiero dejarian de
+    // coincidir.
+    for (const payDay of [1, 5, 10, 15, 16, 20, 25, 29, 30, 31]) {
+      for (const label of ["ene 2026", "jun 2026", "dic 2026"]) {
+        const range = financialPeriodRange(label, payDay)!;
+        expect(financialMonth(range.start, payDay)).toBe(label);
+        expect(financialMonth(range.end, payDay)).toBe(label);
+      }
+    }
   });
 });
 
