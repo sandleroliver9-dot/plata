@@ -9,7 +9,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney, formatCompact, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
+import { formatMoney, formatCompact, currentCalendarMonthLabel, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
 import { DolarWidget } from "@/components/app/dolar-widget";
 import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
@@ -24,12 +24,16 @@ function Dashboard() {
   const { data: profile } = useProfile();
   const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const payDay = profile?.pay_day ?? 1;
+  // `mes` sigue siendo el período financiero anclado al día de cobro (con el
+  // que se agrupan y suman ingresos/gastos: eso NO cambia acá). Lo que cambia
+  // es el título: mostrarle al usuario el nombre del período financiero (que
+  // puede seguir siendo "mayo" en pleno junio, hasta el próximo cobro) leía
+  // como que la app estaba atrasada. El saludo ahora siempre dice el mes
+  // calendario real de hoy; el subtítulo aclara qué período de cobro se está
+  // sumando por si no coincide.
   const mes = currentFinancialMonth(payDay);
-  // Si cobrás después del día 1, tu "mes financiero" no coincide con el mes
-  // calendario (ej: cobrás el 25 → el período "jun 2026" sigue vigente hasta
-  // el 24 de julio). Mostramos el rango de fechas para que no parezca que la
-  // app se quedó atrasada cuando en realidad todavía no llegó tu próximo cobro.
-  const periodoRango = payDay > 1 ? formatFinancialPeriodRange(mes, payDay) : null;
+  const headerMes = currentCalendarMonthLabel();
+  const periodoRango = payDay > 1 && mes !== headerMes ? formatFinancialPeriodRange(mes, payDay) : null;
   const currency = profile?.currency ?? "ARS";
   const meses6 = listFinancialMonths(payDay, 5, 0);
 
@@ -218,9 +222,9 @@ function Dashboard() {
     <div className="space-y-8">
       <header>
         <p className="text-sm text-muted-foreground">Hola{profile?.display_name ? `, ${profile.display_name}` : ""} 👋</p>
-        <h1 className="text-3xl font-bold tracking-tight mt-1">Tu resumen de {mes}</h1>
+        <h1 className="text-3xl font-bold tracking-tight mt-1">Tu resumen de {headerMes}</h1>
         {periodoRango && (
-          <p className="text-xs text-muted-foreground mt-1">Período del {periodoRango} (según tu día de cobro)</p>
+          <p className="text-xs text-muted-foreground mt-1">Incluye tus movimientos desde tu último cobro ({periodoRango}), hasta el próximo</p>
         )}
       </header>
 

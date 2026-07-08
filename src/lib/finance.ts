@@ -51,6 +51,18 @@ export function currentFinancialMonth(payDay = 1): string {
   return financialMonth(new Date(), payDay);
 }
 
+/**
+ * Mes calendario real de HOY (no el mes financiero). Un usuario que cobra el
+ * 29 y hoy es 15 de junio ya vive de ese cobro: el saludo del Dashboard debe
+ * decir "junio" (lo que ve en el calendario ahora), aunque el período
+ * financiero en curso (usado para agrupar ingresos/gastos) siga técnicamente
+ * anclado al cobro de mayo hasta el próximo el 29.
+ */
+export function currentCalendarMonthLabel(): string {
+  const d = new Date();
+  return `${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export function listFinancialMonths(payDay = 1, monthsBack = 6, monthsForward = 0): string[] {
   const current = parseFinancialMonth(currentFinancialMonth(payDay)) ?? new Date();
   const out: string[] = [];

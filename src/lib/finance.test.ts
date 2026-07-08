@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  currentCalendarMonthLabel,
   currentFinancialMonth,
   financialMonth,
   financialPeriodRange,
@@ -38,6 +39,16 @@ describe("financialMonth", () => {
     // April has 30 days.
     expect(financialMonth(new Date(2026, 3, 29), 31)).toBe("mar 2026");
     expect(financialMonth(new Date(2026, 3, 30), 31)).toBe("abr 2026");
+  });
+});
+
+describe("currentCalendarMonthLabel", () => {
+  it("always matches the real calendar month, regardless of pay day", () => {
+    // A diferencia de currentFinancialMonth (que puede quedar "atrasado" un
+    // mes calendario hasta el proximo cobro si payDay > dia de hoy), esta
+    // funcion siempre devuelve el mes real de hoy: por eso tiene que
+    // coincidir con financialMonth(hoy, 1), que nunca hace rollback.
+    expect(currentCalendarMonthLabel()).toBe(financialMonth(new Date(), 1));
   });
 });
 
