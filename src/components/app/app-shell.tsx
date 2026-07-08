@@ -133,7 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="size-4" /></Button>
         </div>
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-4">
+        <div className="p-4 pb-24 md:p-8 max-w-7xl mx-auto space-y-4">
           {FLUJO_TABS.some(t => t.to === pathname) && <SubTabs tabs={FLUJO_TABS} />}
           {CREDITO_TABS.some(t => t.to === pathname) && <SubTabs tabs={CREDITO_TABS} />}
           {children}
