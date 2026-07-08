@@ -84,7 +84,14 @@ function TarjetasPage() {
         es_cuota: true,
         cuota_origen_id: cuota?.id ?? null,
       });
-      if (e2) throw e2;
+      if (e2) {
+        // Si el movimiento espejo no se pudo crear, no dejar la tarjeta_cuota
+        // huerfana: sin este rollback quedaba una fila activa sin ningun
+        // movimiento real detras, que igual se contaba en totalMes, en
+        // buildUpcomingEvents y en el patrimonio neto.
+        await supabase.from("tarjetas_cuotas").delete().eq("id", cuota.id);
+        throw e2;
+      }
     },
     onSuccess: () => {
       toast.success("Compra agregada");

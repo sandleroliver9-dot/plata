@@ -77,6 +77,11 @@ function PrestamoPage() {
     onSuccess: () => {
       toast.success("Préstamo agregado");
       qc.invalidateQueries({ queryKey: ["prestamos"] });
+      // El préstamo participa en estimateNetWorth (dashboard) y en el
+      // calendario de próximos vencimientos: sin invalidar estos, quedaban
+      // desactualizados hasta el próximo refetch natural.
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
       setOpen(false);
       setForm({ descripcion: "", cuota_mensual: "", cuotas_totales: "12", cuotas_pagadas: "0", tasa: "", tasa_tipo: "anual", dia_pago: "" });
     },
@@ -88,7 +93,12 @@ function PrestamoPage() {
       const { error } = await supabase.from("prestamos").update({ activo: false }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Eliminado"); qc.invalidateQueries({ queryKey: ["prestamos"] }); },
+    onSuccess: () => {
+      toast.success("Eliminado");
+      qc.invalidateQueries({ queryKey: ["prestamos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["vencimientos-auto"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
