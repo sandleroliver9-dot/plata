@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatMoney, resolveTC } from "@/lib/finance";
+import { formatMoney, resolveTC, todayISO } from "@/lib/finance";
 import { getCryptoQuotes, getStockQuotes, getDolares } from "@/lib/quotes.functions";
 import { computeBalance, formatPct, type Activo, type Compra, type Venta, type Dividendo, type BalanceRow } from "@/lib/portfolio";
 import { MercadoWidget } from "@/components/app/mercado-widget";
@@ -479,7 +479,7 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
 /* ---------- Universal mov dialog ---------- */
 function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "compra" | "venta" | "dividendo"; activos: Activo[]; userId?: string; tc: number; rows?: BalanceRow[]; onCreated: () => void }) {
   const [open, setOpen] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const [form, setForm] = useState({ activo_id: "", fecha: today, cantidad: "", precio: "", monto: "", tc: tc ? String(Math.round(tc)) : "", broker: "" });
 
   const titles = { compra: "Nueva compra", venta: "Nueva venta", dividendo: "Nuevo dividendo" };

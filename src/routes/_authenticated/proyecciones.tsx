@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { formatMoney } from "@/lib/finance";
+import { appNow, formatMoney } from "@/lib/finance";
 import { getInflacion } from "@/lib/quotes.functions";
 import { updateSavingTarget } from "@/lib/profile.functions";
 import { buildUpcomingEvents, parseISODate } from "@/lib/financial-centers";
@@ -90,9 +90,12 @@ function ProyeccionesPage() {
       .sort((a: any, b: any) => String(b.fecha_cobro).localeCompare(String(a.fecha_cobro)))[0];
     const sueldoMensual = Number(sueldoCargado?.monto ?? 0) > 0 ? Number(sueldoCargado.monto) : salary;
     // promedio mensual de "extras" (no Sueldo) en últimos 3 meses con datos
-    const now = new Date();
+    const now = appNow();
     const extras3m = data.ingresos.filter((i: any) => {
-      const d = new Date(i.fecha_cobro);
+      // parseISODate interpreta "YYYY-MM-DD" en hora local: new Date(string)
+      // la parsea como UTC medianoche, que en Argentina puede correr la
+      // fecha un dia hacia atras y desalinear el conteo de "meses atras".
+      const d = parseISODate(i.fecha_cobro) ?? new Date(i.fecha_cobro);
       const monthsAgo = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
       return monthsAgo >= 0 && monthsAgo < 3 && String(i.tipo ?? "").toLowerCase() !== "sueldo";
     });

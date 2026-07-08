@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { financialMonth, parseFinancialMonth } from "@/lib/finance";
+import { appNow, financialMonth, parseFinancialMonth } from "@/lib/finance";
 import {
   getLastBusinessDay,
   getNthBusinessDay,
@@ -13,7 +13,7 @@ function toISODate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
+export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, referenceDate = appNow()) {
   // Anclamos el cálculo al mes calendario donde arrancó el período financiero
   // ACTUAL (no el mes calendario de "hoy"): si todavía no llegó el día de cobro
   // de este mes, el período financiero vigente empezó el mes anterior, y el
@@ -35,7 +35,7 @@ export function resolveSalaryPayDate(payDay: number, payDateMode: PayDateMode, r
  * desactualizado en esos modos y romper el cálculo de mes financiero en toda
  * la app).
  */
-export function resolveEffectivePayDay(rawPayDay: number, payDateMode: PayDateMode, referenceDate = new Date()) {
+export function resolveEffectivePayDay(rawPayDay: number, payDateMode: PayDateMode, referenceDate = appNow()) {
   const payDate = resolveSalaryPayDate(rawPayDay, payDateMode, referenceDate);
   const payDay = payDateMode === "fixed_day" ? rawPayDay : payDate.getDate();
   return { payDate, payDay };

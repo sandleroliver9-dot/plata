@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/finance";
+import { appNow, formatMoney } from "@/lib/finance";
 import { parseISODate } from "@/lib/financial-centers";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
@@ -95,7 +95,11 @@ function Metas() {
             // husos horarios negativos (Argentina), igual que el bug ya
             // corregido en ingresos.tsx/movimiento-dialog.tsx.
             const fechaObjetivo = m.fecha_objetivo ? parseISODate(m.fecha_objetivo) : null;
-            const dias = fechaObjetivo ? Math.ceil((fechaObjetivo.getTime() - Date.now()) / 86400000) : null;
+            // Date.now() da el instante real (UTC); fechaObjetivo es medianoche
+            // en el huso horario del proceso que ejecuta el codigo. En SSR eso
+            // es UTC, no Argentina, asi que restar contra Date.now() corria
+            // "dias restantes" hasta un dia durante el render en servidor.
+            const dias = fechaObjetivo ? Math.ceil((fechaObjetivo.getTime() - appNow().getTime()) / 86400000) : null;
             return (
               <Card key={m.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">

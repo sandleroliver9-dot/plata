@@ -1,4 +1,4 @@
-import { currentFinancialMonth, installmentForFinancialMonth } from "@/lib/finance";
+import { appNow, currentFinancialMonth, installmentForFinancialMonth } from "@/lib/finance";
 import {
   DEFAULT_FINANCIAL_PREFERENCES,
   clampDay,
@@ -81,7 +81,7 @@ function dateWithDay(year: number, month: number, day: number) {
 }
 
 export function daysUntil(dateISO: string) {
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const date = parseISODate(dateISO);
   if (!date) return Number.POSITIVE_INFINITY;
@@ -168,7 +168,7 @@ function buildRecurringDates({
 }) {
   if (frequency === "variable") return [];
 
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
   const windowStart = startDate ? maxDate(today, startDate) : today;
@@ -222,7 +222,7 @@ function buildIncomeDates({
 }) {
   if (frequency === "variable" || preferences.income.payDateMode === "variable") return [];
 
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
   const dates: Date[] = [];
@@ -286,7 +286,7 @@ export function getMonthlyCashflow({
     ...prefs,
     income: { ...prefs.income, payDay: prefs.income.payDay ?? Number(profile?.pay_day ?? 1) },
   };
-  const payDay = getPayDateForMonth(new Date().getFullYear(), new Date().getMonth(), incomePrefs).getDate();
+  const payDay = getPayDateForMonth(appNow().getFullYear(), appNow().getMonth(), incomePrefs).getDate();
   const mes = currentFinancialMonth(payDay);
   const movsMes = movimientos.filter((m) => m.mes_financiero === mes);
   const ingresoBase = getBaseMonthlyIncome(profile, ingresos);
@@ -363,7 +363,7 @@ export function buildUpcomingEvents({
   preferences?: FinancialPreferences | null;
 }): CalendarEvent[] {
   const prefs = normalizePrefs(preferences);
-  const today = new Date();
+  const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
   const events: CalendarEvent[] = [];
@@ -519,7 +519,7 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
     ...prefs,
     income: { ...prefs.income, payDay: prefs.income.payDay ?? Number(profile?.pay_day ?? 1) },
   };
-  const payDay = getPayDateForMonth(new Date().getFullYear(), new Date().getMonth(), incomePrefs).getDate();
+  const payDay = getPayDateForMonth(appNow().getFullYear(), appNow().getMonth(), incomePrefs).getDate();
   const current = currentFinancialMonth(payDay);
   const currentRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero === current);
   const previousRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero !== current);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  appNow,
   currentCalendarMonthLabel,
   currentFinancialMonth,
   financialMonth,
@@ -9,6 +10,30 @@ import {
   listFinancialMonths,
   parseFinancialMonth,
 } from "./finance";
+
+describe("appNow", () => {
+  it("reflects Argentina wall-clock time regardless of the runtime's own timezone", () => {
+    // Este test corre en CI/produccion con TZ=UTC: si appNow() se rompiera y
+    // volviera a usar `new Date()` directo, este assert lo detectaria
+    // comparando contra Intl formateado a mano en el huso horario correcto
+    // (sin asumir un offset fijo, que puede cambiar por horario de verano
+    // historico o cambios de politica).
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date());
+    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+    const now = appNow();
+    expect(now.getFullYear()).toBe(get("year"));
+    expect(now.getMonth() + 1).toBe(get("month"));
+    expect(now.getDate()).toBe(get("day"));
+    expect(now.getHours()).toBe(get("hour"));
+  });
+});
 
 describe("financialMonth", () => {
   it("matches the calendar month when pay day is the 1st", () => {
@@ -48,7 +73,7 @@ describe("currentCalendarMonthLabel", () => {
     // mes calendario hasta el proximo cobro si payDay > dia de hoy), esta
     // funcion siempre devuelve el mes real de hoy: por eso tiene que
     // coincidir con financialMonth(hoy, 1), que nunca hace rollback.
-    expect(currentCalendarMonthLabel()).toBe(financialMonth(new Date(), 1));
+    expect(currentCalendarMonthLabel()).toBe(financialMonth(appNow(), 1));
   });
 });
 
@@ -68,7 +93,7 @@ describe("listFinancialMonths", () => {
   it("returns the requested number of months ending at the current one", () => {
     const months = listFinancialMonths(1, 3, 0);
     expect(months).toHaveLength(4);
-    expect(months[months.length - 1]).toBe(financialMonth(new Date(), 1));
+    expect(months[months.length - 1]).toBe(financialMonth(appNow(), 1));
   });
 
   it("includes the current financial month as the last entry even when pay day isn't the 1st (regression)", () => {

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { formatMoney, financialMonth } from "@/lib/finance";
+import { appNow, formatMoney, financialMonth, todayISO } from "@/lib/finance";
 import { hasSimilarMovement, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
@@ -43,7 +43,7 @@ function Vencimientos() {
   const payDay = profile?.pay_day ?? 1;
   const qc = useQueryClient();
   const [cursor, setCursor] = useState(() => {
-    const d = new Date();
+    const d = appNow();
     return { y: d.getFullYear(), m: d.getMonth() };
   });
 
@@ -74,7 +74,7 @@ function Vencimientos() {
       ]);
       const movimientos = movs.data ?? [];
       const out: V[] = [];
-      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const hoy = appNow(); hoy.setHours(0, 0, 0, 0);
       const horizonteGastos = new Date(hoy); horizonteGastos.setMonth(horizonteGastos.getMonth() + 12);
 
       // Un vencimiento automatico no deberia seguir apareciendo como pendiente
@@ -179,7 +179,7 @@ function Vencimientos() {
   }, [manualVencs, autoVencs]);
 
   const { proximos, totalMes, vencidos } = useMemo(() => {
-    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const hoy = appNow(); hoy.setHours(0, 0, 0, 0);
     const en30 = new Date(hoy); en30.setDate(en30.getDate() + 30);
     const proximos = vencs.filter(v => !v.pagado && new Date(v.fecha + "T00:00:00") >= hoy && new Date(v.fecha + "T00:00:00") <= en30);
     const vencidos = vencs.filter(v => !v.pagado && new Date(v.fecha + "T00:00:00") < hoy && v.origen === "manual");
@@ -220,7 +220,7 @@ function Vencimientos() {
   }, [vencs, cursor]);
 
   const monthName = new Date(cursor.y, cursor.m, 1).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-  const today = isoLocal(new Date());
+  const today = todayISO();
 
   async function togglePagado(v: V) {
     const { error } = await supabase.from("vencimientos").update({ pagado: !v.pagado }).eq("id", v.id);
@@ -268,7 +268,7 @@ function Vencimientos() {
           <h3 className="font-semibold capitalize">{monthName}</h3>
           <div className="flex gap-1">
             <Button size="sm" variant="outline" onClick={() => setCursor(c => { const m = c.m - 1; return m < 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m }; })}>‹</Button>
-            <Button size="sm" variant="outline" onClick={() => setCursor(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })}>Hoy</Button>
+            <Button size="sm" variant="outline" onClick={() => setCursor(() => { const d = appNow(); return { y: d.getFullYear(), m: d.getMonth() }; })}>Hoy</Button>
             <Button size="sm" variant="outline" onClick={() => setCursor(c => { const m = c.m + 1; return m > 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m }; })}>›</Button>
           </div>
         </div>
@@ -337,7 +337,7 @@ function Vencimientos() {
             })}
             {manualPend.map(v => {
               const d = new Date(v.fecha + "T00:00:00");
-              const dias = Math.ceil((d.getTime() - new Date().setHours(0,0,0,0)) / 86400000);
+              const dias = Math.ceil((d.getTime() - appNow().setHours(0,0,0,0)) / 86400000);
               const vencido = dias < 0;
               return (
                 <li key={v.id} className="py-3 flex items-center justify-between gap-3">
@@ -373,7 +373,7 @@ function Vencimientos() {
 
 function NewV({ userId, onCreated }: { userId?: string; onCreated: () => void }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ concepto: "", monto: "", fecha: new Date().toISOString().slice(0, 10), recurrente: false });
+  const [form, setForm] = useState({ concepto: "", monto: "", fecha: todayISO(), recurrente: false });
 
   async function save() {
     if (!userId || !form.concepto || !form.monto) { toast.error("Faltan campos"); return; }
@@ -395,7 +395,7 @@ function NewV({ userId, onCreated }: { userId?: string; onCreated: () => void })
     if (error) { toast.error(error.message); return; }
     toast.success("Vencimiento agregado");
     setOpen(false);
-    setForm({ concepto: "", monto: "", fecha: new Date().toISOString().slice(0, 10), recurrente: false });
+    setForm({ concepto: "", monto: "", fecha: todayISO(), recurrente: false });
     onCreated();
   }
 

@@ -4,6 +4,38 @@
 
 const monthsEs = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
+// La app hoy es exclusivamente para usuarios en Argentina (copy, categorias,
+// tarjetas, todo asume ese contexto). Si en el futuro se agregan usuarios de
+// otros husos horarios de LatAm, esto tiene que volverse una preferencia por
+// usuario en vez de una constante.
+const APP_TIMEZONE = "America/Argentina/Buenos_Aires";
+
+/**
+ * "Ahora" en el huso horario de la app (Argentina), sin importar en que huso
+ * horario corre el proceso que ejecuta el codigo. Esta app hace SSR (TanStack
+ * Start): el renderizado en servidor corre en UTC, que va 3 horas adelante de
+ * Argentina. Entre las 21:00 y las 23:59:59 hora argentina, `new Date()`
+ * evaluado en el servidor ya "vive" en el dia siguiente, asi que cualquier
+ * calculo de "hoy" (mes financiero, vencimientos, fecha por defecto de un
+ * formulario) quedaba corrido un dia durante esa ventana, todas las noches,
+ * hasta que el cliente hidrataba y lo corregia. Todo calculo de "hoy" en esta
+ * app tiene que pasar por esta funcion en vez de `new Date()` directo.
+ */
+export function appNow(): Date {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return new Date(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+}
+
 export function formatMoney(amount: number | string | null | undefined, currency = "ARS"): string {
   const n = Number(amount ?? 0);
   if (!Number.isFinite(n) || n === 0) return currency === "USD" ? "US$ 0" : "$ 0";
@@ -48,7 +80,7 @@ export function financialMonth(date: Date, payDay = 1): string {
 }
 
 export function currentFinancialMonth(payDay = 1): string {
-  return financialMonth(new Date(), payDay);
+  return financialMonth(appNow(), payDay);
 }
 
 /**
@@ -59,12 +91,12 @@ export function currentFinancialMonth(payDay = 1): string {
  * anclado al cobro de mayo hasta el próximo el 29.
  */
 export function currentCalendarMonthLabel(): string {
-  const d = new Date();
+  const d = appNow();
   return `${monthsEs[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export function listFinancialMonths(payDay = 1, monthsBack = 6, monthsForward = 0): string[] {
-  const current = parseFinancialMonth(currentFinancialMonth(payDay)) ?? new Date();
+  const current = parseFinancialMonth(currentFinancialMonth(payDay)) ?? appNow();
   const out: string[] = [];
   for (let i = -monthsBack; i <= monthsForward; i++) {
     const d = new Date(current.getFullYear(), current.getMonth() + i, 1);
@@ -158,10 +190,7 @@ export function installmentForFinancialMonth({
 }
 
 export function todayISO(): string {
-  // toISOString() da la fecha en UTC: en Argentina (UTC-3), durante las
-  // ultimas ~3 horas de cada dia local esto devolvia la fecha de MANANA.
-  // Se arma la fecha local a mano, igual que isoLocal() en financial-centers.ts.
-  const d = new Date();
+  const d = appNow();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
@@ -184,7 +213,7 @@ export function smartMessage(ingresos: number, gastos: number, overdraft: number
   if (ingresos === 0 && gastos === 0) return "Empezá cargando tus ingresos y movimientos del mes para ver tu situación real.";
   const balance = ingresos - gastos;
   const ahorroPct = ingresos > 0 ? balance / ingresos : 0;
-  const now = new Date();
+  const now = appNow();
   const day = now.getDate();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   // payDay puede ser 29/30/31 y no existir en el mes actual o el siguiente
