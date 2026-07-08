@@ -30,7 +30,7 @@ function InsightsPage() {
   const currency = profile?.currency ?? "ARS";
 
   const { data, isLoading } = useQuery(financialDataQuery(user?.id));
-  const { valorARS: inversionesValor, hasActivos, warnings: portfolioWarnings } = usePortfolioValue(user?.id);
+  const { valorARS: inversionesValor, tc, hasActivos, warnings: portfolioWarnings } = usePortfolioValue(user?.id);
 
   const cash = getMonthlyCashflow({
     profile,
@@ -66,6 +66,7 @@ function InsightsPage() {
     inmuebles: data?.inmuebles,
     prestamos: data?.prestamos,
     tarjetas: data?.tarjetas,
+    tc,
   });
 
   const fixedRatio = cash.ingresos > 0 ? (cash.gastosFijos / cash.ingresos) * 100 : 0;

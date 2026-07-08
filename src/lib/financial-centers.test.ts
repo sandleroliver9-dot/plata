@@ -37,6 +37,29 @@ describe("estimateNetWorth", () => {
   it("defaults missing inputs to zero without throwing", () => {
     expect(estimateNetWorth({})).toBe(0);
   });
+
+  it("converts a USD-denominated inmueble to ARS before summing (regression)", () => {
+    // inversionesValor ya viene convertido a ARS (usePortfolioValue), pero
+    // antes de este fix un inmueble en USD se sumaba en crudo, mezclando
+    // unidades: insights.tsx mostraba un "Patrimonio estimado" muy distinto
+    // al de patrimonio.tsx (que si convierte) para el mismo usuario.
+    const netWorth = estimateNetWorth({
+      inversionesValor: 100_000, // ARS
+      inmuebles: [{ valor_estimado: 100, deuda_asociada: 0, moneda: "USD" } as any],
+      tc: 1000,
+    });
+    // 100_000 + (100 USD * 1000 TC) = 200_000
+    expect(netWorth).toBe(200_000);
+  });
+
+  it("leaves an ARS-denominated inmueble unconverted", () => {
+    const netWorth = estimateNetWorth({
+      inversionesValor: 100_000,
+      inmuebles: [{ valor_estimado: 50_000, deuda_asociada: 0, moneda: "ARS" } as any],
+      tc: 1000,
+    });
+    expect(netWorth).toBe(150_000);
+  });
 });
 
 describe("buildUpcomingEvents", () => {

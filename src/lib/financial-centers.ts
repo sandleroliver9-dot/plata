@@ -563,14 +563,24 @@ export function estimateNetWorth({
   inmuebles = [],
   prestamos = [],
   tarjetas = [],
+  tc = 1,
 }: {
   inversionesValor?: number;
   inmuebles?: Row[];
   prestamos?: Row[];
   tarjetas?: Row[];
+  tc?: number;
 }) {
   const inv = inversionesValor;
-  const inm = inmuebles.reduce((s, i) => s + Number(i.valor_estimado ?? 0) - Number(i.deuda_asociada ?? 0), 0);
+  // Cada inmueble puede estar cargado en USD o ARS (campo `moneda`), pero
+  // inversionesValor ya viene convertido a ARS (usePortfolioValue). Sin
+  // convertir acá, un inmueble en USD se sumaba tal cual a un total en ARS,
+  // igual que patrimonio.tsx ya evita con su propio toARS() -- pero esta
+  // funcion (la que usa insights.tsx) nunca lo hacia, mostrando un
+  // "Patrimonio estimado" muy distinto al de la pantalla Patrimonio para
+  // cualquier usuario con al menos un inmueble en moneda distinta a ARS.
+  const toARS = (monto: number, moneda: string | undefined) => (moneda === "USD" ? monto * tc : monto);
+  const inm = inmuebles.reduce((s, i) => s + toARS(Number(i.valor_estimado ?? 0) - Number(i.deuda_asociada ?? 0), i.moneda), 0);
   const deudaPrestamos = prestamos.reduce((s, p) => {
     const restantes = Math.max(0, Number(p.cuotas_totales ?? 0) - Number(p.cuotas_pagadas ?? 0));
     return s + restantes * Number(p.cuota_mensual ?? 0);
