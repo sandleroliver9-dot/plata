@@ -122,6 +122,7 @@ function Inversiones() {
       stockTickers.length ? stockFn({ data: { tickers: stockTickers } }) : Promise.resolve([]),
     ]);
     let updated = 0;
+    let failed = 0;
     const now = new Date().toISOString();
     for (const a of activos) {
       if (!a.ticker) continue;
@@ -129,12 +130,19 @@ function Inversiones() {
       if (CRYPTO_TIPOS.has(a.tipo)) price = cQ.find(q => q.symbol === a.ticker!.toUpperCase())?.usd;
       else if (STOCK_TIPOS.has(a.tipo)) price = sQ.find(q => q.symbol === a.ticker!.toUpperCase())?.usd;
       if (price && price > 0) {
-        await supabase.from("inversiones_activos").update({ valor_actual_usd: price, precio_actualizado_en: now }).eq("id", a.id);
-        updated++;
+        // El error de Supabase se ignoraba: un update rechazado (RLS, red)
+        // sumaba igual al contador de "actualizadas" y el toast final
+        // mentia que todo salio bien.
+        const { error } = await supabase.from("inversiones_activos").update({ valor_actual_usd: price, precio_actualizado_en: now }).eq("id", a.id);
+        if (error) failed++; else updated++;
       }
     }
     qc.invalidateQueries({ queryKey: ["inv-activos"] });
-    toast.success(`${updated} cotizaciones actualizadas`, { id: "prices" });
+    if (failed > 0) {
+      toast.error(`${updated} cotizaciones actualizadas, ${failed} fallaron`, { id: "prices" });
+    } else {
+      toast.success(`${updated} cotizaciones actualizadas`, { id: "prices" });
+    }
   }
 
   return (

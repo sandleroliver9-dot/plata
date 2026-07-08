@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/finance";
+import { parseISODate } from "@/lib/financial-centers";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/metas")({
@@ -30,6 +31,7 @@ function Metas() {
   const { data: profile } = useProfile();
   const defaultCurrency = profile?.currency ?? "ARS";
   const qc = useQueryClient();
+  const [progressPending, setProgressPending] = useState<string | null>(null);
 
   const { data: metas } = useQuery({
     queryKey: ["metas", user?.id],
@@ -42,10 +44,22 @@ function Metas() {
   });
 
   async function addProgress(m: Meta, monto: number) {
-    const { error } = await supabase.from("metas").update({ ahorrado: Number(m.ahorrado) + monto }).eq("id", m.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Progreso actualizado");
-    qc.invalidateQueries({ queryKey: ["metas"] });
+    // El incremento se calcula en el cliente (ahorrado + monto), no es un
+    // update atomico en la base: dos envios rapidos seguidos (doble click)
+    // partirian del mismo `m.ahorrado` y el segundo pisaria al primero en
+    // vez de sumarse. Bloquear el boton mientras la meta tiene un guardado
+    // en curso evita el caso mas comun (no cubre ediciones simultaneas desde
+    // dos dispositivos distintos).
+    if (progressPending) return;
+    setProgressPending(m.id);
+    try {
+      const { error } = await supabase.from("metas").update({ ahorrado: Number(m.ahorrado) + monto }).eq("id", m.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Progreso actualizado");
+      await qc.invalidateQueries({ queryKey: ["metas"] });
+    } finally {
+      setProgressPending(null);
+    }
   }
 
   async function del(id: string) {
@@ -73,9 +87,15 @@ function Metas() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {(metas ?? []).map((m) => {
-            const pct = Math.min(100, (Number(m.ahorrado) / Number(m.objetivo)) * 100);
-            const falta = Math.max(0, Number(m.objetivo) - Number(m.ahorrado));
-            const dias = m.fecha_objetivo ? Math.ceil((new Date(m.fecha_objetivo).getTime() - Date.now()) / 86400000) : null;
+            const objetivo = Number(m.objetivo);
+            const pct = objetivo > 0 ? Math.min(100, (Number(m.ahorrado) / objetivo) * 100) : 0;
+            const falta = Math.max(0, objetivo - Number(m.ahorrado));
+            // parseISODate interpreta "YYYY-MM-DD" en hora local: con
+            // `new Date(string)` (UTC) los dias restantes se corrian en
+            // husos horarios negativos (Argentina), igual que el bug ya
+            // corregido en ingresos.tsx/movimiento-dialog.tsx.
+            const fechaObjetivo = m.fecha_objetivo ? parseISODate(m.fecha_objetivo) : null;
+            const dias = fechaObjetivo ? Math.ceil((fechaObjetivo.getTime() - Date.now()) / 86400000) : null;
             return (
               <Card key={m.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -105,7 +125,7 @@ function Metas() {
                     <span className="text-muted-foreground">Falta: <span className="num">{formatMoney(falta, m.moneda)}</span></span>
                   </div>
                 </div>
-                <AddProgressDialog meta={m} onConfirm={(monto) => addProgress(m, monto)} />
+                <AddProgressDialog meta={m} onConfirm={(monto) => addProgress(m, monto)} pending={progressPending === m.id} />
               </Card>
             );
           })}
@@ -115,11 +135,12 @@ function Metas() {
   );
 }
 
-function AddProgressDialog({ meta, onConfirm }: { meta: Meta; onConfirm: (monto: number) => void }) {
+function AddProgressDialog({ meta, onConfirm, pending }: { meta: Meta; onConfirm: (monto: number) => void; pending: boolean }) {
   const [open, setOpen] = useState(false);
   const [monto, setMonto] = useState("");
 
   function save() {
+    if (pending) return;
     let parsed: number;
     try {
       parsed = parsePositiveNumberInput(monto, "Monto");
@@ -135,7 +156,7 @@ function AddProgressDialog({ meta, onConfirm }: { meta: Meta; onConfirm: (monto:
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setMonto(""); }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full mt-4">
+        <Button variant="outline" size="sm" className="w-full mt-4" disabled={pending}>
           <PlusIcon className="size-4 mr-2" /> Sumar ahorro
         </Button>
       </DialogTrigger>
@@ -147,7 +168,7 @@ function AddProgressDialog({ meta, onConfirm }: { meta: Meta; onConfirm: (monto:
             <DecimalInput value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="Ej: 50000" autoFocus />
           </div>
         </div>
-        <DialogFooter><Button onClick={save}>Sumar</Button></DialogFooter>
+        <DialogFooter><Button onClick={save} disabled={pending}>Sumar</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
