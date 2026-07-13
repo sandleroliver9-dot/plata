@@ -18,7 +18,7 @@ import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/proyecciones")({
-  head: () => ({ meta: [{ title: "Proyecciones · Plata" }] }),
+  head: () => ({ meta: [{ title: "Proyecciones · Platium" }] }),
   component: ProyeccionesPage,
 });
 

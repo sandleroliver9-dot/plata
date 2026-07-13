@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { passwordIssue, PASSWORD_RULES } from "@/lib/password";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Ingresar · Plata" }] }),
+  head: () => ({ meta: [{ title: "Ingresar · Platium" }] }),
   beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
@@ -60,7 +60,7 @@ function AuthPage() {
     setFormLoading(false);
     if (error) {
       const weakPassword = error.message.toLowerCase().includes("weak") || error.message.toLowerCase().includes("password");
-      return toast.error(weakPassword ? "Usá una contraseña más fuerte, por ejemplo Plata2026!" : error.message);
+      return toast.error(weakPassword ? "Usá una contraseña más fuerte, por ejemplo Platium2026!" : error.message);
     }
     if (data.session) {
       navigate({ to: "/dashboard", replace: true });
@@ -130,8 +130,8 @@ function AuthPage() {
           <div className="size-14 rounded-2xl grid place-items-center mb-4" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
             <Wallet className="size-7 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Plata</h1>
-          <p className="text-sm text-muted-foreground mt-1">Tu fintech personal</p>
+          <h1 className="text-3xl font-bold tracking-tight">Platium</h1>
+          <p className="text-sm text-muted-foreground mt-1">Tu copiloto financiero</p>
         </div>
 
         <Card className="p-6 bg-card border-border" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -186,7 +186,7 @@ function AuthPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
                   )}
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Crear cuenta</Button>

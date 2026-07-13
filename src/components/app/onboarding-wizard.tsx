@@ -79,7 +79,7 @@ export function OnboardingWizard() {
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["profile"] });
     setOpen(false);
-    toast.success("¡Listo! Bienvenido a Plata 🎉");
+    toast.success("¡Listo! Bienvenido a Platium 🎉");
   }
 
   const steps = [

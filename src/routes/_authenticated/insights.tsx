@@ -11,7 +11,7 @@ import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery, usePortfolioValue } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/insights")({
-  head: () => ({ meta: [{ title: "Insights · Plata" }] }),
+  head: () => ({ meta: [{ title: "Insights · Platium" }] }),
   component: InsightsPage,
 });
 

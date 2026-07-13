@@ -21,7 +21,7 @@ import { getDolares } from "@/lib/quotes.functions";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/inmuebles")({
-  head: () => ({ meta: [{ title: "Inmuebles · Plata" }] }),
+  head: () => ({ meta: [{ title: "Inmuebles · Platium" }] }),
   component: Inmuebles,
 });
 

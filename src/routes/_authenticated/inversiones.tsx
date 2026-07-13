@@ -24,7 +24,7 @@ import { MercadoWidget } from "@/components/app/mercado-widget";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/inversiones")({
-  head: () => ({ meta: [{ title: "Inversiones · Plata" }] }),
+  head: () => ({ meta: [{ title: "Inversiones · Platium" }] }),
   component: Inversiones,
 });
 

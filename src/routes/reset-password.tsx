@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { passwordIssue } from "@/lib/password";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Restablecer contraseña · Plata" }] }),
+  head: () => ({ meta: [{ title: "Restablecer contraseña · Platium" }] }),
   component: ResetPasswordPage,
 });
 
@@ -143,7 +143,7 @@ function ResetPasswordPage() {
                   minLength={8}
                   autoComplete="new-password"
                 />
-                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pw-confirm">Repetir contraseña</Label>

@@ -1,4 +1,4 @@
-# Plata - Personal Finance Manager
+# Platium - Personal Finance Manager
 
 Aplicación de gestión de finanzas personales. Registra ingresos, gastos, cuotas de tarjeta, préstamos, vencimientos, inversiones, metas de ahorro y proyecciones financieras.
 

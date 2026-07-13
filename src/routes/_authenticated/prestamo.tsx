@@ -27,7 +27,7 @@ const TASA_TIPOS: { value: string; label: string; short: string }[] = [
 ];
 
 export const Route = createFileRoute("/_authenticated/prestamo")({
-  head: () => ({ meta: [{ title: "Préstamos · Plata" }] }),
+  head: () => ({ meta: [{ title: "Préstamos · Platium" }] }),
   component: PrestamoPage,
 });
 

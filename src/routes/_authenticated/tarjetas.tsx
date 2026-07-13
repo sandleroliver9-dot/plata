@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { parseIntegerInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/tarjetas")({
-  head: () => ({ meta: [{ title: "Tarjetas y cuotas · Plata" }] }),
+  head: () => ({ meta: [{ title: "Tarjetas y cuotas · Platium" }] }),
   component: TarjetasPage,
 });
 

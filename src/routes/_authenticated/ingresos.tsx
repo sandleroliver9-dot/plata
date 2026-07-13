@@ -22,7 +22,7 @@ import { ConceptCombo } from "@/components/app/concept-combo";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/ingresos")({
-  head: () => ({ meta: [{ title: "Ingresos · Plata" }] }),
+  head: () => ({ meta: [{ title: "Ingresos · Platium" }] }),
   component: IngresosPage,
 });
 

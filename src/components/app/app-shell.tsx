@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="size-9 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)" }}>
         <Wallet className="size-5 text-primary-foreground" />
       </div>
-      <div className="font-bold tracking-tight text-lg">Plata</div>
+      <div className="font-bold tracking-tight text-lg">Platium</div>
     </div>
   );
 
@@ -129,7 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SheetContent>
             </Sheet>
             <div className="size-7 rounded-lg" style={{ background: "var(--gradient-primary)" }} />
-            <span className="font-bold">Plata</span>
+            <span className="font-bold">Platium</span>
           </div>
           <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="size-4" /></Button>
         </div>

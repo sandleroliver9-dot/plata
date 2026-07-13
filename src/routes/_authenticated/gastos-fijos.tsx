@@ -22,7 +22,7 @@ import { parsePositiveNumberInput } from "@/lib/number-input";
 import { clampDay, useFinancialPreferences } from "@/lib/financial-preferences";
 
 export const Route = createFileRoute("/_authenticated/gastos-fijos")({
-  head: () => ({ meta: [{ title: "Gastos fijos · Plata" }] }),
+  head: () => ({ meta: [{ title: "Gastos fijos · Platium" }] }),
   component: GastosFijosPage,
 });
 
