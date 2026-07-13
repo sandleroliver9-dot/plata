@@ -4,6 +4,7 @@ import { Wallet, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -148,7 +149,7 @@ function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pw-in">Contraseña</Label>
-                  <Input id="pw-in" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+                  <PasswordInput id="pw-in" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Ingresar</Button>
                 <Button type="button" variant="ghost" className="w-full" onClick={handleForgotPassword} disabled={resetLoading}>
@@ -174,7 +175,7 @@ function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pw-up">Contraseña</Label>
-                  <Input id="pw-up" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
+                  <PasswordInput id="pw-up" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
                   {password ? (
                     <ul className="text-xs space-y-0.5 mt-1">
                       {pwChecks.map((c) => (

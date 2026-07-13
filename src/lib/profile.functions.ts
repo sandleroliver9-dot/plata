@@ -91,18 +91,22 @@ export const updateFinancialProfile = createServerFn({ method: "POST" })
       const fechaCobro = toISODate(payDate);
       const mesFinanciero = financialMonth(payDate, payDay);
 
-      // Solo se filtra por tipo="Sueldo" + mes_financiero, sin exigir
-      // concepto="Sueldo" exacto: el usuario puede haber cargado el sueldo de
-      // ese mes a mano con otro texto (ej. "Sueldo julio") vía ConceptCombo.
-      // Si el match también exigía el concepto literal, esa fila no se
-      // encontraba y quedaba un duplicado cada vez que se guardaba
-      // Configuración.
+      // Se busca el Sueldo "canónico" del usuario SIN filtrar por
+      // mes_financiero (bug real, regresión detectada en producción): ese
+      // valor es derivado y cambia cada vez que cambia el día de cobro, o
+      // cada vez que se corrige la fórmula de mes financiero (como pasó en
+      // esta misma sesión). Filtrar por él hacía que, ante cualquiera de esos
+      // dos casos, esta query no encontrara la fila existente y se creara un
+      // Sueldo NUEVO en vez de actualizar el de siempre, dejando el viejo
+      // dando vueltas (activo, con su etiqueta vieja) sumando de más o
+      // apareciendo en el mes equivocado. Tampoco se exige concepto="Sueldo"
+      // exacto: el usuario puede haber cargado el sueldo de ese mes a mano
+      // con otro texto (ej. "Sueldo julio") vía ConceptCombo.
       const { data: existingRows, error: findError } = await supabase
         .from("ingresos")
         .select("id")
         .eq("user_id", userId)
         .eq("activo", true)
-        .eq("mes_financiero", mesFinanciero)
         .eq("tipo", "Sueldo")
         .order("created_at", { ascending: false })
         .limit(1);

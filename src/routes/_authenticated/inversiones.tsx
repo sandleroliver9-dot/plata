@@ -477,14 +477,18 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
 }
 
 /* ---------- Universal mov dialog ---------- */
+const NUEVO_ACTIVO_SENTINEL = "__nuevo__";
+
 function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "compra" | "venta" | "dividendo"; activos: Activo[]; userId?: string; tc: number; rows?: BalanceRow[]; onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   const today = todayISO();
   const [form, setForm] = useState({ activo_id: "", fecha: today, cantidad: "", precio: "", monto: "", tc: tc ? String(Math.round(tc)) : "", broker: "" });
+  const [nuevoActivo, setNuevoActivo] = useState({ nombre: "", ticker: "" });
 
   const titles = { compra: "Nueva compra", venta: "Nueva venta", dividendo: "Nuevo dividendo" };
   const opts = kind === "venta" ? activos.filter(a => (rows ?? []).some(r => r.activo.id === a.id && r.cantidad > 0)) : activos;
   const selected = activos.find(a => a.id === form.activo_id);
+  const creandoActivoNuevo = form.activo_id === NUEVO_ACTIVO_SENTINEL;
   const qDisponible = kind === "venta" ? (rows ?? []).find(r => r.activo.id === form.activo_id)?.cantidad ?? 0 : null;
 
   async function save() {
@@ -496,6 +500,28 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
       toast.error(e instanceof Error ? e.message : "Revisa los numeros");
       return;
     }
+
+    // Comprar/vender/cobrar un dividendo de un activo que todavía no existe es
+    // el flujo mas comun (recien empezás a usar la app), pero antes obligaba a
+    // cerrar este dialogo, ir a crear el activo aparte, y volver a abrir este
+    // formulario desde cero — confundio a un tester real que no entendio el
+    // orden. Ahora se puede crear el activo sin salir de acá.
+    let activoId = form.activo_id;
+    if (creandoActivoNuevo) {
+      if (!nuevoActivo.nombre.trim()) { toast.error("Ponele un nombre al activo nuevo"); return; }
+      const { data: created, error: createError } = await supabase
+        .from("inversiones_activos")
+        .insert({
+          user_id: userId, nombre: nuevoActivo.nombre.trim(),
+          ticker: nuevoActivo.ticker.trim() || null,
+          tipo: "Acción", moneda_base: "USD",
+        })
+        .select("id")
+        .single();
+      if (createError || !created) { toast.error(createError?.message ?? "No se pudo crear el activo"); return; }
+      activoId = created.id;
+    }
+
     if (kind === "dividendo") {
       if (!form.monto) { toast.error("Completá el monto"); return; }
       let monto: number;
@@ -506,7 +532,7 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
         return;
       }
       const { error } = await supabase.from("inversiones_dividendos").insert({
-        user_id: userId, activo_id: form.activo_id, fecha: form.fecha,
+        user_id: userId, activo_id: activoId, fecha: form.fecha,
         monto_usd: monto, tc: tcNum,
       });
       if (error) { toast.error(error.message); return; }
@@ -526,7 +552,7 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
       }
       const table = kind === "compra" ? "inversiones_compras" : "inversiones_ventas";
       const payload: any = {
-        user_id: userId, activo_id: form.activo_id, fecha: form.fecha,
+        user_id: userId, activo_id: activoId, fecha: form.fecha,
         cantidad: cant, precio_usd: precio, tc: tcNum,
       };
       if (kind === "compra") payload.broker = form.broker || null;
@@ -535,6 +561,7 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
     }
     toast.success("Guardado");
     setForm({ activo_id: "", fecha: today, cantidad: "", precio: "", monto: "", tc: tc ? String(Math.round(tc)) : "", broker: "" });
+    setNuevoActivo({ nombre: "", ticker: "" });
     setOpen(false); onCreated();
   }
 
@@ -549,11 +576,20 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
           <div>
             <Label>Activo *</Label>
             <Select value={form.activo_id} onValueChange={(v) => setForm({ ...form, activo_id: v })}>
-              <SelectTrigger><SelectValue placeholder={opts.length ? "Elegí" : "Creá un activo primero"} /></SelectTrigger>
-              <SelectContent>{opts.map(a => <SelectItem key={a.id} value={a.id}>{a.nombre}{a.ticker ? ` (${a.ticker})` : ""}</SelectItem>)}</SelectContent>
+              <SelectTrigger><SelectValue placeholder="Elegí" /></SelectTrigger>
+              <SelectContent>
+                {opts.map(a => <SelectItem key={a.id} value={a.id}>{a.nombre}{a.ticker ? ` (${a.ticker})` : ""}</SelectItem>)}
+                {kind !== "venta" && <SelectItem value={NUEVO_ACTIVO_SENTINEL}>+ Crear activo nuevo</SelectItem>}
+              </SelectContent>
             </Select>
             {qDisponible != null && selected && <div className="text-xs text-muted-foreground mt-1">Disponible: {qDisponible}</div>}
           </div>
+          {creandoActivoNuevo && (
+            <div className="grid grid-cols-2 gap-3 rounded-md border border-border/70 p-3">
+              <div className="col-span-2"><Label>Nombre del activo *</Label><Input value={nuevoActivo.nombre} onChange={(e) => setNuevoActivo({ ...nuevoActivo, nombre: e.target.value })} placeholder="Apple, Bitcoin, SPY..." /></div>
+              <div className="col-span-2"><Label>Ticker</Label><Input value={nuevoActivo.ticker} onChange={(e) => setNuevoActivo({ ...nuevoActivo, ticker: e.target.value.toUpperCase() })} placeholder="AAPL, BTC, SPY" /></div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Fecha</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
             <div><Label>TC ARS/USD</Label><DecimalInput value={form.tc} onChange={(e) => setForm({ ...form, tc: e.target.value })} placeholder="MEP del día" /></div>
