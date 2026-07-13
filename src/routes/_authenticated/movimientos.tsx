@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Upload, Search, Download } from "lucide-react";
+import { Plus, Upload, Search, Download, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MovimientoDialog } from "@/components/app/movimiento-dialog";
+import { MovimientoDialog, type Form as MovimientoDefaults } from "@/components/app/movimiento-dialog";
+import { QuickEntryDialog } from "@/components/app/quick-entry-dialog";
 import { CsvImportDialog } from "@/components/app/csv-import-dialog";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
@@ -36,6 +37,8 @@ function MovimientosPage() {
 
   const [openNew, setOpenNew] = useState(false);
   const [openImport, setOpenImport] = useState(false);
+  const [openQuickEntry, setOpenQuickEntry] = useState(false);
+  const [quickEntryDefaults, setQuickEntryDefaults] = useState<Partial<MovimientoDefaults> | undefined>(undefined);
   const [mes, setMes] = useDefaultFinancialMonth(payDay);
   const [tipo, setTipo] = useState("todos");
   const [search, setSearch] = useState("");
@@ -207,6 +210,7 @@ function MovimientosPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setOpenImport(true)}><Upload className="size-4 mr-2" />Importar CSV</Button>
           <ExportCsvButton userId={user?.id} />
+          <Button variant="outline" onClick={() => setOpenQuickEntry(true)}><Sparkles className="size-4 mr-2" />Carga rápida</Button>
           <Button onClick={() => setOpenNew(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
         </div>
       </header>
@@ -313,8 +317,25 @@ function MovimientosPage() {
         )}
       </Card>
 
-      <MovimientoDialog open={openNew} onOpenChange={setOpenNew} />
+      <MovimientoDialog
+        open={openNew}
+        onOpenChange={(o) => {
+          setOpenNew(o);
+          if (!o) setQuickEntryDefaults(undefined);
+        }}
+        defaults={quickEntryDefaults}
+      />
       <CsvImportDialog open={openImport} onOpenChange={setOpenImport} />
+      <QuickEntryDialog
+        open={openQuickEntry}
+        onOpenChange={setOpenQuickEntry}
+        categorias={(cats ?? []).map((c: any) => c.nombre)}
+        onParsed={(defaults) => {
+          setQuickEntryDefaults(defaults);
+          setOpenQuickEntry(false);
+          setOpenNew(true);
+        }}
+      />
     </div>
   );
 }
