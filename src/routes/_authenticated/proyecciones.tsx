@@ -15,6 +15,7 @@ import { getInflacion } from "@/lib/quotes.functions";
 import { updateSavingTarget } from "@/lib/profile.functions";
 import { buildUpcomingEvents, parseISODate } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
+import { SimulatorChat } from "@/components/app/simulator-chat";
 import { TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/proyecciones")({
@@ -230,9 +231,15 @@ function ProyeccionesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Proyecciones</h1>
-        <p className="text-sm text-muted-foreground mt-1">Mira como evolucionan tus proximos 12 meses segun fechas de cobro, vencimientos, gastos recurrentes y cuotas.</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Proyecciones</h1>
+          <p className="text-sm text-muted-foreground mt-1">Mira como evolucionan tus proximos 12 meses segun fechas de cobro, vencimientos, gastos recurrentes y cuotas.</p>
+        </div>
+        <SimulatorChat
+          currency={currency}
+          proyeccion={rows.map((r) => ({ mes: r.mes, ingresos: r.ingresos, gastos: r.total, disponible: r.disponible }))}
+        />
       </header>
 
       <Card className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
