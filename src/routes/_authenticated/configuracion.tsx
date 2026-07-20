@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Save, Shield, Wallet, CreditCard, Receipt, Target, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { financialDataQuery } from "@/lib/supabase-queries";
+import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ function ConfiguracionPage() {
   }, [profile?.pay_day, profile?.salary, profile?.saving_target]);
 
   const { data } = useQuery(financialDataQuery(user?.id));
+  const { tc } = useDolarTC();
 
   const saveProfile = useServerFn(updateFinancialProfile);
   const saveProfileMutation = useMutation({
@@ -120,6 +121,7 @@ function ConfiguracionPage() {
     tarjetas: data?.tarjetas,
     prestamos: data?.prestamos,
     preferences,
+    tc,
   });
   const emergency = getEmergencyFundSummary(cash, preferences);
 

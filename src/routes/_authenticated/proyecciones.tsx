@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
-import { financialDataQuery } from "@/lib/supabase-queries";
+import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
@@ -75,10 +75,11 @@ function ProyeccionesPage() {
   }, [infl, inflacionTouched]);
 
   const { data } = useQuery(financialDataQuery(user?.id));
+  const { tc } = useDolarTC();
 
   const rows = useMemo(
-    () => computeProjectionRows({ data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency }),
-    [data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency],
+    () => computeProjectionRows({ data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency, tc }),
+    [data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency, tc],
   );
 
   const chartData = rows.map((r) => ({

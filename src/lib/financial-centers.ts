@@ -1,4 +1,4 @@
-import { appNow, currentFinancialMonth, installmentForFinancialMonth } from "@/lib/finance";
+import { appNow, convertAmount, currentFinancialMonth, installmentForFinancialMonth, TC_FALLBACK } from "@/lib/finance";
 import {
   DEFAULT_FINANCIAL_PREFERENCES,
   clampDay,
@@ -119,11 +119,15 @@ export function getSavingTargetPercent(profile: Row | null | undefined) {
   return Math.max(0, Math.min(80, Number(profile?.saving_target ?? 20)));
 }
 
-export function getBaseMonthlyIncome(profile: Row | null | undefined, ingresos: Row[] = []) {
+// `tc` (tipo de cambio ARS/USD del día) sólo importa si `lastSalary.moneda`
+// difiere de la moneda de gastos del usuario (profile.currency) — con una
+// sola moneda en juego es un no-op, ver convertAmount().
+export function getBaseMonthlyIncome(profile: Row | null | undefined, ingresos: Row[] = [], tc: number = TC_FALLBACK) {
+  const targetCurrency = profile?.currency ?? "ARS";
   const lastSalary = ingresos
     .filter((i) => String(i.tipo ?? "").toLowerCase() === "sueldo" && Number(i.monto) > 0)
     .sort((a, b) => String(b.fecha_cobro).localeCompare(String(a.fecha_cobro)))[0];
-  const fromIncome = Number(lastSalary?.monto ?? 0);
+  const fromIncome = lastSalary ? convertAmount(Number(lastSalary.monto), lastSalary.moneda, targetCurrency, tc) : 0;
   const fromProfile = Number(profile?.salary ?? 0);
   return fromIncome > 0 ? fromIncome : Math.max(0, fromProfile);
 }
@@ -299,6 +303,7 @@ export function getMonthlyCashflow({
   tarjetas = [],
   prestamos = [],
   preferences,
+  tc = TC_FALLBACK,
 }: {
   profile?: Row | null;
   movimientos?: Row[];
@@ -307,6 +312,7 @@ export function getMonthlyCashflow({
   tarjetas?: Row[];
   prestamos?: Row[];
   preferences?: FinancialPreferences | null;
+  tc?: number;
 }): CashflowSummary {
   const prefs = normalizePrefs(preferences);
   const incomePrefs: FinancialPreferences = {
@@ -315,9 +321,12 @@ export function getMonthlyCashflow({
   };
   const payDay = getPayDateForMonth(appNow().getFullYear(), appNow().getMonth(), incomePrefs).getDate();
   const mes = currentFinancialMonth(payDay);
+  const targetCurrency = profile?.currency ?? "ARS";
   const movsMes = movimientos.filter((m) => m.mes_financiero === mes);
-  const ingresoBase = getBaseMonthlyIncome(profile, ingresos);
-  const ingresoRegistrado = movsMes.filter((m) => m.tipo === "Ingreso").reduce((s, m) => s + Number(m.monto), 0);
+  const ingresoBase = getBaseMonthlyIncome(profile, ingresos, tc);
+  const ingresoRegistrado = movsMes
+    .filter((m) => m.tipo === "Ingreso")
+    .reduce((s, m) => s + convertAmount(Number(m.monto), m.moneda, targetCurrency, tc), 0);
   const ingresosMes = ingresoRegistrado > 0 ? ingresoRegistrado : ingresoBase;
   const gastosRegistrados = movsMes.filter((m) => m.tipo === "Gasto").reduce((s, m) => s + Number(m.monto), 0);
 
@@ -379,6 +388,7 @@ export function buildUpcomingEvents({
   gastosFijos = [],
   horizonDays = 90,
   preferences,
+  tc = TC_FALLBACK,
 }: {
   profile?: Row | null;
   ingresos?: Row[];
@@ -388,8 +398,10 @@ export function buildUpcomingEvents({
   gastosFijos?: Row[];
   horizonDays?: number;
   preferences?: FinancialPreferences | null;
+  tc?: number;
 }): CalendarEvent[] {
   const prefs = normalizePrefs(preferences);
+  const targetCurrency = profile?.currency ?? "ARS";
   const today = appNow();
   today.setHours(0, 0, 0, 0);
   const horizon = new Date(today.getTime() + horizonDays * DAY_MS);
@@ -478,7 +490,7 @@ export function buildUpcomingEvents({
     });
   }
 
-  const income = getBaseMonthlyIncome(profile, ingresos);
+  const income = getBaseMonthlyIncome(profile, ingresos, tc);
   if (income > 0) {
     const incomePrefs: FinancialPreferences = {
       ...prefs,
@@ -503,13 +515,14 @@ export function buildUpcomingEvents({
     const date = parseISODate(ingreso.fecha_cobro);
     const isSalary = String(ingreso.tipo ?? "").toLowerCase() === "sueldo";
     const pref = prefs.incomeSettings[String(ingreso.id)];
+    const montoConvertido = convertAmount(Number(ingreso.monto ?? 0), ingreso.moneda, targetCurrency, tc);
 
     if (date && date >= today && date <= horizon) {
       addIfInRange({
         id: `ingreso-${ingreso.id}`,
         date: ingreso.fecha_cobro,
         title: String(ingreso.concepto ?? (isSalary ? "Sueldo" : "Ingreso")),
-        amount: Number(ingreso.monto ?? 0),
+        amount: montoConvertido,
         type: "cobro",
         detail: ingreso.tipo ?? "Ingreso cargado",
       });
@@ -517,7 +530,7 @@ export function buildUpcomingEvents({
 
     if (!pref?.frequency || pref.frequency === "variable" || isSalary) continue;
     const payDay = pref.payDay ?? date?.getDate() ?? prefs.income.payDay ?? Number(profile?.pay_day ?? 1);
-    const amount = incomeEventAmount(Number(ingreso.monto ?? 0), pref.frequency);
+    const amount = incomeEventAmount(montoConvertido, pref.frequency);
     buildRecurringDates({ day: payDay, frequency: pref.frequency, horizonDays, startDate: date }).forEach((nextDate, index) => {
       addIfInRange({
         id: `ingreso-recurrente-${ingreso.id}-${isoLocal(nextDate)}-${index}`,

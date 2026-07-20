@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatMoney, todayISO } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, detectUnusualSpending, getMonthlyCashflow } from "@/lib/financial-centers";
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
-import { financialDataQuery } from "@/lib/supabase-queries";
+import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/alertas")({
   head: () => ({ meta: [{ title: "Alertas · Platium" }] }),
@@ -29,6 +29,7 @@ function AlertasPage() {
   const currency = profile?.currency ?? "ARS";
 
   const { data, isLoading } = useQuery(financialDataQuery(user?.id));
+  const { tc } = useDolarTC();
 
   const cash = getMonthlyCashflow({
     profile,
@@ -38,6 +39,7 @@ function AlertasPage() {
     tarjetas: data?.tarjetas,
     prestamos: data?.prestamos,
     preferences,
+    tc,
   });
   const upcoming = buildUpcomingEvents({
     profile,
@@ -48,6 +50,7 @@ function AlertasPage() {
     gastosFijos: data?.fijos,
     horizonDays: 30,
     preferences,
+    tc,
   });
   const unusual = detectUnusualSpending(data?.movimientos, profile, preferences);
   const sensitivity = riskProfileSettings(preferences.riskProfile);

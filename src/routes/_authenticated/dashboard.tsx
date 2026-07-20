@@ -9,10 +9,11 @@ import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney, formatCompact, currentCalendarMonthLabel, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
+import { formatMoney, formatCompact, convertAmount, currentCalendarMonthLabel, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
 import { DolarWidget } from "@/components/app/dolar-widget";
 import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
+import { useDolarTC } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Resumen · Platium" }] }),
@@ -37,13 +38,15 @@ function Dashboard() {
   const currency = profile?.currency ?? "ARS";
   const meses6 = listFinancialMonths(payDay, 5, 0);
 
+  const { tc } = useDolarTC();
+
   const { data: movs } = useQuery({
     queryKey: ["dashboard", user?.id, meses6.join(",")],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("movimientos")
-        .select("tipo, monto, categoria, mes_financiero, descripcion, fecha, medio, es_cuota, cuota_origen_id, tarjeta")
+        .select("tipo, monto, moneda, categoria, mes_financiero, descripcion, fecha, medio, es_cuota, cuota_origen_id, tarjeta")
         .in("mes_financiero", meses6)
         .eq("activo", true);
       if (error) throw error;
@@ -82,7 +85,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ingresos")
-        .select("id, user_id, concepto, tipo, monto, fecha_cobro, mes_financiero, activo")
+        .select("id, user_id, concepto, tipo, monto, moneda, fecha_cobro, mes_financiero, activo")
         .eq("user_id", user!.id)
         .eq("activo", true)
         .in("mes_financiero", meses6);
@@ -102,7 +105,12 @@ function Dashboard() {
 
 
   const { ingresos, gastos, balance, topCats, serie, anomalias } = useMemo(() => {
-    const movsConCuotas = [...(movs ?? [])];
+    // Los "Gasto" quedan siempre en `currency` (moneda de gastos del
+    // usuario, sin selector propio); los "Ingreso" pueden traer su propia
+    // `moneda` (ej: sueldo en USD) y se normalizan acá antes de sumar nada.
+    const movsConCuotas: any[] = (movs ?? []).map((m: any) =>
+      m.tipo === "Ingreso" ? { ...m, monto: convertAmount(Number(m.monto), m.moneda, currency, tc) } : m,
+    );
     (cuotasActivas ?? []).forEach((c) => {
       meses6.forEach((m) => {
         const cuotaDelMes = installmentForFinancialMonth({
@@ -131,7 +139,10 @@ function Dashboard() {
     // Ingresos cargados: agregar al mes correspondiente
     (ingresosCargados ?? []).forEach((ingreso: any) => {
       const concepto = String(ingreso.concepto ?? "").toLowerCase();
-      const monto = Number(ingreso.monto ?? 0);
+      // movsConCuotas ya tiene sus "Ingreso" convertidos a `currency` (arriba):
+      // comparar acá contra el monto ya convertido, no el crudo, para que el
+      // chequeo de duplicado siga funcionando con monedas mixtas.
+      const monto = convertAmount(Number(ingreso.monto ?? 0), ingreso.moneda, currency, tc);
       const mesIngreso = String(ingreso.mes_financiero ?? "");
       const yaExiste = movsConCuotas.some((mov) => {
         if (mov.tipo !== "Ingreso") return false;
@@ -209,7 +220,7 @@ function Dashboard() {
       .map((u) => ({ cat: u.categoria, monto: u.monto }));
 
     return { ingresos, gastos, balance: ingresos - gastos, topCats, serie, anomalias };
-  }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6, profile, preferences]);
+  }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6, profile, preferences, currency, tc]);
 
   const overdraft = Number(profile?.overdraft_allowed ?? 0);
   const score = financialScore(ingresos, gastos, overdraft);

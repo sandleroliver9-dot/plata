@@ -40,6 +40,7 @@ function InsightsPage() {
     tarjetas: data?.tarjetas,
     prestamos: data?.prestamos,
     preferences,
+    tc,
   });
   const upcoming = buildUpcomingEvents({
     profile,
@@ -50,6 +51,7 @@ function InsightsPage() {
     gastosFijos: data?.fijos,
     horizonDays: 30,
     preferences,
+    tc,
   }).filter((event) => event.type !== "cobro");
   const allUpcoming = buildUpcomingEvents({
     profile,
@@ -60,6 +62,7 @@ function InsightsPage() {
     gastosFijos: data?.fijos,
     horizonDays: 30,
     preferences,
+    tc,
   });
   const netWorth = estimateNetWorth({
     inversionesValor,

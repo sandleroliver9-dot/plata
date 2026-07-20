@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, type CalendarEvent } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
-import { financialDataQuery } from "@/lib/supabase-queries";
+import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/calendario-financiero")({
   head: () => ({ meta: [{ title: "Calendario financiero · Platium" }] }),
@@ -22,6 +22,7 @@ function CalendarioFinancieroPage() {
   const currency = profile?.currency ?? "ARS";
 
   const { data, isLoading } = useQuery(financialDataQuery(user?.id));
+  const { tc } = useDolarTC();
 
   const events = buildUpcomingEvents({
     profile,
@@ -32,6 +33,7 @@ function CalendarioFinancieroPage() {
     gastosFijos: data?.fijos,
     horizonDays: 90,
     preferences,
+    tc,
   });
 
   const grouped = events.reduce((map, event) => {

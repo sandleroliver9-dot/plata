@@ -1,4 +1,4 @@
-import { appNow, formatMoney } from "@/lib/finance";
+import { appNow, convertAmount, formatMoney, TC_FALLBACK } from "@/lib/finance";
 import { buildUpcomingEvents, parseISODate } from "@/lib/financial-centers";
 
 const MONTHS_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -39,15 +39,18 @@ export function computeProjectionRows(params: {
   inflacionPct: number;
   overdraft: number;
   currency: string;
+  tc?: number;
 }): ProjectionRow[] {
-  const { data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency } = params;
+  const { data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency, tc = TC_FALLBACK } = params;
   if (!data) return [];
 
   const totalFijos = data.fijos.reduce((s, f: any) => s + Number(f.monto_mensual), 0);
   const sueldoCargado = data.ingresos
     .filter((i: any) => String(i.tipo ?? "").toLowerCase() === "sueldo")
     .sort((a: any, b: any) => String(b.fecha_cobro).localeCompare(String(a.fecha_cobro)))[0];
-  const sueldoMensual = Number(sueldoCargado?.monto ?? 0) > 0 ? Number(sueldoCargado.monto) : salary;
+  const sueldoMensual = Number(sueldoCargado?.monto ?? 0) > 0
+    ? convertAmount(Number(sueldoCargado.monto), sueldoCargado.moneda, currency, tc)
+    : salary;
   // promedio mensual de "extras" (no Sueldo) en últimos 3 meses con datos
   const now = appNow();
   const extras3m = data.ingresos.filter((i: any) => {
@@ -58,7 +61,9 @@ export function computeProjectionRows(params: {
     const monthsAgo = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
     return monthsAgo >= 0 && monthsAgo < 3 && String(i.tipo ?? "").toLowerCase() !== "sueldo";
   });
-  const extrasProm = extras3m.length ? extras3m.reduce((s, i: any) => s + Number(i.monto), 0) / 3 : 0;
+  const extrasProm = extras3m.length
+    ? extras3m.reduce((s, i: any) => s + convertAmount(Number(i.monto), i.moneda, currency, tc), 0) / 3
+    : 0;
   now.setHours(0, 0, 0, 0);
   const events = buildUpcomingEvents({
     profile,
@@ -74,6 +79,7 @@ export function computeProjectionRows(params: {
     gastosFijos: data.fijos,
     horizonDays: 370,
     preferences,
+    tc,
   });
 
   const out: ProjectionRow[] = [];

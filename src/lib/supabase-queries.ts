@@ -18,7 +18,7 @@ export const financialDataQuery = (userId: string | undefined) =>
     queryFn: async () => {
       const [movimientos, ingresos, fijos, tarjetas, prestamos, vencimientos, inmuebles] = await Promise.all([
         supabase.from("movimientos").select("*").eq("activo", true).order("fecha", { ascending: false }).limit(200),
-        supabase.from("ingresos").select("id,concepto,monto,fecha_cobro,tipo,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
+        supabase.from("ingresos").select("id,concepto,monto,fecha_cobro,tipo,moneda,activo").eq("activo", true).order("fecha_cobro", { ascending: false }).limit(80),
         supabase.from("gastos_fijos").select("*").eq("activo", true),
         supabase.from("tarjetas_cuotas").select("*").eq("activo", true),
         supabase.from("prestamos").select("*").eq("activo", true),
@@ -58,21 +58,30 @@ const portfolioRawQuery = (userId: string | undefined) =>
   });
 
 /**
- * Valor actual de la cartera de inversiones, usado por Patrimonio e Insights.
- * Comparte la misma lógica de valuación (computeBalance) que la pantalla de Inversiones.
+ * Tipo de cambio de referencia del día, compartido por cualquier pantalla que
+ * necesite convertir montos entre ARS y USD (inversiones, inmuebles,
+ * patrimonio, y los cálculos de ingresos/gastos con moneda mixta). Misma
+ * query key ("dolares") que usePortfolioValue: si ya se pidió en esta
+ * sesión, no vuelve a pegarle a la red.
  */
-export function usePortfolioValue(userId: string | undefined) {
+export function useDolarTC() {
   const fetchDolares = useServerFn(getDolares);
-
-  const { data, isLoading } = useQuery(portfolioRawQuery(userId));
-
   const { data: dolar } = useQuery({
     queryKey: ["dolares"],
     queryFn: () => fetchDolares(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const { tc, isFallback: tcIsFallback } = resolveTC(dolar);
+  return resolveTC(dolar);
+}
+
+/**
+ * Valor actual de la cartera de inversiones, usado por Patrimonio e Insights.
+ * Comparte la misma lógica de valuación (computeBalance) que la pantalla de Inversiones.
+ */
+export function usePortfolioValue(userId: string | undefined) {
+  const { data, isLoading } = useQuery(portfolioRawQuery(userId));
+  const { tc, isFallback: tcIsFallback } = useDolarTC();
 
   const { rows, warnings } = data
     ? computeBalance(data.activos, data.compras, data.ventas, data.dividendos, tc)
