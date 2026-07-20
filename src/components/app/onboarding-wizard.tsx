@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { parseIntegerInput, parseOptionalNumberInput } from "@/lib/number-input";
 import { updateFinancialProfile } from "@/lib/profile.functions";
+import { useFinancialPreferences, type IncomeFrequency } from "@/lib/financial-preferences";
 
 export function OnboardingWizard() {
   const { user } = useAuth();
@@ -23,17 +24,19 @@ export function OnboardingWizard() {
   const saveFinancialProfile = useServerFn(updateFinancialProfile);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ display_name: "", currency: "ARS", pay_day: "1", salary: "" });
+  const [form, setForm] = useState({ display_name: "", currency: "ARS", pay_day: "1", frequency: "mensual" as IncomeFrequency, salary: "" });
   const [saving, setSaving] = useState(false);
+  const [, setPreferences] = useFinancialPreferences(user?.id);
 
   useEffect(() => {
     if (!isLoading && profile && !profile.onboarding_done) {
-      setForm({
+      setForm((prev) => ({
+        ...prev,
         display_name: profile.display_name ?? "",
         currency: profile.currency ?? "ARS",
         pay_day: String(profile.pay_day ?? 1),
         salary: String(profile.salary ?? ""),
-      });
+      }));
       setOpen(true);
     }
   }, [isLoading, profile]);
@@ -63,8 +66,11 @@ export function OnboardingWizard() {
       // arriba solo dispara con onboarding_done=false) y el usuario queda sin
       // pay_day/salario/ingreso "Sueldo" cargados, sin forma de reintentar.
       await saveFinancialProfile({
-        data: { payDay, salary, savingTarget: Number(profile?.saving_target ?? 20) },
+        data: { payDay, salary, savingTarget: Number(profile?.saving_target ?? 20), incomeFrequency: form.frequency },
       });
+      // La frecuencia vive en las preferencias del usuario (mismo lugar que
+      // usa Configuración): sin esto, el wizard la pedía pero se perdía.
+      setPreferences((prev) => ({ ...prev, income: { ...prev.income, frequency: form.frequency } }));
     } catch (e) {
       setSaving(false);
       toast.error(e instanceof Error ? e.message : "No se pudo guardar el sueldo");
@@ -112,11 +118,28 @@ export function OnboardingWizard() {
       ),
     },
     {
-      icon: Calendar, title: "Tu día de cobro", desc: "Lo usamos para calcular tu 'mes financiero' (no calendario). Ej: cobrás el 5 → el mes financiero va del 5 al 4.",
+      icon: Calendar, title: "Tu cobro", desc: "Lo usamos para calcular tu 'mes financiero' (no calendario). Ej: cobrás el 5 → el mes financiero va del 5 al 4.",
       body: (
-        <div className="space-y-2">
-          <Label>Día del mes que cobrás</Label>
-          <IntegerInput value={form.pay_day} onChange={(e) => setForm({ ...form, pay_day: e.target.value })} />
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>¿Cada cuánto cobrás?</Label>
+            <Select value={form.frequency} onValueChange={(v) => setForm({ ...form, frequency: v as IncomeFrequency })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mensual">Mensual</SelectItem>
+                <SelectItem value="quincenal">Quincenal</SelectItem>
+                <SelectItem value="semanal">Semanal</SelectItem>
+                <SelectItem value="variable">Variable / irregular</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>{form.frequency === "mensual" ? "Día del mes que cobrás" : "Día de tu cobro principal del mes"}</Label>
+            <IntegerInput value={form.pay_day} onChange={(e) => setForm({ ...form, pay_day: e.target.value })} />
+            {form.frequency !== "mensual" && (
+              <p className="text-xs text-muted-foreground">Con este día anclamos tu mes financiero. Los demás cobros los cargás como ingresos cuando lleguen.</p>
+            )}
+          </div>
         </div>
       ),
     },
