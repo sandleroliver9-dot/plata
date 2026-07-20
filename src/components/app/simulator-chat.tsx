@@ -134,7 +134,7 @@ export function SimulatorChat() {
     }
     const recognition = new SpeechRecognition();
     recognition.lang = "es-AR";
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     recognition.onstart = () => setEscuchando(true);
     recognition.onend = () => setEscuchando(false);
@@ -142,9 +142,15 @@ export function SimulatorChat() {
       setEscuchando(false);
       toast.error("No pude escucharte, probá de nuevo o escribí el mensaje.");
     };
+    // Igual que el dictado del chat de Claude: la transcripción va cayendo en
+    // el input a medida que hablás, pero nunca se envía sola — el usuario la
+    // revisa (y puede corregirla) y manda el mensaje a mano.
     recognition.onresult = (event: any) => {
-      const transcript = event.results?.[0]?.[0]?.transcript;
-      if (transcript) enviar(transcript);
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i]?.[0]?.transcript ?? "";
+      }
+      setTexto(transcript);
     };
     recognitionRef.current = recognition;
     recognition.start();
