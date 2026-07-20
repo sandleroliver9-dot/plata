@@ -247,7 +247,7 @@ function BalanceTable({ rows }: { rows: BalanceRow[] }) {
                 <TableCell className="text-right num">{formatMoney(r.pMedioUSD, "USD")}</TableCell>
                 <TableCell className="text-right num">{formatMoney(r.pActualUSD, "USD")}</TableCell>
                 <TableCell className={`text-right num ${r.deltaPct >= 0 ? "text-success" : "text-destructive"}`}>{formatPct(r.deltaPct)}</TableCell>
-                <TableCell className={`text-right num ${r.tAnual >= 0 ? "text-success" : "text-destructive"}`}>{formatPct(r.tAnual)}</TableCell>
+                <TableCell className={`text-right num ${!isFinite(r.tAnual) ? "text-muted-foreground" : r.tAnual >= 0 ? "text-success" : "text-destructive"}`}>{formatPct(r.tAnual)}</TableCell>
                 <TableCell className="text-right num font-medium">{formatMoney(r.valorUSD, "USD")}</TableCell>
                 <TableCell className="text-right num text-muted-foreground">{formatMoney(r.valorARS, "ARS")}</TableCell>
                 <TableCell className="text-right num">{formatPct(r.pctPortfolio, 1)}</TableCell>

@@ -85,4 +85,27 @@ describe("computeBalance", () => {
     expect(row.divUSDTotal).toBe(12.5);
     expect(row.realizadaUSD + row.divUSDTotal).toBe(132.5);
   });
+
+  it("does not annualize returns for holdings younger than 30 days (regression)", () => {
+    // Reportado por un tester real como "crecimiento ilógico": una compra de
+    // hace pocos días con una suba chica proyectaba retornos anuales absurdos
+    // (ej: +5% en 3 días → +38.000% anual). Sin 30 días de historia no se
+    // anualiza: tAnual queda NaN y la UI muestra "—".
+    const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const { rows } = computeBalance(
+      [activo({ valor_actual_usd: 105 })],
+      [compra({ fecha: ayer, precio_usd: 100 })],
+      [], [], 1000,
+    );
+    expect(Number.isNaN(rows[0].tAnual)).toBe(true);
+    // Con historia suficiente (compra de enero, hoy es julio 2026 en estos
+    // tests), la anualización sigue funcionando normal.
+    const { rows: rowsViejos } = computeBalance(
+      [activo({ valor_actual_usd: 105 })],
+      [compra({ fecha: "2026-01-01", precio_usd: 100 })],
+      [], [], 1000,
+    );
+    expect(Number.isFinite(rowsViejos[0].tAnual)).toBe(true);
+    expect(rowsViejos[0].tAnual).toBeGreaterThan(0);
+  });
 });
