@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/cron-notificaciones",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}
