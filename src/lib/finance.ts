@@ -171,6 +171,21 @@ export function formatFinancialPeriodRange(label: string, payDay = 1): string | 
   return `${fmt(range.start)} al ${fmt(range.end)}`;
 }
 
+/**
+ * Período financiero inmediatamente siguiente al dado. No suma un mes al
+ * label a lo bruto: calcula el primer día después del fin del período actual
+ * (vía financialPeriodRange) y lo vuelve a etiquetar con financialMonth(),
+ * para no desalinearse con día de pago tardío (>=16), donde el label no
+ * avanza 1:1 con el mes calendario de arranque.
+ */
+export function nextFinancialMonth(label: string, payDay = 1): string {
+  const range = financialPeriodRange(label, payDay);
+  if (!range) return label;
+  const next = new Date(range.end);
+  next.setDate(next.getDate() + 1);
+  return financialMonth(next, payDay);
+}
+
 export function monthsBetween(start: Date, end: Date): number {
   return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
 }
@@ -209,9 +224,12 @@ export function installmentForFinancialMonth({
   return cuota;
 }
 
-export function todayISO(): string {
-  const d = appNow();
+export function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function todayISO(): string {
+  return toISODate(appNow());
 }
 
 /**
