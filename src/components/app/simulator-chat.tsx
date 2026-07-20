@@ -14,6 +14,7 @@ type Turno = { role: "user" | "assistant"; content: string };
 const SUGERENCIAS = [
   "Si compro algo de $300.000 en 6 cuotas, ¿cómo quedo?",
   "¿Cuánto me queda libre los próximos 3 meses?",
+  "¿Qué es el interés compuesto?",
 ];
 
 export function SimulatorChat() {
@@ -41,7 +42,7 @@ export function SimulatorChat() {
     },
     onSuccess: (result, pregunta) => {
       if (!result.configured) {
-        toast.info("El simulador por IA todavía no está configurado en esta cuenta.");
+        toast.info("El chat con la IA todavía no está configurado en esta cuenta.");
         return;
       }
       setTurnos((prev) => [...prev, { role: "user", content: pregunta }, { role: "assistant", content: result.respuesta }]);
@@ -63,7 +64,7 @@ export function SimulatorChat() {
         size="sm"
         className="fixed bottom-20 right-4 z-40 shadow-lg rounded-full h-12 w-12 p-0"
         style={{ background: "var(--gradient-primary)" }}
-        aria-label="Abrir simulador de IA"
+        aria-label="Abrir chat con la IA"
       >
         <Sparkles className="size-5" />
       </Button>
@@ -71,9 +72,9 @@ export function SimulatorChat() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg flex flex-col max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><MessageCircleQuestion className="size-4" />Simulador de escenarios</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><MessageCircleQuestion className="size-4" />Chat con la IA</DialogTitle>
             <DialogDescription>
-              Preguntá cómo quedarían tus próximos meses con una compra, cuotas, etc. Te muestra los números — la decisión siempre es tuya, no da consejos.
+              Preguntame lo que quieras sobre tus finanzas, simulá un escenario (compras, cuotas) o resolvé dudas generales. Te muestra los números y explica — la decisión siempre es tuya, no da consejos.
             </DialogDescription>
           </DialogHeader>
 
@@ -102,7 +103,7 @@ export function SimulatorChat() {
             ))}
             {mut.isPending && (
               <div className="flex justify-start">
-                <div className="rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground">Calculando escenario...</div>
+                <div className="rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground">Pensando...</div>
               </div>
             )}
             <div ref={bottomRef} />
@@ -115,7 +116,7 @@ export function SimulatorChat() {
             <Input
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder="Ej: ¿si compro algo de $500.000 en 12 cuotas?"
+              placeholder="Preguntame lo que quieras..."
               maxLength={500}
             />
             <Button type="submit" size="icon" disabled={mut.isPending || !texto.trim()}><Send className="size-4" /></Button>
