@@ -612,11 +612,14 @@ export type Database = {
       }
       profiles: {
         Row: {
+          alert_days: number
           country: string | null
           created_at: string
           currency: string
           display_name: string | null
           id: string
+          notify_email: boolean
+          notify_push: boolean
           onboarding_done: boolean
           overdraft_allowed: number | null
           pay_date_mode: string
@@ -626,11 +629,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          alert_days?: number
           country?: string | null
           created_at?: string
           currency?: string
           display_name?: string | null
           id: string
+          notify_email?: boolean
+          notify_push?: boolean
           onboarding_done?: boolean
           overdraft_allowed?: number | null
           pay_date_mode?: string
@@ -640,11 +646,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          alert_days?: number
           country?: string | null
           created_at?: string
           currency?: string
           display_name?: string | null
           id?: string
+          notify_email?: boolean
+          notify_push?: boolean
           onboarding_done?: boolean
           overdraft_allowed?: number | null
           pay_date_mode?: string
@@ -652,6 +661,57 @@ export type Database = {
           salary?: number | null
           saving_target?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificaciones_enviadas: {
+        Row: {
+          canal: string
+          enviado_at: string
+          id: string
+          referencia_id: string
+          user_id: string
+        }
+        Insert: {
+          canal: string
+          enviado_at?: string
+          id?: string
+          referencia_id: string
+          user_id: string
+        }
+        Update: {
+          canal?: string
+          enviado_at?: string
+          id?: string
+          referencia_id?: string
+          user_id?: string
         }
         Relationships: []
       }
