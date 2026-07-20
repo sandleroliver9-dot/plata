@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, TrendingUp } from "lucide-react";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { formatMoney, listFinancialMonths, financialMonth, todayISO } from "@/lib/finance";
+import { formatMoney, listFinancialMonths, financialMonth, currentFinancialMonth, nextFinancialMonth, financialPeriodRange, toISODate, todayISO } from "@/lib/finance";
 import { parseISODate } from "@/lib/financial-centers";
 import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
+import { getInflacion } from "@/lib/quotes.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +52,97 @@ function IngresosPage() {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  // Historial de sueldo independiente del filtro de mes de arriba: no pisa
+  // ninguna fila existente (a diferencia de updateFinancialProfile, que
+  // actualiza en el lugar el Sueldo "canónico" para no reintroducir el bug de
+  // duplicación ya resuelto) — cada "Registrar" de acá abajo inserta una fila
+  // nueva por período, así se puede ver la evolución real mes a mes.
+  const { data: sueldoHistorial } = useQuery({
+    queryKey: ["ingresos-sueldo-historial", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ingresos")
+        .select("id, monto, fecha_cobro, mes_financiero")
+        .eq("activo", true)
+        .eq("tipo", "Sueldo")
+        .order("fecha_cobro", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const fetchInflacion = useServerFn(getInflacion);
+  const { data: infl } = useQuery({
+    queryKey: ["inflacion-ar"],
+    queryFn: () => fetchInflacion(),
+    staleTime: 1000 * 60 * 60 * 6,
+  });
+
+  const ultimoSueldo = sueldoHistorial?.[0];
+  const baseSueldo = Number(ultimoSueldo?.monto ?? profile?.salary ?? 0);
+  // Siempre el período siguiente al último registrado (no al de "hoy"): si el
+  // usuario se adelantó varios períodos, la sugerencia sigue avanzando en vez
+  // de quedar pegada sugiriendo un período que ya cargó.
+  const targetLabel = ultimoSueldo ? nextFinancialMonth(ultimoSueldo.mes_financiero, payDay) : currentFinancialMonth(payDay);
+  const inflacionPct = infl?.promedio3m ? Number(infl.promedio3m.toFixed(1)) : 0;
+  const sugeridoRaw = baseSueldo > 0 ? Math.round(baseSueldo * (1 + inflacionPct / 100)) : 0;
+
+  const [sugerenciaTexto, setSugerenciaTexto] = useState("");
+  const [sugerenciaTouched, setSugerenciaTouched] = useState(false);
+
+  useEffect(() => {
+    if (!sugerenciaTouched && sugeridoRaw > 0) {
+      setSugerenciaTexto(String(sugeridoRaw));
+    }
+  }, [sugeridoRaw, sugerenciaTouched]);
+
+  const registrarSueldo = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error();
+      const monto = parsePositiveNumberInput(sugerenciaTexto, "Sueldo");
+      const fechaCobro = toISODate(financialPeriodRange(targetLabel, payDay)?.start ?? new Date());
+      const ajuste = baseSueldo > 0 ? Math.round((monto - baseSueldo) * 100) / 100 : null;
+      const existing = (sueldoHistorial ?? []).find((h) => h.mes_financiero === targetLabel);
+      if (existing) {
+        // Ya hay un Sueldo activo para este período (ej: se corrige un
+        // número ya cargado): se actualiza esa fila en vez de duplicarla.
+        const { error: updIngresoError } = await supabase
+          .from("ingresos")
+          .update({ monto, fecha_cobro: fechaCobro, ajuste_esperado: ajuste })
+          .eq("id", existing.id);
+        if (updIngresoError) throw updIngresoError;
+        const { error: updMovError } = await supabase
+          .from("movimientos")
+          .update({ monto, fecha: fechaCobro })
+          .eq("ingreso_id", existing.id);
+        if (updMovError) throw updMovError;
+      } else {
+        const { error } = await supabase.rpc("create_income_with_movement", {
+          p_user_id: user.id,
+          p_concepto: "Sueldo",
+          p_monto: monto,
+          p_fecha_cobro: fechaCobro,
+          p_mes_financiero: targetLabel,
+          p_tipo: "Sueldo",
+          p_ajuste_esperado: ajuste,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(`Sueldo de ${targetLabel} registrado`);
+      qc.invalidateQueries({ queryKey: ["ingresos"] });
+      qc.invalidateQueries({ queryKey: ["ingresos-sueldo-historial"] });
+      qc.invalidateQueries({ queryKey: ["movimientos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-data"] });
+      setSugerenciaTouched(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const add = useMutation({
@@ -123,6 +216,49 @@ function IngresosPage() {
           <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
         </div>
       </header>
+
+      <Card className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold flex items-center gap-2"><TrendingUp className="size-4" />Sueldo</div>
+          {ultimoSueldo && (
+            <div className="text-xs text-muted-foreground">
+              Último: <span className="num font-medium text-foreground">{formatMoney(baseSueldo, currency)}</span> ({ultimoSueldo.mes_financiero})
+            </div>
+          )}
+        </div>
+
+        {(sueldoHistorial?.length ?? 0) > 1 && (
+          <div className="flex flex-wrap gap-2">
+            {sueldoHistorial!.slice().reverse().map((h) => (
+              <div key={h.id} className="text-[11px] px-2 py-1 rounded-md bg-muted text-muted-foreground">
+                {h.mes_financiero}: <span className="num text-foreground">{formatMoney(Number(h.monto), currency)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end pt-2 border-t border-border">
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Sugerencia para {targetLabel}</Label>
+            <DecimalInput
+              value={sugerenciaTexto}
+              onChange={(e) => { setSugerenciaTexto(e.target.value); setSugerenciaTouched(true); }}
+              placeholder="Monto del sueldo"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {baseSueldo > 0 && inflacionPct > 0
+                ? `Auto: +${inflacionPct}% por inflación (prom. 3 meses INDEC). Cambialo si querés.`
+                : "Cargá el monto para registrarlo como sueldo de este período."}
+            </p>
+          </div>
+          <Button
+            onClick={() => registrarSueldo.mutate()}
+            disabled={registrarSueldo.isPending || !sugerenciaTexto.trim()}
+          >
+            {registrarSueldo.isPending ? "Registrando..." : "Registrar"}
+          </Button>
+        </div>
+      </Card>
 
       <Card className="p-5">
         <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes}</div>

@@ -8,6 +8,8 @@ import {
   formatFinancialPeriodRange,
   installmentForFinancialMonth,
   listFinancialMonths,
+  monthsBetween,
+  nextFinancialMonth,
   parseFinancialMonth,
 } from "./finance";
 
@@ -187,6 +189,41 @@ describe("financialPeriodRange / formatFinancialPeriodRange", () => {
         const range = financialPeriodRange(label, payDay)!;
         expect(financialMonth(range.start, payDay)).toBe(label);
         expect(financialMonth(range.end, payDay)).toBe(label);
+      }
+    }
+  });
+});
+
+describe("nextFinancialMonth", () => {
+  it("advances one calendar month when pay day is the 1st", () => {
+    expect(nextFinancialMonth("jun 2026", 1)).toBe("jul 2026");
+  });
+
+  it("rolls over the year boundary", () => {
+    expect(nextFinancialMonth("dic 2026", 1)).toBe("ene 2027");
+  });
+
+  it("returns the label unchanged for an invalid input", () => {
+    expect(nextFinancialMonth("no-es-un-mes", 10)).toBe("no-es-un-mes");
+  });
+
+  it("stays exactly one financial month ahead across a range of pay days, including late ones (regression)", () => {
+    // Con dia de pago tardio (>=16) el label no avanza 1:1 con el mes
+    // calendario de arranque del periodo (ver financialMonth) — este test
+    // corrobora que nextFinancialMonth() sigue dando el periodo siguiente
+    // real (via financialPeriodRange), no un +1 mes ingenuo sobre el label.
+    for (const payDay of [1, 5, 10, 15, 16, 20, 25, 29, 30, 31]) {
+      for (const label of ["ene 2026", "jun 2026", "dic 2026"]) {
+        const next = nextFinancialMonth(label, payDay);
+        const a = parseFinancialMonth(label)!;
+        const b = parseFinancialMonth(next)!;
+        expect(monthsBetween(a, b)).toBe(1);
+        // Y el dia siguiente al fin del periodo actual cae justo dentro del
+        // periodo "siguiente" recien calculado.
+        const range = financialPeriodRange(label, payDay)!;
+        const dayAfter = new Date(range.end);
+        dayAfter.setDate(dayAfter.getDate() + 1);
+        expect(financialMonth(dayAfter, payDay)).toBe(next);
       }
     }
   });
