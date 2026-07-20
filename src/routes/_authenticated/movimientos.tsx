@@ -207,9 +207,15 @@ function MovimientosPage() {
           <h1 className="text-3xl font-bold tracking-tight">Movimientos</h1>
           <p className="text-sm text-muted-foreground mt-1">Ingresos y gastos de cada mes financiero.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setOpenImport(true)}><Upload className="size-4 mr-2" />Importar CSV</Button>
-          <ExportCsvButton userId={user?.id} />
+        <div className="flex flex-wrap gap-2">
+          {/* Importar/Exportar CSV son funciones de escritorio: en mobile
+              amontonaban el header y le ganaban lugar a "Nuevo" (la acción
+              que un usuario nuevo busca primero), dejando el botón flotante
+              de IA como lo único visible a simple vista. */}
+          <div className="hidden sm:flex gap-2">
+            <Button variant="outline" onClick={() => setOpenImport(true)}><Upload className="size-4 mr-2" />Importar CSV</Button>
+            <ExportCsvButton userId={user?.id} />
+          </div>
           <Button variant="outline" onClick={() => setOpenQuickEntry(true)}><Sparkles className="size-4 mr-2" />Carga rápida</Button>
           <Button onClick={() => setOpenNew(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
         </div>
