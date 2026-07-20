@@ -11,7 +11,7 @@ import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-pr
 import { financialDataQuery } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/alertas")({
-  head: () => ({ meta: [{ title: "Alertas · Plata" }] }),
+  head: () => ({ meta: [{ title: "Alertas · Platium" }] }),
   component: AlertasPage,
 });
 

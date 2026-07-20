@@ -21,7 +21,7 @@ import { getDolares } from "@/lib/quotes.functions";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/inmuebles")({
-  head: () => ({ meta: [{ title: "Inmuebles · Plata" }] }),
+  head: () => ({ meta: [{ title: "Inmuebles · Platium" }] }),
   component: Inmuebles,
 });
 
@@ -80,7 +80,7 @@ function Inmuebles() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Inmuebles</h1>
-          <p className="text-muted-foreground text-sm">Tu portafolio inmobiliario.</p>
+          <p className="text-muted-foreground text-sm">Cargá cualquier propiedad que tengas: donde vivís, una que alquiles, una casa de fin de semana. Todas suman a tu patrimonio, no hace falta que generen renta.</p>
           {tcIsFallback && (
             <p className="text-xs text-warning mt-1">
               No se pudo obtener la cotización del dólar del día: los totales en USD usan un tipo de cambio de referencia y pueden no ser exactos.
@@ -100,7 +100,8 @@ function Inmuebles() {
       {(list ?? []).length === 0 ? (
         <Card className="p-10 text-center">
           <Building2 className="size-12 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">Aún no cargaste inmuebles.</p>
+          <p className="font-medium">Todavía no cargaste ninguna propiedad</p>
+          <p className="text-sm text-muted-foreground mt-1">No tiene que ser una inversión: tu casa, un depto, lo que tengas — todo cuenta para tu patrimonio.</p>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

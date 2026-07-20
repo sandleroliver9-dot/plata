@@ -130,5 +130,5 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
   );
 }
 
-type Form = { tipo: string; monto: string; fecha: string; descripcion: string; categoria: string; medio: string; notas: string };
+export type Form = { tipo: string; monto: string; fecha: string; descripcion: string; categoria: string; medio: string; notas: string };
 const initial = (): Form => ({ tipo: "Gasto", monto: "", fecha: todayISO(), descripcion: "", categoria: "", medio: "", notas: "" });

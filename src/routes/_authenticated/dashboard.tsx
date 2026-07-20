@@ -15,7 +15,7 @@ import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorde
 import { useFinancialPreferences } from "@/lib/financial-preferences";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Resumen · Plata" }] }),
+  head: () => ({ meta: [{ title: "Resumen · Platium" }] }),
   component: Dashboard,
 });
 

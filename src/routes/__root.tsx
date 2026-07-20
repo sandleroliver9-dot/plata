@@ -79,10 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Plata · Tu fintech personal" },
+      { title: "Platium · Tu copiloto financiero" },
       { name: "description", content: "Controlá tus ingresos, gastos, tarjetas, inversiones y patrimonio en un solo lugar." },
       { name: "theme-color", content: "#0a0a1a" },
-      { property: "og:title", content: "Plata · Tu fintech personal" },
+      { property: "og:title", content: "Platium · Tu copiloto financiero" },
       { property: "og:description", content: "Controlá tus finanzas como una app bancaria." },
       { property: "og:type", content: "website" },
     ],

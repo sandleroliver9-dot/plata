@@ -1,6 +1,6 @@
-# CONTEXTO DEL PROYECTO: PLATA
+# CONTEXTO DEL PROYECTO: PLATIUM
 
-Estoy desarrollando una startup fintech llamada **Plata**.
+Estoy desarrollando una startup fintech llamada **Platium**.
 
 La visión NO es hacer una app simple de gastos.
 
@@ -21,7 +21,7 @@ La mayoría de las personas:
 * No pueden proyectar meses futuros.
 * Toman decisiones financieras sin información.
 
-Plata busca resolver eso mostrando una visión integral del dinero.
+Platium busca resolver eso mostrando una visión integral del dinero.
 
 ---
 
@@ -248,7 +248,7 @@ Necesito detectar:
 
 # OBJETIVO DE MEDIANO PLAZO
 
-Convertir Plata en una herramienta financiera completa.
+Convertir Platium en una herramienta financiera completa.
 
 Agregar:
 
@@ -310,7 +310,7 @@ Basado en:
 
 # OBJETIVO DE LARGO PLAZO
 
-Convertir Plata en un "copiloto financiero".
+Convertir Platium en un "copiloto financiero".
 
 Quiero que un usuario pueda abrir la app y recibir:
 
@@ -393,7 +393,7 @@ Conectar bancos y tarjetas para importar movimientos automáticamente.
 
 ---
 
-Quiero que cualquier sugerencia o desarrollo futuro se alinee con esta visión y no trate a Plata como una simple app de gastos.
+Quiero que cualquier sugerencia o desarrollo futuro se alinee con esta visión y no trate a Platium como una simple app de gastos.
 
 ---
 
@@ -402,6 +402,6 @@ Quiero que cualquier sugerencia o desarrollo futuro se alinee con esta visión y
 1. Ver el feedback de los testers y hacer las mejoras pertinentes.
 2. Automatización de movimientos bancarios (conexión de cuenta/débito vía agregador tipo Belvo — NO tarjeta de crédito, NO mueve plata).
 3. IA dentro de la app: carga rápida de movimientos por texto/voz, categorización automática, y un chatbot simulador de escenarios (cuotas, flujo de caja) que **muestra opciones en paralelo pero nunca recomienda** qué hacer — la app no es una entidad financiera regulada y no da asesoramiento financiero.
-4. Pasar Plata a app real: PWA primero, después empaquetar con Capacitor para publicar en Apple App Store y Google Play.
+4. Pasar Platium a app real: PWA primero, después empaquetar con Capacitor para publicar en Apple App Store y Google Play.
 
 Recién después de completar estos 4 pasos: versión Pro (para inversores) y versión Premium (para negocios), alineadas con la visión de este documento.

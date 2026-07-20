@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/terminos")({
-  head: () => ({ meta: [{ title: "Términos y Condiciones · Plata" }] }),
+  head: () => ({ meta: [{ title: "Términos y Condiciones · Platium" }] }),
   component: TerminosPage,
 });
 
@@ -21,11 +21,11 @@ function TerminosPage() {
           </div>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">1. Qué es Plata</h2>
+            <h2 className="font-semibold text-foreground">1. Qué es Platium</h2>
             <p>
-              Plata es una herramienta personal para registrar y visualizar tu información financiera:
+              Platium es una herramienta personal para registrar y visualizar tu información financiera:
               ingresos, gastos, tarjetas, préstamos, metas, inversiones e inmuebles que vos mismo cargás.
-              Plata <strong>no es una entidad financiera, no procesa pagos ni mueve dinero</strong>: es
+              Platium <strong>no es una entidad financiera, no procesa pagos ni mueve dinero</strong>: es
               exclusivamente un tracker/organizador. No está regulada por el BCRA ni ofrece productos
               bancarios o de inversión.
             </p>
@@ -34,7 +34,7 @@ function TerminosPage() {
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground">2. Etapa beta</h2>
             <p>
-              Plata está en fase de pruebas con un grupo cerrado de usuarios. Puede tener errores,
+              Platium está en fase de pruebas con un grupo cerrado de usuarios. Puede tener errores,
               cambios de funcionalidad sin aviso previo, e interrupciones del servicio. No se garantiza
               disponibilidad continua ni la conservación indefinida de los datos cargados durante esta etapa.
             </p>
@@ -45,14 +45,14 @@ function TerminosPage() {
             <p>
               Sos responsable de mantener la confidencialidad de tu contraseña y de toda la actividad que
               ocurra en tu cuenta. La información financiera que cargás (montos, categorías, fechas) es
-              ingresada manualmente por vos; Plata no verifica su exactitud.
+              ingresada manualmente por vos; Platium no verifica su exactitud.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground">4. Uso aceptable</h2>
             <p>
-              No está permitido usar Plata para actividades ilegales, intentar acceder a cuentas de otros
+              No está permitido usar Platium para actividades ilegales, intentar acceder a cuentas de otros
               usuarios, ni realizar ingeniería inversa de la aplicación.
             </p>
           </section>
@@ -73,7 +73,7 @@ function TerminosPage() {
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground">6. Sin garantías</h2>
             <p>
-              Plata se ofrece "tal cual", sin garantías de ningún tipo durante esta etapa de pruebas. No
+              Platium se ofrece "tal cual", sin garantías de ningún tipo durante esta etapa de pruebas. No
               nos responsabilizamos por decisiones financieras tomadas en base a la información mostrada
               en la app.
             </p>

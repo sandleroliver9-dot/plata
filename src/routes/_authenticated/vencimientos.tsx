@@ -21,7 +21,7 @@ import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/vencimientos")({
-  head: () => ({ meta: [{ title: "Vencimientos · Plata" }] }),
+  head: () => ({ meta: [{ title: "Vencimientos · Platium" }] }),
   component: Vencimientos,
 });
 

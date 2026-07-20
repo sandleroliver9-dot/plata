@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Save, Shield, Wallet, CreditCard, Receipt, Target } from "lucide-react";
+import { Save, Shield, Wallet, CreditCard, Receipt, Target, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { financialDataQuery } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,9 +28,10 @@ import {
 } from "@/lib/financial-preferences";
 import { parseIntegerInput, parseNumberInput, parseOptionalNumberInput } from "@/lib/number-input";
 import { updateFinancialProfile } from "@/lib/profile.functions";
+import { recalculateFinancialMonths } from "@/lib/maintenance.functions";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
-  head: () => ({ meta: [{ title: "Configuracion · Plata" }] }),
+  head: () => ({ meta: [{ title: "Configuracion · Platium" }] }),
   component: ConfiguracionPage,
 });
 
@@ -82,6 +83,23 @@ function ConfiguracionPage() {
       qc.invalidateQueries({ queryKey: ["financial-data", user?.id] });
       qc.invalidateQueries({ queryKey: ["ingresos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const recalculateMonths = useServerFn(recalculateFinancialMonths);
+  const recalculateMonthsMutation = useMutation({
+    mutationFn: () => recalculateMonths({}),
+    onSuccess: ({ corrected }) => {
+      if (corrected === 0) {
+        toast.success("Todo estaba bien: no había nada para corregir.");
+      } else {
+        toast.success(`Se corrigieron ${corrected} movimiento${corrected === 1 ? "" : "s"}/ingreso${corrected === 1 ? "" : "s"}.`);
+      }
+      qc.invalidateQueries({ queryKey: ["movimientos"] });
+      qc.invalidateQueries({ queryKey: ["ingresos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-data", user?.id] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -413,6 +431,18 @@ function ConfiguracionPage() {
             <p>Ingreso principal: {incomeFrequencyLabel(preferences.income.frequency)}.</p>
             <p>Gastos recurrentes configurados: {Object.values(preferences.recurringSettings).filter((x) => x.frequency || x.debitDay).length}</p>
           </div>
+        </Card>
+
+        <Card className="p-5 space-y-4">
+          <SectionTitle icon={<RefreshCw className="size-5" />} title="Corregir meses viejos" detail="Si algún movimiento o ingreso quedó etiquetado con el mes que no corresponde (por ejemplo, después de cambiar tu día de cobro), esto lo recalcula." />
+          <Button
+            variant="outline"
+            onClick={() => recalculateMonthsMutation.mutate()}
+            disabled={recalculateMonthsMutation.isPending}
+          >
+            <RefreshCw className="size-4 mr-2" />
+            {recalculateMonthsMutation.isPending ? "Corrigiendo..." : "Recalcular meses financieros"}
+          </Button>
         </Card>
       </div>
 

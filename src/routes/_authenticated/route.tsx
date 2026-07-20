@@ -3,6 +3,7 @@ import { Loader2, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app/app-shell";
 import { FeedbackWidget } from "@/components/app/feedback-widget";
+import { SimulatorChat } from "@/components/app/simulator-chat";
 import { OnboardingWizard } from "@/components/app/onboarding-wizard";
 
 // waitForSession() puede tardar hasta 6s reintentando (ver comentario abajo)
@@ -49,6 +50,7 @@ export const Route = createFileRoute("/_authenticated")({
     <AppShell>
       <Outlet />
       <FeedbackWidget />
+      <SimulatorChat />
       <OnboardingWizard />
     </AppShell>
   ),

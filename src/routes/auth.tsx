@@ -4,6 +4,7 @@ import { Wallet, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { toast } from "sonner";
 import { passwordIssue, PASSWORD_RULES } from "@/lib/password";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Ingresar · Plata" }] }),
+  head: () => ({ meta: [{ title: "Ingresar · Platium" }] }),
   beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
@@ -59,7 +60,7 @@ function AuthPage() {
     setFormLoading(false);
     if (error) {
       const weakPassword = error.message.toLowerCase().includes("weak") || error.message.toLowerCase().includes("password");
-      return toast.error(weakPassword ? "Usá una contraseña más fuerte, por ejemplo Plata2026!" : error.message);
+      return toast.error(weakPassword ? "Usá una contraseña más fuerte, por ejemplo Platium2026!" : error.message);
     }
     if (data.session) {
       navigate({ to: "/dashboard", replace: true });
@@ -129,8 +130,8 @@ function AuthPage() {
           <div className="size-14 rounded-2xl grid place-items-center mb-4" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
             <Wallet className="size-7 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Plata</h1>
-          <p className="text-sm text-muted-foreground mt-1">Tu fintech personal</p>
+          <h1 className="text-3xl font-bold tracking-tight">Platium</h1>
+          <p className="text-sm text-muted-foreground mt-1">Tu copiloto financiero</p>
         </div>
 
         <Card className="p-6 bg-card border-border" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -148,7 +149,7 @@ function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pw-in">Contraseña</Label>
-                  <Input id="pw-in" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+                  <PasswordInput id="pw-in" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Ingresar</Button>
                 <Button type="button" variant="ghost" className="w-full" onClick={handleForgotPassword} disabled={resetLoading}>
@@ -174,7 +175,7 @@ function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pw-up">Contraseña</Label>
-                  <Input id="pw-up" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
+                  <PasswordInput id="pw-up" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
                   {password ? (
                     <ul className="text-xs space-y-0.5 mt-1">
                       {pwChecks.map((c) => (
@@ -185,7 +186,7 @@ function AuthPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
                   )}
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading}>Crear cuenta</Button>

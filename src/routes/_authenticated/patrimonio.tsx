@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/finance";
 import { financialDataQuery, usePortfolioValue } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/patrimonio")({
-  head: () => ({ meta: [{ title: "Patrimonio · Plata" }] }),
+  head: () => ({ meta: [{ title: "Patrimonio · Platium" }] }),
   component: Patrimonio,
 });
 

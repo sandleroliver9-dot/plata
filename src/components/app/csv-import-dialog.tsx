@@ -1,18 +1,23 @@
 import { useState } from "react";
 import Papa from "papaparse";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { financialMonth } from "@/lib/finance";
 import { parseISODate } from "@/lib/financial-centers";
 import { parseNumberInput } from "@/lib/number-input";
+import { categoriasQuery } from "@/lib/queries";
+import { categoryNamesFor } from "@/lib/categories";
+import { suggestCategories } from "@/lib/categorize.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Row = { fecha: string; descripcion: string; monto: number; tipo: string; categoria?: string; medio?: string };
 
@@ -20,10 +25,49 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const qc = useQueryClient();
+  const { data: cats } = useQuery(categoriasQuery(user?.id));
   const [parsed, setParsed] = useState<Row[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [errorCount, setErrorCount] = useState(0);
   const [filename, setFilename] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
+
+  const suggest = useServerFn(suggestCategories);
+  const categoriasDisponibles = Array.from(new Set([
+    ...categoryNamesFor(cats, "Ingreso"),
+    ...categoryNamesFor(cats, "Gasto"),
+  ]));
+
+  async function suggestMissingCategories(rows: Row[]) {
+    const faltantes = rows.filter((r) => !r.categoria);
+    if (faltantes.length === 0) return;
+    setSuggesting(true);
+    try {
+      const result = await suggest({
+        data: {
+          filas: faltantes.map((r) => ({ descripcion: r.descripcion, tipo: r.tipo })),
+          categorias: categoriasDisponibles,
+        },
+      });
+      if (!result.configured) {
+        setAiUnavailable(true);
+        return;
+      }
+      let i = 0;
+      setParsed((prev) => prev.map((r) => {
+        if (r.categoria) return r;
+        const categoria = result.categorias[i] || undefined;
+        i++;
+        return categoria ? { ...r, categoria } : r;
+      }));
+    } catch {
+      // La sugerencia es un plus, no algo critico: si falla, el usuario
+      // sigue pudiendo importar y categorizar a mano como siempre.
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   function handleFile(file: File) {
     if (file.size > 5 * 1024 * 1024) { toast.error("Archivo > 5MB"); return; }
@@ -69,6 +113,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
         if (totalRows > 500) {
           toast.warning(`El archivo tiene ${totalRows} filas: solo se importan las primeras 500.`);
         }
+        void suggestMissingCategories(rows);
       },
       error: () => toast.error("No pude leer el archivo"),
     });
@@ -138,7 +183,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
     onError: (e: Error) => toast.error(e.message || "Falló la importación"),
   });
 
-  function reset() { setParsed([]); setErrors([]); setErrorCount(0); setFilename(""); }
+  function reset() { setParsed([]); setErrors([]); setErrorCount(0); setFilename(""); setSuggesting(false); setAiUnavailable(false); }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
@@ -174,11 +219,18 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
               </div>
             )}
 
+            {suggesting && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="size-3" />Sugiriendo categorías con IA...</p>
+            )}
+            {aiUnavailable && (
+              <p className="text-xs text-muted-foreground">La sugerencia automática de categorías todavía no está configurada en esta cuenta — podés asignarlas a mano abajo.</p>
+            )}
+
             <div className="max-h-60 overflow-y-auto border border-border rounded-lg">
               <table className="w-full text-xs">
                 <thead className="bg-muted/30 sticky top-0">
                   <tr className="text-left">
-                    <th className="p-2">Fecha</th><th className="p-2">Descripción</th><th className="p-2">Tipo</th><th className="p-2 text-right">Monto</th>
+                    <th className="p-2">Fecha</th><th className="p-2">Descripción</th><th className="p-2">Tipo</th><th className="p-2 text-right">Monto</th><th className="p-2">Categoría</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,6 +240,20 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
                       <td className="p-2 truncate max-w-[200px]">{r.descripcion}</td>
                       <td className="p-2"><Badge variant="secondary" className="text-xs">{r.tipo}</Badge></td>
                       <td className="p-2 text-right num">{r.monto.toFixed(2)}</td>
+                      <td className="p-2">
+                        <Select
+                          value={r.categoria ?? "__sin__"}
+                          onValueChange={(v) => setParsed((prev) => prev.map((row, idx) => idx === i ? { ...row, categoria: v === "__sin__" ? undefined : v } : row))}
+                        >
+                          <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Sin categoría" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__sin__">Sin categoría</SelectItem>
+                            {categoryNamesFor(cats, r.tipo === "Ingreso" ? "Ingreso" : "Gasto").map((c) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

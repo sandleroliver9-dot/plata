@@ -4,13 +4,13 @@ import { Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { passwordIssue } from "@/lib/password";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Restablecer contraseña · Plata" }] }),
+  head: () => ({ meta: [{ title: "Restablecer contraseña · Platium" }] }),
   component: ResetPasswordPage,
 });
 
@@ -135,22 +135,20 @@ function ResetPasswordPage() {
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="pw-new">Nueva contraseña</Label>
-                <Input
+                <PasswordInput
                   id="pw-new"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
                   autoComplete="new-password"
                 />
-                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Plata2026!</p>
+                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pw-confirm">Repetir contraseña</Label>
-                <Input
+                <PasswordInput
                   id="pw-confirm"
-                  type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required

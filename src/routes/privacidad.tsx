@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/privacidad")({
-  head: () => ({ meta: [{ title: "Política de Privacidad · Plata" }] }),
+  head: () => ({ meta: [{ title: "Política de Privacidad · Platium" }] }),
   component: PrivacidadPage,
 });
 
@@ -22,7 +22,7 @@ function PrivacidadPage() {
 
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground">1. Qué datos guardamos</h2>
-            <p>Al usar Plata guardamos:</p>
+            <p>Al usar Platium guardamos:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Datos de cuenta: nombre y email (o los datos básicos que comparte Google si entrás con ese método).</li>
               <li>
@@ -81,7 +81,7 @@ function PrivacidadPage() {
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground">6. Cambios a esta política</h2>
             <p>
-              Como Plata está en etapa de pruebas, esta política puede actualizarse. Si hay cambios
+              Como Platium está en etapa de pruebas, esta política puede actualizarse. Si hay cambios
               importantes, te vamos a avisar por email.
             </p>
           </section>

@@ -20,7 +20,7 @@ import { parseISODate } from "@/lib/financial-centers";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/metas")({
-  head: () => ({ meta: [{ title: "Metas · Plata" }] }),
+  head: () => ({ meta: [{ title: "Metas · Platium" }] }),
   component: Metas,
 });
 

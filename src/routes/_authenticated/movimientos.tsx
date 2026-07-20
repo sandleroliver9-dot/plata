@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Upload, Search } from "lucide-react";
+import { Plus, Upload, Search, Download, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
@@ -15,13 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MovimientoDialog } from "@/components/app/movimiento-dialog";
+import { MovimientoDialog, type Form as MovimientoDefaults } from "@/components/app/movimiento-dialog";
+import { QuickEntryDialog } from "@/components/app/quick-entry-dialog";
 import { CsvImportDialog } from "@/components/app/csv-import-dialog";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/movimientos")({
-  head: () => ({ meta: [{ title: "Movimientos · Plata" }] }),
+  head: () => ({ meta: [{ title: "Movimientos · Platium" }] }),
   component: MovimientosPage,
 });
 
@@ -35,6 +37,8 @@ function MovimientosPage() {
 
   const [openNew, setOpenNew] = useState(false);
   const [openImport, setOpenImport] = useState(false);
+  const [openQuickEntry, setOpenQuickEntry] = useState(false);
+  const [quickEntryDefaults, setQuickEntryDefaults] = useState<Partial<MovimientoDefaults> | undefined>(undefined);
   const [mes, setMes] = useDefaultFinancialMonth(payDay);
   const [tipo, setTipo] = useState("todos");
   const [search, setSearch] = useState("");
@@ -205,6 +209,8 @@ function MovimientosPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setOpenImport(true)}><Upload className="size-4 mr-2" />Importar CSV</Button>
+          <ExportCsvButton userId={user?.id} />
+          <Button variant="outline" onClick={() => setOpenQuickEntry(true)}><Sparkles className="size-4 mr-2" />Carga rápida</Button>
           <Button onClick={() => setOpenNew(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
         </div>
       </header>
@@ -311,8 +317,25 @@ function MovimientosPage() {
         )}
       </Card>
 
-      <MovimientoDialog open={openNew} onOpenChange={setOpenNew} />
+      <MovimientoDialog
+        open={openNew}
+        onOpenChange={(o) => {
+          setOpenNew(o);
+          if (!o) setQuickEntryDefaults(undefined);
+        }}
+        defaults={quickEntryDefaults}
+      />
       <CsvImportDialog open={openImport} onOpenChange={setOpenImport} />
+      <QuickEntryDialog
+        open={openQuickEntry}
+        onOpenChange={setOpenQuickEntry}
+        categorias={(cats ?? []).map((c: any) => c.nombre)}
+        onParsed={(defaults) => {
+          setQuickEntryDefaults(defaults);
+          setOpenQuickEntry(false);
+          setOpenNew(true);
+        }}
+      />
     </div>
   );
 }
@@ -324,4 +347,48 @@ function MiniStat({ label, value, tone }: { label: string; value: string; tone: 
       <div className={`num text-xl font-bold mt-1 ${tone === "success" ? "text-success" : ""}`}>{value}</div>
     </Card>
   );
+}
+
+// Exporta TODOS los movimientos activos del usuario (no solo el mes
+// financiero seleccionado): es un backup de todo lo cargado, no una
+// exportación parcial que dependa de qué mes esté mirando en ese momento.
+// Mismas columnas que espera CsvImportDialog, para que el archivo se pueda
+// volver a importar sin transformarlo.
+function ExportCsvButton({ userId }: { userId?: string }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleExport() {
+    if (!userId) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("movimientos")
+      .select("fecha, descripcion, monto, tipo, categoria, medio")
+      .eq("user_id", userId)
+      .eq("activo", true)
+      .order("fecha", { ascending: false });
+    setLoading(false);
+    if (error) { toast.error("No pude exportar tus movimientos"); return; }
+    if (!data || data.length === 0) { toast.info("Todavía no tenés movimientos para exportar"); return; }
+
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `plata-movimientos-${todayISO()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} movimientos exportados`);
+  }
+
+  return (
+    <Button variant="outline" onClick={handleExport} disabled={loading}>
+      <Download className="size-4 mr-2" />{loading ? "Exportando..." : "Exportar CSV"}
+    </Button>
+  );
+}
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

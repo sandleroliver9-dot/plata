@@ -11,7 +11,7 @@ import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/calendario-financiero")({
-  head: () => ({ meta: [{ title: "Calendario financiero · Plata" }] }),
+  head: () => ({ meta: [{ title: "Calendario financiero · Platium" }] }),
   component: CalendarioFinancieroPage,
 });
 

@@ -11,7 +11,7 @@ import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery, usePortfolioValue } from "@/lib/supabase-queries";
 
 export const Route = createFileRoute("/_authenticated/insights")({
-  head: () => ({ meta: [{ title: "Insights · Plata" }] }),
+  head: () => ({ meta: [{ title: "Insights · Platium" }] }),
   component: InsightsPage,
 });
 
@@ -83,68 +83,68 @@ function InsightsPage() {
 
   const insights: Insight[] = [
     {
-      title: "Gastos fijos sobre ingresos",
+      title: "Gastos fijos",
       value: cash.ingresos > 0 ? `${fixedRatio.toFixed(0)}%` : "Sin ingresos",
       message: cash.ingresos > 0
-        ? `Tus gastos fijos representan ${fixedRatio.toFixed(0)}% de tus ingresos estimados de ${cash.mes}.`
-        : "Cargá un ingreso o sueldo para calcular este indicador.",
+        ? `De cada $100 que entran, $${fixedRatio.toFixed(0)} ya están comprometidos en gastos fijos (alquiler, servicios, etc.) de ${cash.mes}.`
+        : "Cargá un ingreso o sueldo para ver este dato.",
       icon: TrendingUp,
       tone: fixedRatio > 50 ? "warning" : "success",
     },
     {
-      title: "Ahorro estimado",
+      title: "Lo que estás ahorrando",
       value: formatMoney(savings, currency),
       message: savings >= cash.objetivoAhorro
-        ? `Tu ahorro estimado esta alineado con tu objetivo del ${savingTarget}%.`
-        : `Estas ahorrando menos que tu objetivo del ${savingTarget}%.`,
+        ? `Vas bien: estás llegando a tu objetivo de ahorrar el ${savingTarget}%.`
+        : `Todavía no llegás a tu objetivo de ahorrar el ${savingTarget}%.`,
       icon: Wallet,
       tone: savings < 0 ? "destructive" : savings < cash.objetivoAhorro ? "warning" : "success",
     },
     {
-      title: "Fondo de emergencia",
+      title: "Colchón para imprevistos",
       value: `${emergency.coveredMonths.toFixed(1)} meses`,
-      message: `Tu fondo recomendado es ${formatMoney(emergency.recommended, currency)} para cubrir ${emergency.targetMonths} meses.`,
+      message: `Si dejaras de cobrar hoy, tenés para bancarte ${emergency.coveredMonths.toFixed(1)} meses. Te recomendamos tener guardado ${formatMoney(emergency.recommended, currency)} (para cubrir ${emergency.targetMonths} meses).`,
       icon: Wallet,
       tone: emergency.coveredMonths >= emergency.targetMonths ? "success" : emergency.coveredMonths >= emergency.targetMonths / 2 ? "warning" : "destructive",
     },
     {
-      title: "Proxima semana",
+      title: "Semana que viene",
       value: nextMonthPayments > 0 ? `${weeklyConcentration.toFixed(0)}%` : "Sin pagos",
       message: nextMonthPayments > 0
-        ? `Tu proxima semana concentra el ${weeklyConcentration.toFixed(0)}% de los gastos programados a 30 dias.`
-        : "No hay gastos programados para medir concentracion semanal.",
+        ? `De todo lo que tenés para pagar en los próximos 30 días, el ${weeklyConcentration.toFixed(0)}% se te junta en los próximos 7.`
+        : "No tenés pagos programados para los próximos 30 días.",
       icon: CalendarClock,
       tone: weeklyConcentration > 35 ? "warning" : "success",
     },
     {
-      title: "Proximo cobro",
+      title: "Tu próximo cobro",
       value: nextIncome ? formatDate(nextIncome.date) : "Sin fecha",
       message: nextIncome
-        ? `Tu proxima fecha de cobro es ${formatDate(nextIncome.date)} por ${formatMoney(nextIncome.amount, currency)}.`
-        : "Configura tu frecuencia de ingresos para ver la proxima fecha de cobro.",
+        ? `Cobrás el ${formatDate(nextIncome.date)}, por ${formatMoney(nextIncome.amount, currency)}.`
+        : "Configurá cada cuánto cobrás para ver la próxima fecha.",
       icon: CalendarClock,
       tone: nextIncome ? "success" : "warning",
     },
     {
-      title: "Vencimientos próximos",
+      title: "Pagos que se vienen",
       value: String(upcoming.length),
       message: upcoming.length === 0
-        ? "No tenés vencimientos próximos cargados para los próximos 30 días."
-        : `Tenés ${upcoming.length} pagos próximos en los próximos 30 días.`,
+        ? "No tenés ningún pago pendiente en los próximos 30 días."
+        : `Tenés ${upcoming.length} pago${upcoming.length === 1 ? "" : "s"} pendiente${upcoming.length === 1 ? "" : "s"} en los próximos 30 días.`,
       icon: CalendarClock,
       tone: upcoming.length > 5 ? "warning" : "success",
     },
     {
-      title: "Patrimonio estimado",
+      title: "Tu patrimonio",
       value: formatMoney(netWorth, currency),
-      message: "Suma inmuebles e inversiones, descontando deuda pendiente de préstamos.",
+      message: "Todo lo que tenés (propiedades e inversiones) menos lo que debés de préstamos.",
       icon: Building2,
       tone: netWorth < 0 ? "destructive" : "success",
     },
     {
-      title: "Liquidez",
+      title: "Plata disponible",
       value: liquidityLabel,
-      message: `Tu disponible estimado para ${cash.mes} es ${formatMoney(cash.disponible, currency)}.`,
+      message: `Esto es lo que te queda libre para gastar en ${cash.mes}: ${formatMoney(cash.disponible, currency)}.`,
       icon: Lightbulb,
       tone: liquidityLabel === "riesgo" ? "destructive" : liquidityLabel === "atención" ? "warning" : "success",
     },

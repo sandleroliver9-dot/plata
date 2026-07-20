@@ -129,7 +129,15 @@ export function computeBalance(
 
     const deltaPct = pMedioUSD > 0 ? (pActualUSD - pMedioUSD) / pMedioUSD : 0;
     const dias = primera ? Math.max(1, Math.floor((today - new Date(`${primera}T00:00:00`).getTime()) / 86400000)) : 0;
-    const tAnual = dias > 0 && pMedioUSD > 0 && 1 + deltaPct > 0 ? Math.pow(1 + deltaPct, 365 / dias) - 1 : 0;
+    // Anualizar una tenencia de pocos dias produce numeros absurdos: comprar
+    // hace 3 dias algo que subio 5% daba "+38.000% anual" (reportado por un
+    // tester real como "crecimiento ilogico"). Con menos de 30 dias de
+    // historia no hay base para anualizar: NaN, y la UI muestra "—"
+    // (formatPct ya trata los no-finitos como "—").
+    const MIN_DIAS_ANUALIZACION = 30;
+    const tAnual = dias >= MIN_DIAS_ANUALIZACION && pMedioUSD > 0 && 1 + deltaPct > 0
+      ? Math.pow(1 + deltaPct, 365 / dias) - 1
+      : NaN;
 
     const divUSDTotal = ds.reduce((s, d) => s + Number(d.monto_usd), 0);
     const cutoff = today - 365 * 86400000;
