@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { financialDataQuery } from "@/lib/supabase-queries";
+import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
@@ -21,6 +21,7 @@ export function useProjectionSummary() {
   const salary = Number(profile?.salary ?? 0);
 
   const { data } = useQuery(financialDataQuery(user?.id));
+  const { tc } = useDolarTC();
 
   const fetchInflacion = useServerFn(getInflacion);
   const { data: infl } = useQuery({
@@ -33,8 +34,8 @@ export function useProjectionSummary() {
   const inflacionPct = infl?.promedio3m ? Number(infl.promedio3m.toFixed(1)) : 0;
 
   const rows = useMemo(
-    () => computeProjectionRows({ data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency }),
-    [data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency],
+    () => computeProjectionRows({ data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency, tc }),
+    [data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency, tc],
   );
 
   return { rows, currency };

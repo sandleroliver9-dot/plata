@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   appNow,
+  convertAmount,
   currentCalendarMonthLabel,
   currentFinancialMonth,
   financialMonth,
@@ -191,6 +192,29 @@ describe("financialPeriodRange / formatFinancialPeriodRange", () => {
         expect(financialMonth(range.end, payDay)).toBe(label);
       }
     }
+  });
+});
+
+describe("convertAmount", () => {
+  it("does nothing when currencies match", () => {
+    expect(convertAmount(1000, "ARS", "ARS", 1200)).toBe(1000);
+    expect(convertAmount(100, "USD", "USD", 1200)).toBe(100);
+  });
+
+  it("treats a missing/null moneda as already being in the target currency (legacy rows, regression)", () => {
+    // Filas creadas antes de este feature no tienen `moneda`: deben seguir
+    // sumandose tal cual, sin convertir, para no romper ningun calculo
+    // existente con usuarios de una sola moneda.
+    expect(convertAmount(1000, null, "ARS", 1200)).toBe(1000);
+    expect(convertAmount(1000, undefined, "ARS", 1200)).toBe(1000);
+  });
+
+  it("converts USD to ARS by multiplying by the exchange rate", () => {
+    expect(convertAmount(100, "USD", "ARS", 1200)).toBe(120000);
+  });
+
+  it("converts ARS to USD by dividing by the exchange rate", () => {
+    expect(convertAmount(120000, "ARS", "USD", 1200)).toBe(100);
   });
 });
 

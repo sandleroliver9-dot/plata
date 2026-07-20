@@ -66,6 +66,20 @@ export function resolveTC(dolar?: { mep?: number; ccl?: number; blue?: number } 
 }
 
 /**
+ * Convierte un monto entre ARS y USD con el tipo de cambio dado. Soporte de
+ * moneda mixta (ej: sueldo cobrado en USD, gastos en ARS): la mayoría de
+ * las filas no tienen `moneda` propia (o coincide con el destino), en cuyo
+ * caso esto es un no-op — sólo convierte cuando de verdad hace falta.
+ */
+export function convertAmount(monto: number, fromMoneda: string | null | undefined, toMoneda: string, tc: number): number {
+  const from = fromMoneda || toMoneda;
+  if (from === toMoneda) return monto;
+  if (from === "USD" && toMoneda === "ARS") return monto * tc;
+  if (from === "ARS" && toMoneda === "USD") return monto / tc;
+  return monto;
+}
+
+/**
  * Mes financiero: si el usuario cobra el dia 5, el periodo de "jun 2026"
  * va del 5 de junio al 4 de julio.
  *

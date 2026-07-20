@@ -134,6 +134,7 @@ export type Database = {
           fecha_cobro: string
           id: string
           mes_financiero: string
+          moneda: string | null
           monto: number
           notas: string | null
           tipo: string | null
@@ -147,6 +148,7 @@ export type Database = {
           fecha_cobro: string
           id?: string
           mes_financiero: string
+          moneda?: string | null
           monto: number
           notas?: string | null
           tipo?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           fecha_cobro?: string
           id?: string
           mes_financiero?: string
+          moneda?: string | null
           monto?: number
           notas?: string | null
           tipo?: string | null
@@ -501,6 +504,7 @@ export type Database = {
           ingreso_id: string | null
           medio: string | null
           mes_financiero: string
+          moneda: string | null
           monto: number
           notas: string | null
           tarjeta: string | null
@@ -520,6 +524,7 @@ export type Database = {
           ingreso_id?: string | null
           medio?: string | null
           mes_financiero: string
+          moneda?: string | null
           monto: number
           notas?: string | null
           tarjeta?: string | null
@@ -539,6 +544,7 @@ export type Database = {
           ingreso_id?: string | null
           medio?: string | null
           mes_financiero?: string
+          moneda?: string | null
           monto?: number
           notas?: string | null
           tarjeta?: string | null
@@ -741,6 +747,7 @@ export type Database = {
           p_concepto: string
           p_fecha_cobro: string
           p_mes_financiero: string
+          p_moneda?: string | null
           p_monto: number
           p_notas?: string | null
           p_tipo?: string

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildUpcomingEvents, estimateNetWorth, resolveGastoFijoDebitDay } from "./financial-centers";
+import { buildUpcomingEvents, estimateNetWorth, getBaseMonthlyIncome, getMonthlyCashflow, resolveGastoFijoDebitDay } from "./financial-centers";
 
 describe("estimateNetWorth", () => {
   it("subtracts remaining loan debt from net worth", () => {
@@ -111,6 +111,50 @@ describe("buildUpcomingEvents", () => {
     });
     const gastoEvents = events.filter((e) => e.type === "gasto_fijo");
     expect(gastoEvents[0]?.date).toBe("2026-07-15");
+  });
+});
+
+describe("moneda mixta (ingreso en otra moneda que la de gastos)", () => {
+  const profileARS = { currency: "ARS", pay_day: 1, salary: 0 } as any;
+
+  it("getBaseMonthlyIncome converts a USD salary row to the profile's currency using tc", () => {
+    const ingresos = [{ tipo: "Sueldo", monto: 1000, moneda: "USD", fecha_cobro: "2026-07-01" }] as any;
+    expect(getBaseMonthlyIncome(profileARS, ingresos, 1200)).toBe(1_200_000);
+  });
+
+  it("getBaseMonthlyIncome treats a row without moneda as already in the profile's currency (legacy, regression)", () => {
+    const ingresos = [{ tipo: "Sueldo", monto: 500_000, moneda: null, fecha_cobro: "2026-07-01" }] as any;
+    expect(getBaseMonthlyIncome(profileARS, ingresos, 1200)).toBe(500_000);
+  });
+
+  it("getMonthlyCashflow converts a USD 'Ingreso' movimiento to ARS before computing disponible", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 8));
+    const cash = getMonthlyCashflow({
+      profile: profileARS,
+      movimientos: [
+        { tipo: "Ingreso", monto: 1000, moneda: "USD", mes_financiero: "jul 2026" },
+        { tipo: "Gasto", monto: 200_000, moneda: "ARS", mes_financiero: "jul 2026" },
+      ] as any,
+      tc: 1200,
+    });
+    expect(cash.ingresos).toBe(1_200_000);
+    expect(cash.disponible).toBe(1_000_000);
+    vi.useRealTimers();
+  });
+
+  it("buildUpcomingEvents converts a future USD ingreso to the profile's currency", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 8, 12, 0, 0));
+    const events = buildUpcomingEvents({
+      profile: profileARS,
+      ingresos: [{ id: "i1", concepto: "Freelance en dólares", tipo: "Extra", monto: 100, moneda: "USD", fecha_cobro: "2026-07-20" }] as any,
+      horizonDays: 30,
+      tc: 1200,
+    });
+    const ingresoEvent = events.find((e) => e.id === "ingreso-i1");
+    expect(ingresoEvent?.amount).toBe(120_000);
+    vi.useRealTimers();
   });
 });
 
