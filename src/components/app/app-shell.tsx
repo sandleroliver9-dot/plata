@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowLeftRight, TrendingUp, Wallet, CreditCard, Landmark, LineChart, Building2, Target, Settings, LogOut, Receipt, Menu, Sparkles, Bell, Lightbulb, CalendarDays } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, TrendingUp, Wallet, CreditCard, Landmark, LineChart, Building2, Target, Settings, LogOut, Receipt, Menu, Sparkles, Bell, Lightbulb, CalendarDays, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ const navGroups: Array<{ label?: string; items: Array<{ to: string; label: strin
       { to: "/alertas", label: "Alertas", icon: Bell },
       { to: "/insights", label: "Insights", icon: Lightbulb },
       { to: "/calendario-financiero", label: "Calendario", icon: CalendarDays },
+      { to: "/vencimientos", label: "Vencimientos", icon: CalendarClock },
     ],
   },
   { items: [{ to: "/configuracion", label: "Configuración", icon: Settings }] },
