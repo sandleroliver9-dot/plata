@@ -328,7 +328,7 @@ export function getMonthlyCashflow({
     .filter((m) => m.tipo === "Ingreso")
     .reduce((s, m) => s + convertAmount(Number(m.monto), m.moneda, targetCurrency, tc), 0);
   const ingresosMes = ingresoRegistrado > 0 ? ingresoRegistrado : ingresoBase;
-  const gastosRegistrados = movsMes.filter((m) => m.tipo === "Gasto").reduce((s, m) => s + Number(m.monto), 0);
+  const gastosRegistrados = movsMes.filter((m) => m.tipo === "Gasto").reduce((s, m) => s + convertAmount(Number(m.monto), m.moneda, targetCurrency, tc), 0);
 
   const gastosFijosPendientes = gastosFijos.reduce((s, g) => {
     const pref = prefs.recurringSettings[String(g.id)] ?? {};
@@ -546,12 +546,13 @@ export function buildUpcomingEvents({
   return events.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
 }
 
-export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | null, preferences?: FinancialPreferences | null) {
+export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | null, preferences?: FinancialPreferences | null, tc: number = TC_FALLBACK) {
   const prefs = normalizePrefs(preferences);
   const incomePrefs: FinancialPreferences = {
     ...prefs,
     income: { ...prefs.income, payDay: prefs.income.payDay ?? Number(profile?.pay_day ?? 1) },
   };
+  const targetCurrency = profile?.currency ?? "ARS";
   const payDay = getPayDateForMonth(appNow().getFullYear(), appNow().getMonth(), incomePrefs).getDate();
   const current = currentFinancialMonth(payDay);
   const currentRows = movimientos.filter((m) => m.tipo === "Gasto" && m.mes_financiero === current);
@@ -567,12 +568,12 @@ export function detectUnusualSpending(movimientos: Row[] = [], profile?: Row | n
 
   currentRows.forEach((m) => {
     const cat = String(m.categoria ?? "Sin categoria");
-    currentByCat.set(cat, (currentByCat.get(cat) ?? 0) + Number(m.monto ?? 0));
+    currentByCat.set(cat, (currentByCat.get(cat) ?? 0) + convertAmount(Number(m.monto ?? 0), m.moneda, targetCurrency, tc));
   });
   previousRows.forEach((m) => {
     const cat = String(m.categoria ?? "Sin categoria");
     const prev = previousByCat.get(cat) ?? { total: 0, months: new Set<string>() };
-    prev.total += Number(m.monto ?? 0);
+    prev.total += convertAmount(Number(m.monto ?? 0), m.moneda, targetCurrency, tc);
     prev.months.add(String(m.mes_financiero));
     previousByCat.set(cat, prev);
   });

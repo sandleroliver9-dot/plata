@@ -105,11 +105,16 @@ function Dashboard() {
 
 
   const { ingresos, gastos, balance, topCats, serie, anomalias } = useMemo(() => {
-    // Los "Gasto" quedan siempre en `currency` (moneda de gastos del
-    // usuario, sin selector propio); los "Ingreso" pueden traer su propia
-    // `moneda` (ej: sueldo en USD) y se normalizan acá antes de sumar nada.
+    // Cualquier movimiento (Gasto o Ingreso) puede traer su propia `moneda`
+    // (ej: sueldo en USD, un gasto en dólares) y se normaliza acá a
+    // `currency` antes de sumar nada. convertAmount es un no-op cuando la
+    // fila ya está en la moneda destino, así que esto es seguro para todo.
+    // Importante: también pisamos `moneda` a `currency` acá, si no la fila
+    // queda con `monto` ya convertido pero `moneda` todavía apuntando a la
+    // original — y cualquier convertAmount() más adelante (ej. dentro de
+    // detectUnusualSpending) la volvería a convertir por segunda vez.
     const movsConCuotas: any[] = (movs ?? []).map((m: any) =>
-      m.tipo === "Ingreso" ? { ...m, monto: convertAmount(Number(m.monto), m.moneda, currency, tc) } : m,
+      ({ ...m, monto: convertAmount(Number(m.monto), m.moneda, currency, tc), moneda: currency }),
     );
     (cuotasActivas ?? []).forEach((c) => {
       meses6.forEach((m) => {
@@ -215,7 +220,7 @@ function Dashboard() {
     // propia copia que promediaba por TRANSACCION individual (unidades
     // distintas), disparando falsos positivos en categorias con muchas
     // compras chicas.
-    const anomalias = detectUnusualSpending(movsConCuotas, profile, preferences)
+    const anomalias = detectUnusualSpending(movsConCuotas, profile, preferences, tc)
       .slice(0, 3)
       .map((u) => ({ cat: u.categoria, monto: u.monto }));
 

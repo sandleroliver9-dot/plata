@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MovimientoDialog, type Form as MovimientoDefaults } from "@/components/app/movimiento-dialog";
 
-type MovimientoParseado = { tipo: "Ingreso" | "Gasto"; monto: string; descripcion: string; categoria: string; fecha: string };
+type MovimientoParseado = { tipo: "Ingreso" | "Gasto"; monto: string; moneda: "ARS" | "USD"; descripcion: string; categoria: string; fecha: string };
 type Turno =
   | { role: "user" | "assistant"; content: string }
   | { role: "confirm"; movimiento: MovimientoParseado; status: "pending" | "guardado" | "descartado" };
@@ -94,6 +94,7 @@ export function SimulatorChat() {
         fecha: movimiento.fecha,
         mes_financiero,
         categoria: movimiento.categoria || null,
+        moneda: movimiento.moneda,
       });
       if (error) throw error;
     },
@@ -118,7 +119,7 @@ export function SimulatorChat() {
   }
 
   function editar(movimiento: MovimientoParseado) {
-    setEditDefaults({ tipo: movimiento.tipo, monto: movimiento.monto, descripcion: movimiento.descripcion, categoria: movimiento.categoria, fecha: movimiento.fecha });
+    setEditDefaults({ tipo: movimiento.tipo, monto: movimiento.monto, moneda: movimiento.moneda, descripcion: movimiento.descripcion, categoria: movimiento.categoria, fecha: movimiento.fecha });
     descartar(movimiento);
   }
 
@@ -205,12 +206,17 @@ export function SimulatorChat() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-medium">{t.movimiento.descripcion}</span>
                         <span className={`num font-semibold ${t.movimiento.tipo === "Ingreso" ? "text-success" : ""}`}>
-                          {t.movimiento.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(t.movimiento.monto), currency)}
+                          {t.movimiento.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(t.movimiento.monto), t.movimiento.moneda)}
                         </span>
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {t.movimiento.tipo} · {t.movimiento.categoria || "Sin categoría"} · {t.movimiento.fecha}
                       </div>
+                      {t.movimiento.moneda !== currency && (
+                        <div className="text-xs text-muted-foreground">
+                          Se va a mostrar convertido a {currency} en el dashboard, con el tipo de cambio del día.
+                        </div>
+                      )}
                       {t.status === "pending" && (
                         <div className="flex gap-2 pt-1">
                           <Button size="sm" onClick={() => guardarMut.mutate(t.movimiento)} disabled={guardarMut.isPending}>

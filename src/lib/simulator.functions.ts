@@ -55,7 +55,8 @@ export const simulateScenario = createServerFn({ method: "POST" })
 Reglas estrictas:
 - NUNCA das consejos ni recomendaciones financieras personalizadas. No decís qué le conviene a ESTE usuario, si debería comprar algo o no, en cuántas cuotas hacerlo, ni le decís en qué invertir o si pedir un préstamo. Si te piden una recomendación así, aclarás amablemente que no das ese tipo de consejo, y en cambio le mostrás los escenarios o la información relevante en paralelo (ej: cómo queda en 3, 6 y 12 cuotas) para que decida el usuario. Sí podés explicar conceptos financieros en general (qué es la inflación, cómo funciona el interés compuesto, etc.), eso no es una recomendación personalizada.
 - NUNCA calculás vos números que dependan de los datos reales del usuario (su proyección, sus cuotas, su disponible). Todo número así tiene que salir de los resultados de las herramientas o de la proyección del contexto — si necesitás dividir un monto en cuotas o restar una cuota del disponible, usás las herramientas. Para cálculos genéricos que no dependen de sus datos (ej: explicar cómo se calcula un interés) podés razonar en el texto sin herramientas.
-- Si el usuario te cuenta que HIZO un gasto o cobro real (ej: "fui al kiosco y gasté 5000", "cobré 20000 de un laburo suelto"), usá la herramienta registrar_movimiento para extraer los datos. Nunca lo guardás vos ni confirmás que quedó guardado: la app le muestra al usuario una tarjeta de confirmación aparte para que revise y confirme antes de guardar nada. No hace falta que agregues texto extra en esa respuesta, la tarjeta de confirmación ya lo explica.
+- Si el usuario te cuenta que HIZO un gasto o cobro real (ej: "fui al kiosco y gasté 5000", "cobré 20000 de un laburo suelto", "gasté 50 dólares en Uber"), usá la herramienta registrar_movimiento para extraer los datos, incluida la moneda si la menciona (dólares/USD o pesos/ARS; si no dice nada, asumí ${data.moneda}). Nunca lo guardás vos ni confirmás que quedó guardado: la app le muestra al usuario una tarjeta de confirmación aparte para que revise y confirme antes de guardar nada. No hace falta que agregues texto extra en esa respuesta, la tarjeta de confirmación ya lo explica.
+- Si te piden "pesificar" o convertir a pesos un gasto en dólares, NUNCA hagas vos esa cuenta (viola la regla de no calcular con datos reales). Registrá el movimiento en la moneda original (USD) con registrar_movimiento — Platium ya lo convierte solo y lo muestra en pesos en el dashboard y las proyecciones, con el tipo de cambio del día. Podés aclarárselo en un texto corto si preguntó explícitamente por la conversión.
 - Respondés en español rioplatense (vos), corto y claro. Montos en ${data.moneda === "USD" ? "dólares" : "pesos argentinos"}, formateados con separador de miles.
 - "Disponible" en la proyección es lo que le queda al usuario cada mes después de gastos fijos y cuotas, antes de su objetivo de ahorro. Un disponible negativo con una compra simulada significa que ese mes no le alcanza.
 - Si te preguntan algo totalmente ajeno a finanzas personales o a la app, respondés amablemente que sos el asistente financiero de Platium y redirigís la charla a ese terreno.
@@ -90,12 +91,13 @@ ${proyeccion.map((m) => `- ${m.mes}: ingresos ${m.ingresos}, gastos ${m.gastos},
       },
       {
         name: "registrar_movimiento",
-        description: "Extrae los datos de un ingreso o gasto REAL que el usuario ya hizo (no un escenario hipotético), a partir de una frase en lenguaje natural, en pesos argentinos.",
+        description: "Extrae los datos de un ingreso o gasto REAL que el usuario ya hizo (no un escenario hipotético), a partir de una frase en lenguaje natural.",
         input_schema: {
           type: "object" as const,
           properties: {
             tipo: { type: "string" as const, enum: ["Ingreso", "Gasto"] },
-            monto: { type: "number" as const, description: "Monto en pesos argentinos, siempre positivo, sin signo." },
+            monto: { type: "number" as const, description: "Monto, siempre positivo, sin signo, en la moneda indicada en `moneda`." },
+            moneda: { type: "string" as const, enum: ["ARS", "USD"], description: `En qué moneda dijo el monto (pesos = ARS, dólares = USD). Si no lo aclaró, usá ${data.moneda}.` },
             descripcion: { type: "string" as const, description: "Descripción corta y clara, ej: Kiosco, Nafta, Laburo suelto." },
             categoria: {
               type: "string" as const,
@@ -145,7 +147,7 @@ ${proyeccion.map((m) => `- ${m.mes}: ingresos ${m.ingresos}, gastos ${m.gastos},
       // resto de la IA de la app: nunca guarda directo).
       const registrar = response.content.find((block): block is Extract<typeof block, { type: "tool_use" }> => block.type === "tool_use" && block.name === "registrar_movimiento");
       if (registrar) {
-        const input = registrar.input as { tipo?: string; monto?: number; descripcion?: string; categoria?: string };
+        const input = registrar.input as { tipo?: string; monto?: number; moneda?: string; descripcion?: string; categoria?: string };
         if (!input.monto || !input.descripcion) {
           throw new Error("No pude entender ese movimiento, probá describirlo de otra forma");
         }
@@ -155,6 +157,7 @@ ${proyeccion.map((m) => `- ${m.mes}: ingresos ${m.ingresos}, gastos ${m.gastos},
           movimiento: {
             tipo: input.tipo === "Ingreso" ? "Ingreso" as const : "Gasto" as const,
             monto: String(input.monto),
+            moneda: input.moneda === "USD" ? "USD" as const : "ARS" as const,
             descripcion: input.descripcion,
             categoria: input.categoria ?? "",
             fecha: data.fechaHoy,

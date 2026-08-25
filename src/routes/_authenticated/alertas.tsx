@@ -52,7 +52,7 @@ function AlertasPage() {
     preferences,
     tc,
   });
-  const unusual = detectUnusualSpending(data?.movimientos, profile, preferences);
+  const unusual = detectUnusualSpending(data?.movimientos, profile, preferences, tc);
   const sensitivity = riskProfileSettings(preferences.riskProfile);
 
   const alerts: Alert[] = [];

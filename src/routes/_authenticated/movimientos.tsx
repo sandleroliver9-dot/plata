@@ -8,9 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { categoriasQuery } from "@/lib/queries";
-import { formatMoney, currentFinancialMonth, installmentForFinancialMonth, listFinancialMonths } from "@/lib/finance";
+import { formatMoney, convertAmount, currentFinancialMonth, installmentForFinancialMonth, listFinancialMonths } from "@/lib/finance";
 import { hasSimilarMovement, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
+import { useDolarTC } from "@/lib/supabase-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -32,6 +33,7 @@ function MovimientosPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const currency = profile?.currency ?? "ARS";
+  const { tc } = useDolarTC();
   const payDay = profile?.pay_day ?? 1;
   const mesActual = currentFinancialMonth(payDay);
 
@@ -153,10 +155,10 @@ function MovimientosPage() {
   }, [movimientosConCuotas, tipo, search]);
 
   const totales = useMemo(() => {
-    const ing = filtered.filter(m => m.tipo === "Ingreso").reduce((s, m) => s + Number(m.monto), 0);
-    const gas = filtered.filter(m => m.tipo === "Gasto").reduce((s, m) => s + Number(m.monto), 0);
+    const ing = filtered.filter(m => m.tipo === "Ingreso").reduce((s, m) => s + convertAmount(Number(m.monto), (m as any).moneda, currency, tc), 0);
+    const gas = filtered.filter(m => m.tipo === "Gasto").reduce((s, m) => s + convertAmount(Number(m.monto), (m as any).moneda, currency, tc), 0);
     return { ing, gas, balance: ing - gas };
-  }, [filtered]);
+  }, [filtered, currency, tc]);
 
   const catColor = (nombre: string | null) => cats?.find((c: any) => c.nombre === nombre)?.color ?? "#64748b";
 
@@ -165,11 +167,11 @@ function MovimientosPage() {
     for (const m of movimientosConCuotas) {
       if (m.tipo !== "Gasto") continue;
       const k = m.categoria ?? "Sin categoría";
-      map.set(k, (map.get(k) ?? 0) + Number(m.monto));
+      map.set(k, (map.get(k) ?? 0) + convertAmount(Number(m.monto), (m as any).moneda, currency, tc));
     }
     return Array.from(map, ([name, value]) => ({ name, value, color: catColor(name) }))
       .sort((a, b) => b.value - a.value);
-  }, [movimientosConCuotas, cats]);
+  }, [movimientosConCuotas, cats, currency, tc]);
 
   const delMut = useMutation({
     mutationFn: async (m: { id: string; ingreso_id?: string | null }) => {
@@ -308,12 +310,12 @@ function MovimientosPage() {
                   </div>
                 </div>
                 <div className={`num font-semibold whitespace-nowrap ${m.tipo === "Ingreso" ? "text-success" : "text-foreground"}`}>
-                  {m.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(m.monto), currency)}
+                  {m.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(m.monto), (m as any).moneda || currency)}
                 </div>
                 {!String(m.id).startsWith("cuota-") && !String(m.id).startsWith("fijo-") && (
                   <ConfirmDeleteButton
                     title="¿Eliminar este movimiento?"
-                    description={`${m.descripcion ?? "Este movimiento"} por ${formatMoney(Number(m.monto), currency)} se va a borrar.`}
+                    description={`${m.descripcion ?? "Este movimiento"} por ${formatMoney(Number(m.monto), (m as any).moneda || currency)} se va a borrar.`}
                     onConfirm={() => delMut.mutate({ id: m.id, ingreso_id: (m as any).ingreso_id })}
                   />
                 )}
@@ -336,6 +338,7 @@ function MovimientosPage() {
         open={openQuickEntry}
         onOpenChange={setOpenQuickEntry}
         categorias={(cats ?? []).map((c: any) => c.nombre)}
+        monedaPorDefecto={currency}
         onParsed={(defaults) => {
           setQuickEntryDefaults(defaults);
           setOpenQuickEntry(false);

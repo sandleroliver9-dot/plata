@@ -27,7 +27,7 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
 
   const [form, setForm] = useState<Form>(initial());
   useEffect(() => {
-    if (open) setForm({ ...initial(), ...defaults });
+    if (open) setForm({ ...initial(profile?.currency), ...defaults });
   }, [open]); // eslint-disable-line
 
   const categoryOptions = categoryNamesFor(cats, form.tipo === "Ingreso" ? "Ingreso" : "Gasto");
@@ -52,6 +52,7 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
         categoria: form.categoria || null,
         medio: form.medio || null,
         notas: form.notas.trim() || null,
+        moneda: form.moneda || null,
       });
       if (error) throw error;
     },
@@ -78,15 +79,25 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
               <TabsTrigger value="Ingreso">Ingreso</TabsTrigger>
             </TabsList>
           </Tabs>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[1fr_auto] gap-3">
             <div>
               <Label>Monto</Label>
               <DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 12500,50" />
             </div>
             <div>
-              <Label>Fecha</Label>
-              <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
+              <Label>Moneda</Label>
+              <Select value={form.moneda} onValueChange={(v) => setForm({ ...form, moneda: v })}>
+                <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ARS">ARS</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+          <div>
+            <Label>Fecha</Label>
+            <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
           </div>
           <div>
             <Label>Descripción</Label>
@@ -130,5 +141,5 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
   );
 }
 
-export type Form = { tipo: string; monto: string; fecha: string; descripcion: string; categoria: string; medio: string; notas: string };
-const initial = (): Form => ({ tipo: "Gasto", monto: "", fecha: todayISO(), descripcion: "", categoria: "", medio: "", notas: "" });
+export type Form = { tipo: string; monto: string; fecha: string; descripcion: string; categoria: string; medio: string; notas: string; moneda: string };
+const initial = (defaultCurrency?: string): Form => ({ tipo: "Gasto", monto: "", fecha: todayISO(), descripcion: "", categoria: "", medio: "", notas: "", moneda: defaultCurrency || "ARS" });

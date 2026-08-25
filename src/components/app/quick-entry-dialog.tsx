@@ -14,11 +14,13 @@ export function QuickEntryDialog({
   open,
   onOpenChange,
   categorias,
+  monedaPorDefecto,
   onParsed,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   categorias: string[];
+  monedaPorDefecto?: string;
   onParsed: (defaults: Partial<MovimientoDefaults>) => void;
 }) {
   const [texto, setTexto] = useState("");
@@ -27,7 +29,7 @@ export function QuickEntryDialog({
   const mut = useMutation({
     mutationFn: async () => {
       if (!texto.trim()) throw new Error("Escribí algo primero");
-      return parse({ data: { texto, categorias, fechaHoy: todayISO() } });
+      return parse({ data: { texto, categorias, fechaHoy: todayISO(), monedaPorDefecto } });
     },
     onSuccess: (result) => {
       if (!result.configured) {
@@ -37,6 +39,7 @@ export function QuickEntryDialog({
       onParsed({
         tipo: result.tipo,
         monto: result.monto,
+        moneda: result.moneda,
         descripcion: result.descripcion,
         categoria: result.categoria,
         fecha: result.fecha,
