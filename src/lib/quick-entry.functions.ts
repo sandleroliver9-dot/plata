@@ -18,7 +18,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const parseQuickEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { texto: string; categorias: string[]; fechaHoy: string }) => data)
+  .inputValidator((data: { texto: string; categorias: string[]; fechaHoy: string; monedaPorDefecto?: string }) => data)
   .handler(async ({ data }) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
@@ -27,6 +27,7 @@ export const parseQuickEntry = createServerFn({ method: "POST" })
 
     const texto = data.texto.trim().slice(0, 500);
     if (!texto) throw new Error("Escribí algo primero");
+    const monedaPorDefecto = data.monedaPorDefecto === "USD" ? "USD" : "ARS";
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey });
@@ -39,12 +40,13 @@ export const parseQuickEntry = createServerFn({ method: "POST" })
       tools: [
         {
           name: "registrar_movimiento",
-          description: "Extrae los datos de un ingreso o gasto a partir de una frase en lenguaje natural, en pesos argentinos.",
+          description: "Extrae los datos de un ingreso o gasto a partir de una frase en lenguaje natural.",
           input_schema: {
             type: "object",
             properties: {
               tipo: { type: "string", enum: ["Ingreso", "Gasto"] },
-              monto: { type: "number", description: "Monto en pesos argentinos, siempre positivo, sin signo." },
+              monto: { type: "number", description: "Monto, siempre positivo, sin signo, en la moneda indicada en `moneda`." },
+              moneda: { type: "string", enum: ["ARS", "USD"], description: `En qué moneda dijo el monto (pesos = ARS, dólares = USD). Si no lo aclaró, usá ${monedaPorDefecto}.` },
               descripcion: { type: "string", description: "Descripción corta y clara, ej: Supermercado, Nafta, Sueldo." },
               categoria: {
                 type: "string",
@@ -71,7 +73,7 @@ export const parseQuickEntry = createServerFn({ method: "POST" })
       throw new Error("No pude entender ese texto, probá describirlo de otra forma");
     }
 
-    const parsed = toolUse.input as { tipo?: string; monto?: number; descripcion?: string; categoria?: string };
+    const parsed = toolUse.input as { tipo?: string; monto?: number; moneda?: string; descripcion?: string; categoria?: string };
     if (!parsed.monto || !parsed.descripcion) {
       throw new Error("No pude entender ese texto, probá describirlo de otra forma");
     }
@@ -80,6 +82,7 @@ export const parseQuickEntry = createServerFn({ method: "POST" })
       configured: true as const,
       tipo: parsed.tipo === "Ingreso" ? "Ingreso" : "Gasto",
       monto: String(parsed.monto),
+      moneda: parsed.moneda === "USD" ? "USD" : "ARS",
       descripcion: parsed.descripcion,
       categoria: parsed.categoria ?? "",
       fecha: data.fechaHoy,
