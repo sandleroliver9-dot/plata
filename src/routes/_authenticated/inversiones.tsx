@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,15 +108,16 @@ function Inversiones() {
     qc.invalidateQueries({ queryKey: ["inv-divs"] });
   };
 
-  async function refreshPrices() {
+  async function refreshPrices(opts: { silent?: boolean } = {}) {
+    const silent = opts.silent ?? false;
     if (!activos || activos.length === 0) return;
     const cryptoTickers = activos.filter(a => CRYPTO_TIPOS.has(a.tipo) && a.ticker).map(a => a.ticker!);
     const stockTickers = activos.filter(a => STOCK_TIPOS.has(a.tipo) && a.ticker).map(a => a.ticker!);
     if (cryptoTickers.length === 0 && stockTickers.length === 0) {
-      toast.info("Cargá ticker a los activos para poder actualizar.");
+      if (!silent) toast.info("Cargá ticker a los activos para poder actualizar.");
       return;
     }
-    toast.loading("Actualizando cotizaciones...", { id: "prices" });
+    if (!silent) toast.loading("Actualizando cotizaciones...", { id: "prices" });
     const [cQ, sQ] = await Promise.all([
       cryptoTickers.length ? cryptoFn({ data: { tickers: cryptoTickers } }) : Promise.resolve([]),
       stockTickers.length ? stockFn({ data: { tickers: stockTickers } }) : Promise.resolve([]),
@@ -138,12 +139,30 @@ function Inversiones() {
       }
     }
     qc.invalidateQueries({ queryKey: ["inv-activos"] });
+    // En segundo plano no interrumpimos con toasts en cada ciclo (cada 5
+    // minutos): solo avisamos si algo falló, igual que el botón manual sí
+    // muestra siempre el resultado.
     if (failed > 0) {
       toast.error(`${updated} cotizaciones actualizadas, ${failed} fallaron`, { id: "prices" });
-    } else {
+    } else if (!silent) {
       toast.success(`${updated} cotizaciones actualizadas`, { id: "prices" });
     }
   }
+
+  // Actualización automática en segundo plano: mismo mecanismo que el botón
+  // "Actualizar precios", disparado cada 5 minutos mientras la pantalla está
+  // abierta (mismo intervalo que ya se usa para el tipo de cambio del dólar
+  // en el resto de la app). refreshPrices ya no actualiza nada si no hay
+  // tickers cargados, así que este efecto es un no-op silencioso hasta que
+  // el usuario carga un activo con ticker.
+  const refreshPricesRef = useRef(refreshPrices);
+  refreshPricesRef.current = refreshPrices;
+  useEffect(() => {
+    if (!activos || activos.length === 0) return;
+    refreshPricesRef.current({ silent: true });
+    const interval = setInterval(() => refreshPricesRef.current({ silent: true }), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [activos?.length, user?.id]);
 
   return (
     <div className="space-y-6">
@@ -158,7 +177,7 @@ function Inversiones() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={refreshPrices}><RefreshCw className="size-4 mr-2" />Actualizar precios</Button>
+          <Button variant="outline" size="sm" onClick={() => refreshPrices()}><RefreshCw className="size-4 mr-2" />Actualizar precios</Button>
           <NuevoActivoDialog userId={user?.id} onCreated={invalidate} />
         </div>
       </header>
