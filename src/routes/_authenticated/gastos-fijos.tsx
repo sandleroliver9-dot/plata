@@ -130,15 +130,21 @@ function GastosFijosPage() {
         <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
       </header>
 
-      <Card className="p-5">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual</div>
-        <div className="num text-3xl font-bold mt-1">{formatMoney(total, currency)}</div>
-        {totalCuotas > 0 && (
-          <div className="text-xs text-muted-foreground mt-2">
-            Incluye {formatMoney(totalCuotas, currency)} de cuotas de tarjeta activas
-          </div>
-        )}
-      </Card>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="p-5">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual</div>
+          <div className="num text-3xl font-bold mt-1">{formatMoney(total, currency)}</div>
+          {totalCuotas > 0 && (
+            <div className="text-xs text-muted-foreground mt-2">
+              Incluye {formatMoney(totalCuotas, currency)} de cuotas de tarjeta activas
+            </div>
+          )}
+        </Card>
+        <Card className="p-5">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual (USD)</div>
+          <div className="num text-3xl font-bold mt-1">{formatMoney(convertAmount(total, currency, "USD", tc), "USD")}</div>
+        </Card>
+      </div>
 
       <Card>
         {!items?.length && !cuotasActivas?.length ? (

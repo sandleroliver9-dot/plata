@@ -291,10 +291,16 @@ function IngresosPage() {
         </div>
       </Card>
 
-      <Card className="p-5">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes}</div>
-        <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(total, currency)}</div>
-      </Card>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="p-5">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes}</div>
+          <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(total, currency)}</div>
+        </Card>
+        <Card className="p-5">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes} (USD)</div>
+          <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(convertAmount(total, currency, "USD", tc), "USD")}</div>
+        </Card>
+      </div>
 
       <Card>
         {!items?.length ? (

@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, convertAmount } from "@/lib/finance";
 import { getInflacion } from "@/lib/quotes.functions";
 import { updateSavingTarget } from "@/lib/profile.functions";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
@@ -133,6 +133,21 @@ function ProyeccionesPage() {
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Ahorro proyectado 12 meses</div>
           <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(sumAhorro, currency)}</div>
+        </div>
+      </Card>
+
+      <Card className="p-5 grid gap-4 md:grid-cols-3">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado (USD)</div>
+          <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sueldoProyectado, currency, "USD", tc), "USD")}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio (USD)</div>
+          <div className="num text-2xl font-bold mt-1">{formatMoney(convertAmount(extrasProyectados, currency, "USD", tc), "USD")}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Ahorro proyectado 12 meses (USD)</div>
+          <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sumAhorro, currency, "USD", tc), "USD")}</div>
         </div>
       </Card>
 

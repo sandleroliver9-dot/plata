@@ -69,6 +69,13 @@ function Patrimonio() {
         <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto</div><div className={`num text-2xl font-bold mt-2 ${totals.neto >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.neto, displayCurrency)}</div></Card>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inversiones (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inversiones / tc, "USD")}</div></Card>
+        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inmuebles (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inmuebles / tc, "USD")}</div></Card>
+        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Deudas (USD)</div><div className="num text-2xl font-bold mt-2 text-destructive">{formatMoney(totals.deudas / tc, "USD")}</div></Card>
+        <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto (USD)</div><div className={`num text-2xl font-bold mt-2 ${totals.neto >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.neto / tc, "USD")}</div></Card>
+      </div>
+
       {pieData.length > 0 && (
         <Card className="p-5">
           <h3 className="font-semibold mb-4">Distribución de activos</h3>
