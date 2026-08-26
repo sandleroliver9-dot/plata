@@ -118,6 +118,7 @@ function GastosFijosPage() {
   const totalFijos = (items ?? []).reduce((s, i) => s + convertAmount(Number(i.monto_mensual), (i as any).moneda, currency, tc), 0);
   const totalCuotas = (cuotasActivas ?? []).filter(c => c.cuota_actual <= c.cuotas_totales).reduce((s, c) => s + Number(c.valor_cuota), 0);
   const total = totalFijos + totalCuotas;
+  const tieneUSD = (items ?? []).some((i) => (i as any).moneda === "USD");
   const categoryOptions = categoryNamesFor(cats, "Gasto");
 
   return (
@@ -130,7 +131,7 @@ function GastosFijosPage() {
         <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className={`grid gap-4 ${tieneUSD ? "sm:grid-cols-2" : ""}`}>
         <Card className="p-5">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual</div>
           <div className="num text-3xl font-bold mt-1">{formatMoney(total, currency)}</div>
@@ -140,10 +141,12 @@ function GastosFijosPage() {
             </div>
           )}
         </Card>
-        <Card className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual (USD)</div>
-          <div className="num text-3xl font-bold mt-1">{formatMoney(convertAmount(total, currency, "USD", tc), "USD")}</div>
-        </Card>
+        {tieneUSD && (
+          <Card className="p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual (USD)</div>
+            <div className="num text-3xl font-bold mt-1">{formatMoney(convertAmount(total, currency, "USD", tc), "USD")}</div>
+          </Card>
+        )}
       </div>
 
       <Card>

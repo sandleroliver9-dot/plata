@@ -92,6 +92,8 @@ function ProyeccionesPage() {
   const sumAhorro = rows.reduce((s, r) => s + Math.max(0, r.final), 0);
   const sueldoProyectado = rows[0]?.sueldo ?? 0;
   const extrasProyectados = rows[0]?.extras ?? 0;
+  const tieneUSD = (data?.ingresos ?? []).some((i: any) => i.moneda === "USD")
+    || (data?.fijos ?? []).some((g: any) => g.moneda === "USD");
 
   return (
     <div className="space-y-6">
@@ -136,20 +138,22 @@ function ProyeccionesPage() {
         </div>
       </Card>
 
-      <Card className="p-5 grid gap-4 md:grid-cols-3">
-        <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado (USD)</div>
-          <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sueldoProyectado, currency, "USD", tc), "USD")}</div>
-        </div>
-        <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio (USD)</div>
-          <div className="num text-2xl font-bold mt-1">{formatMoney(convertAmount(extrasProyectados, currency, "USD", tc), "USD")}</div>
-        </div>
-        <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Ahorro proyectado 12 meses (USD)</div>
-          <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sumAhorro, currency, "USD", tc), "USD")}</div>
-        </div>
-      </Card>
+      {tieneUSD && (
+        <Card className="p-5 grid gap-4 md:grid-cols-3">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado (USD)</div>
+            <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sueldoProyectado, currency, "USD", tc), "USD")}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio (USD)</div>
+            <div className="num text-2xl font-bold mt-1">{formatMoney(convertAmount(extrasProyectados, currency, "USD", tc), "USD")}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Ahorro proyectado 12 meses (USD)</div>
+            <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sumAhorro, currency, "USD", tc), "USD")}</div>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4">
         <div className="h-64">
