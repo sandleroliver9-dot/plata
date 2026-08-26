@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { formatMoney, convertAmount } from "@/lib/finance";
+import { formatMoney } from "@/lib/finance";
 import { getInflacion } from "@/lib/quotes.functions";
 import { updateSavingTarget } from "@/lib/profile.functions";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
@@ -92,8 +92,24 @@ function ProyeccionesPage() {
   const sumAhorro = rows.reduce((s, r) => s + Math.max(0, r.final), 0);
   const sueldoProyectado = rows[0]?.sueldo ?? 0;
   const extrasProyectados = rows[0]?.extras ?? 0;
-  const tieneUSD = (data?.ingresos ?? []).some((i: any) => i.moneda === "USD")
-    || (data?.fijos ?? []).some((g: any) => g.moneda === "USD");
+
+  // Sueldo/extras en USD "nativo": solo si el último sueldo cargado (o los
+  // extras de los últimos 3 meses) están efectivamente en dólares, sin
+  // convertir nada de lo que está en pesos. El ahorro proyectado a 12 meses
+  // no tiene un equivalente nativo en USD limpio (es una proyección en
+  // pesos con inflación/objetivo de ahorro), así que no se muestra en USD.
+  const ultimoSueldo = (data?.ingresos ?? [])
+    .filter((i: any) => String(i.tipo ?? "").toLowerCase() === "sueldo")
+    .sort((a: any, b: any) => String(b.fecha_cobro).localeCompare(String(a.fecha_cobro)))[0];
+  const sueldoProyectadoUSD = ultimoSueldo?.moneda === "USD" ? Number(ultimoSueldo.monto ?? 0) : 0;
+  const now3m = new Date();
+  const extras3mUSD = (data?.ingresos ?? []).filter((i: any) => {
+    if (i.moneda !== "USD" || String(i.tipo ?? "").toLowerCase() === "sueldo") return false;
+    const d = new Date(i.fecha_cobro);
+    const monthsAgo = (now3m.getFullYear() - d.getFullYear()) * 12 + (now3m.getMonth() - d.getMonth());
+    return monthsAgo >= 0 && monthsAgo < 3;
+  });
+  const extrasProyectadosUSD = extras3mUSD.length ? extras3mUSD.reduce((s: number, i: any) => s + Number(i.monto ?? 0), 0) / 3 : 0;
 
   return (
     <div className="space-y-6">
@@ -138,22 +154,16 @@ function ProyeccionesPage() {
         </div>
       </Card>
 
-      {tieneUSD && (
-        <Card className="p-5 grid gap-4 md:grid-cols-3">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado (USD)</div>
-            <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sueldoProyectado, currency, "USD", tc), "USD")}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio (USD)</div>
-            <div className="num text-2xl font-bold mt-1">{formatMoney(convertAmount(extrasProyectados, currency, "USD", tc), "USD")}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Ahorro proyectado 12 meses (USD)</div>
-            <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(convertAmount(sumAhorro, currency, "USD", tc), "USD")}</div>
-          </div>
-        </Card>
-      )}
+      <Card className="p-5 grid gap-4 md:grid-cols-2">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado (USD)</div>
+          <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(sueldoProyectadoUSD, "USD")}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio (USD)</div>
+          <div className="num text-2xl font-bold mt-1">{formatMoney(extrasProyectadosUSD, "USD")}</div>
+        </div>
+      </Card>
 
       <Card className="p-4">
         <div className="h-64">

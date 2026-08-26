@@ -221,7 +221,8 @@ function IngresosPage() {
   });
 
   const total = (items ?? []).reduce((s, i) => s + convertAmount(Number(i.monto), (i as any).moneda, currency, tc), 0);
-  const tieneUSD = (items ?? []).some((i) => (i as any).moneda === "USD");
+  // Total nativo en USD: solo lo cargado en dólares. Da $0 si no hay nada en USD.
+  const totalUSD = (items ?? []).filter((i) => (i as any).moneda === "USD").reduce((s, i) => s + Number(i.monto), 0);
 
   return (
     <div className="space-y-6">
@@ -292,17 +293,15 @@ function IngresosPage() {
         </div>
       </Card>
 
-      <div className={`grid gap-4 ${tieneUSD ? "sm:grid-cols-2" : ""}`}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes}</div>
           <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(total, currency)}</div>
         </Card>
-        {tieneUSD && (
-          <Card className="p-5">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes} (USD)</div>
-            <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(convertAmount(total, currency, "USD", tc), "USD")}</div>
-          </Card>
-        )}
+        <Card className="p-5">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes} (USD)</div>
+          <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(totalUSD, "USD")}</div>
+        </Card>
       </div>
 
       <Card>

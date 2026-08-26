@@ -22,7 +22,7 @@ function Patrimonio() {
   const displayCurrency = "ARS";
 
   const { data } = useQuery(financialDataQuery(user?.id));
-  const { valorARS: inversionesValor, tc, tcIsFallback, warnings: portfolioWarnings } = usePortfolioValue(user?.id);
+  const { valorARS: inversionesValor, valorUSD: inversionesValorUSD, tc, tcIsFallback, warnings: portfolioWarnings } = usePortfolioValue(user?.id);
 
   // Cada inmueble puede estar cargado en USD o ARS: convertimos a ARS (moneda
   // de referencia de esta pantalla) antes de sumar, para no mezclar unidades.
@@ -37,13 +37,16 @@ function Patrimonio() {
     // del patrimonio neto, que quedaba inflado en exactamente esa deuda.
     const deudasTar = (data?.tarjetas ?? []).reduce((s: number, t: any) => s + (Number(t.valor_cuota || 0) * Math.max(0, Number(t.cuotas_totales || 0) - Number(t.cuota_actual || 0) + 1)), 0);
     const deudas = deudasInm + deudasPres + deudasTar;
-    return { inversiones, inmuebles, deudas, neto: inversiones + inmuebles - deudas };
-  }, [data, inversionesValor, tc]);
-
-  // Inversiones ya están en dólares por naturaleza (así las trackea el
-  // portfolio), así que alcanza con tener alguna cargada; inmuebles/deudas
-  // solo si hay algo puntualmente en USD.
-  const tieneUSD = totals.inversiones > 0 || (data?.inmuebles ?? []).some((i: any) => i.moneda === "USD");
+    // Nativo en USD: inversiones ya se trackean en dólares (valorUSD del
+    // portfolio, no una conversión); inmuebles/deudas solo lo que esté
+    // puntualmente cargado en USD, sin convertir lo que está en pesos.
+    const inmueblesUSD = (data?.inmuebles ?? []).filter((i: any) => i.moneda === "USD").reduce((s: number, i: any) => s + Number(i.valor_estimado || 0), 0);
+    const deudasUSD = (data?.inmuebles ?? []).filter((i: any) => i.moneda === "USD").reduce((s: number, i: any) => s + Number(i.deuda_asociada || 0), 0);
+    return {
+      inversiones, inmuebles, deudas, neto: inversiones + inmuebles - deudas,
+      inversionesUSD: inversionesValorUSD, inmueblesUSD, deudasUSD, netoUSD: inversionesValorUSD + inmueblesUSD - deudasUSD,
+    };
+  }, [data, inversionesValor, inversionesValorUSD, tc]);
 
   const pieData = [
     { name: "Inversiones", value: totals.inversiones, color: "var(--primary)" },
@@ -74,14 +77,12 @@ function Patrimonio() {
         <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto</div><div className={`num text-2xl font-bold mt-2 ${totals.neto >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.neto, displayCurrency)}</div></Card>
       </div>
 
-      {tieneUSD && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inversiones (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inversiones / tc, "USD")}</div></Card>
-          <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inmuebles (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inmuebles / tc, "USD")}</div></Card>
-          <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Deudas (USD)</div><div className="num text-2xl font-bold mt-2 text-destructive">{formatMoney(totals.deudas / tc, "USD")}</div></Card>
-          <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto (USD)</div><div className={`num text-2xl font-bold mt-2 ${totals.neto >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.neto / tc, "USD")}</div></Card>
-        </div>
-      )}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inversiones (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inversionesUSD, "USD")}</div></Card>
+        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inmuebles (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inmueblesUSD, "USD")}</div></Card>
+        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Deudas (USD)</div><div className="num text-2xl font-bold mt-2 text-destructive">{formatMoney(totals.deudasUSD, "USD")}</div></Card>
+        <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto (USD)</div><div className={`num text-2xl font-bold mt-2 ${totals.netoUSD >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.netoUSD, "USD")}</div></Card>
+      </div>
 
       {pieData.length > 0 && (
         <Card className="p-5">

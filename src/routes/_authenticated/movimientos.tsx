@@ -158,13 +158,12 @@ function MovimientosPage() {
   const totales = useMemo(() => {
     const ing = filtered.filter(m => m.tipo === "Ingreso").reduce((s, m) => s + convertAmount(Number(m.monto), (m as any).moneda, currency, tc), 0);
     const gas = filtered.filter(m => m.tipo === "Gasto").reduce((s, m) => s + convertAmount(Number(m.monto), (m as any).moneda, currency, tc), 0);
-    return { ing, gas, balance: ing - gas };
+    // Total nativo en USD: solo lo cargado en dólares, sin convertir lo que
+    // está en pesos. Da $0 si no hay nada cargado en USD.
+    const ingUSD = filtered.filter(m => m.tipo === "Ingreso" && (m as any).moneda === "USD").reduce((s, m) => s + Number(m.monto), 0);
+    const gasUSD = filtered.filter(m => m.tipo === "Gasto" && (m as any).moneda === "USD").reduce((s, m) => s + Number(m.monto), 0);
+    return { ing, gas, balance: ing - gas, ingUSD, gasUSD, balanceUSD: ingUSD - gasUSD };
   }, [filtered, currency, tc]);
-
-  // Solo mostrar la fila en USD si hay algo cargado en dólares en lo que se
-  // está mirando: si todo está en pesos, no tiene sentido mostrar un
-  // "equivalente en USD" que hace parecer que todo se dolarizó.
-  const tieneUSD = filtered.some((m) => (m as any).moneda === "USD");
 
   const catColor = (nombre: string | null) => cats?.find((c: any) => c.nombre === nombre)?.color ?? "#64748b";
 
@@ -234,13 +233,11 @@ function MovimientosPage() {
         <MiniStat label="Gastos" value={formatMoney(totales.gas, currency)} tone="destructive" />
         <MiniStat label="Balance" value={formatMoney(totales.balance, currency)} tone={totales.balance >= 0 ? "success" : "destructive"} />
       </div>
-      {tieneUSD && (
-        <div className="grid grid-cols-3 gap-3">
-          <MiniStat label="Ingresos (USD)" value={formatMoney(convertAmount(totales.ing, currency, "USD", tc), "USD")} tone="success" />
-          <MiniStat label="Gastos (USD)" value={formatMoney(convertAmount(totales.gas, currency, "USD", tc), "USD")} tone="destructive" />
-          <MiniStat label="Balance (USD)" value={formatMoney(convertAmount(totales.balance, currency, "USD", tc), "USD")} tone={totales.balance >= 0 ? "success" : "destructive"} />
-        </div>
-      )}
+      <div className="grid grid-cols-3 gap-3">
+        <MiniStat label="Ingresos (USD)" value={formatMoney(totales.ingUSD, "USD")} tone="success" />
+        <MiniStat label="Gastos (USD)" value={formatMoney(totales.gasUSD, "USD")} tone="destructive" />
+        <MiniStat label="Balance (USD)" value={formatMoney(totales.balanceUSD, "USD")} tone={totales.balanceUSD >= 0 ? "success" : "destructive"} />
+      </div>
 
       {gastosPorCategoria.length > 0 && (
         <Card className="p-4">
