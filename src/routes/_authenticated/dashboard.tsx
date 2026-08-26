@@ -73,7 +73,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gastos_fijos")
-        .select("id, gasto, monto_mensual, categoria, medio")
+        .select("id, gasto, monto_mensual, categoria, medio, moneda")
         .eq("activo", true);
       if (error) throw error;
       return data ?? [];
@@ -173,14 +173,19 @@ function Dashboard() {
     });
     // Gastos fijos: agregar al mes actual
     (gastosFijos ?? []).forEach((g) => {
+      // movsConCuotas ya tiene sus montos convertidos a `currency` (arriba):
+      // comparar acá contra el monto ya convertido, no el crudo, para que el
+      // chequeo de duplicado siga funcionando con monedas mixtas.
+      const montoConvertido = convertAmount(Number(g.monto_mensual), (g as any).moneda, currency, tc);
       const yaExiste = movsConCuotas.some((mov) => {
         if (mov.tipo !== "Gasto" || mov.mes_financiero !== mes) return false;
-        return (mov.descripcion ?? "").toLowerCase() === g.gasto.toLowerCase() && Number(mov.monto) === Number(g.monto_mensual);
+        return (mov.descripcion ?? "").toLowerCase() === g.gasto.toLowerCase() && Number(mov.monto) === montoConvertido;
       });
       if (yaExiste) return;
       movsConCuotas.push({
         tipo: "Gasto",
-        monto: Number(g.monto_mensual),
+        monto: montoConvertido,
+        moneda: currency,
         categoria: g.categoria ?? "Fijo",
         mes_financiero: mes,
         descripcion: g.gasto,

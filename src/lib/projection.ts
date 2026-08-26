@@ -44,7 +44,7 @@ export function computeProjectionRows(params: {
   const { data, profile, preferences, salary, ahorroPct, inflacionPct, overdraft, currency, tc = TC_FALLBACK } = params;
   if (!data) return [];
 
-  const totalFijos = data.fijos.reduce((s, f: any) => s + Number(f.monto_mensual), 0);
+  const totalFijos = data.fijos.reduce((s, f: any) => s + convertAmount(Number(f.monto_mensual), f.moneda, currency, tc), 0);
   const sueldoCargado = data.ingresos
     .filter((i: any) => String(i.tipo ?? "").toLowerCase() === "sueldo")
     .sort((a: any, b: any) => String(b.fecha_cobro).localeCompare(String(a.fecha_cobro)))[0];

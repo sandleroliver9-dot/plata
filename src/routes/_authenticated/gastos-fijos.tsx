@@ -1,5 +1,5 @@
 import { ConceptCombo } from "@/components/app/concept-combo";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { categoriasQuery } from "@/lib/queries";
-import { formatMoney } from "@/lib/finance";
+import { formatMoney, convertAmount } from "@/lib/finance";
+import { useDolarTC } from "@/lib/supabase-queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,8 +34,12 @@ function GastosFijosPage() {
   const [, setPreferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
   const qc = useQueryClient();
   const currency = profile?.currency ?? "ARS";
+  const { tc } = useDolarTC();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ gasto: "", monto_mensual: "", categoria: "", medio: "", dia_debito: "" });
+  const [form, setForm] = useState({ gasto: "", monto_mensual: "", categoria: "", medio: "", dia_debito: "", moneda: currency });
+  useEffect(() => {
+    if (open) setForm((f) => ({ ...f, moneda: currency }));
+  }, [open]);
 
   const { data: items } = useQuery({
     queryKey: ["gastos-fijos", user?.id],
@@ -67,6 +72,7 @@ function GastosFijosPage() {
         monto_mensual: monto,
         categoria: form.categoria || null,
         medio: form.medio || null,
+        moneda: form.moneda || null,
       }).select("id").single();
       if (error) throw error;
       // El dia de debito no vive en la tabla gastos_fijos: se guarda como
@@ -90,7 +96,7 @@ function GastosFijosPage() {
       qc.invalidateQueries({ queryKey: ["movimientos"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       setOpen(false);
-      setForm({ gasto: "", monto_mensual: "", categoria: "", medio: "", dia_debito: "" });
+      setForm({ gasto: "", monto_mensual: "", categoria: "", medio: "", dia_debito: "", moneda: currency });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -109,7 +115,7 @@ function GastosFijosPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const totalFijos = (items ?? []).reduce((s, i) => s + Number(i.monto_mensual), 0);
+  const totalFijos = (items ?? []).reduce((s, i) => s + convertAmount(Number(i.monto_mensual), (i as any).moneda, currency, tc), 0);
   const totalCuotas = (cuotasActivas ?? []).filter(c => c.cuota_actual <= c.cuotas_totales).reduce((s, c) => s + Number(c.valor_cuota), 0);
   const total = totalFijos + totalCuotas;
   const categoryOptions = categoryNamesFor(cats, "Gasto");
@@ -145,10 +151,10 @@ function GastosFijosPage() {
                   <div className="font-medium">{i.gasto}</div>
                   <div className="text-xs text-muted-foreground">{i.categoria ?? "Sin categoría"}{i.medio ? ` · ${i.medio}` : ""}</div>
                 </div>
-                <div className="num font-semibold">{formatMoney(Number(i.monto_mensual), currency)}</div>
+                <div className="num font-semibold">{formatMoney(Number(i.monto_mensual), (i as any).moneda || currency)}</div>
                 <ConfirmDeleteButton
                   title="¿Eliminar este gasto fijo?"
-                  description={`${i.gasto} (${formatMoney(Number(i.monto_mensual), currency)}/mes) se va a borrar.`}
+                  description={`${i.gasto} (${formatMoney(Number(i.monto_mensual), (i as any).moneda || currency)}/mes) se va a borrar.`}
                   onConfirm={() => del.mutate(i.id)}
                 />
               </div>
@@ -172,7 +178,19 @@ function GastosFijosPage() {
           <div className="space-y-3">
             <div><Label>Gasto</Label><ConceptCombo kind="GastoFijo" value={form.gasto} onChange={(v) => setForm({ ...form, gasto: v })} placeholder="Alquiler, Netflix..." /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Monto mensual</Label><DecimalInput value={form.monto_mensual} onChange={(e) => setForm({ ...form, monto_mensual: e.target.value })} placeholder="Ej: 35000" /></div>
+              <div>
+                <Label>Monto mensual</Label>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <DecimalInput value={form.monto_mensual} onChange={(e) => setForm({ ...form, monto_mensual: e.target.value })} placeholder="Ej: 35000" />
+                  <Select value={form.moneda} onValueChange={(v) => setForm({ ...form, moneda: v })}>
+                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ARS">ARS</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div>
                 <Label>Día de débito</Label>
                 <IntegerInput placeholder="Ej: 10" value={form.dia_debito} onChange={(e) => setForm({ ...form, dia_debito: e.target.value })} />

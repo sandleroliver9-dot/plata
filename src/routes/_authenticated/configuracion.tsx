@@ -388,7 +388,7 @@ function ConfiguracionPage() {
                   <div className="min-w-0">
                     <div className="font-medium truncate">{expense.gasto}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      {expense.categoria ?? "Gasto fijo"} · {formatMoney(Number(expense.monto_mensual), currency)}
+                      {expense.categoria ?? "Gasto fijo"} · {formatMoney(Number(expense.monto_mensual), expense.moneda || currency)}
                     </div>
                   </div>
                   <Field label="¿Que dia suele debitarse?">
