@@ -238,6 +238,11 @@ function Dashboard() {
   const ahorroPct = ingresos > 0 ? (balance / ingresos) * 100 : 0;
   const ahorroObjetivo = getSavingTargetPercent(profile);
   const topMax = topCats[0]?.[1] ?? 0;
+  // Equivalente en USD de los totales del mes: convertAmount(valor, currency, "ARS"/"USD", tc)
+  // anda para cualquier `currency` de base (ARS o USD), no solo cuando el perfil es ARS.
+  const ingresosUSD = convertAmount(ingresos, currency, "USD", tc);
+  const gastosUSD = convertAmount(gastos, currency, "USD", tc);
+  const balanceUSD = convertAmount(balance, currency, "USD", tc);
 
   return (
     <div className="space-y-8">
@@ -253,6 +258,12 @@ function Dashboard() {
         <KpiCard label="Ingresos" value={formatMoney(ingresos, currency)} icon={<TrendingUp className="size-5" />} tone="success" />
         <KpiCard label="Gastos" value={formatMoney(gastos, currency)} icon={<TrendingDown className="size-5" />} tone="destructive" />
         <KpiCard label="Balance" value={formatMoney(balance, currency)} icon={<Wallet className="size-5" />} tone={balance >= 0 ? "success" : "destructive"} subtitle={`${ahorroPct >= 0 ? "+" : ""}${ahorroPct.toFixed(0)}% de ahorro · objetivo ${ahorroObjetivo}%`} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <KpiCard label="Ingresos (USD)" value={formatMoney(ingresosUSD, "USD")} icon={<TrendingUp className="size-5" />} tone="success" />
+        <KpiCard label="Gastos (USD)" value={formatMoney(gastosUSD, "USD")} icon={<TrendingDown className="size-5" />} tone="destructive" />
+        <KpiCard label="Balance (USD)" value={formatMoney(balanceUSD, "USD")} icon={<Wallet className="size-5" />} tone={balanceUSD >= 0 ? "success" : "destructive"} />
       </div>
 
       <Card className="p-5" style={{ boxShadow: "var(--shadow-card)" }}>
