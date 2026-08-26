@@ -81,7 +81,7 @@ function MovimientosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gastos_fijos")
-        .select("id, gasto, monto_mensual, categoria, medio")
+        .select("id, gasto, monto_mensual, categoria, medio, moneda")
         .eq("activo", true);
       if (error) throw error;
       return data ?? [];
@@ -133,6 +133,7 @@ function MovimientosPage() {
       tipo: "Gasto",
       descripcion: g.gasto,
       monto: Number(g.monto_mensual),
+      moneda: (g as any).moneda,
       fecha: mes,
       mes_financiero: mes,
       categoria: g.categoria ?? "Fijo",

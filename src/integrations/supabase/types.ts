@@ -93,6 +93,7 @@ export type Database = {
           id: string
           inicio: string | null
           medio: string | null
+          moneda: string | null
           monto_mensual: number
           notas: string | null
           user_id: string
@@ -106,6 +107,7 @@ export type Database = {
           id?: string
           inicio?: string | null
           medio?: string | null
+          moneda?: string | null
           monto_mensual: number
           notas?: string | null
           user_id: string
@@ -119,6 +121,7 @@ export type Database = {
           id?: string
           inicio?: string | null
           medio?: string | null
+          moneda?: string | null
           monto_mensual?: number
           notas?: string | null
           user_id?: string

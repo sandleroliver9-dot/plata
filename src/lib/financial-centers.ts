@@ -332,9 +332,13 @@ export function getMonthlyCashflow({
 
   const gastosFijosPendientes = gastosFijos.reduce((s, g) => {
     const pref = prefs.recurringSettings[String(g.id)] ?? {};
-    const monto = Number(g.monto_mensual ?? 0) * recurringMonthlyMultiplier(pref.frequency);
-    if (monto <= 0 || hasSimilarMovement(movsMes, String(g.gasto ?? ""), monto, mes)) return s;
-    return s + monto;
+    // hasSimilarMovement compara contra el monto CRUDO (sin convertir): si ya
+    // se registró un movimiento real para este gasto fijo, se guardó en su
+    // misma moneda original, así que comparar en esos términos es correcto.
+    // La conversión a targetCurrency se aplica recién al sumar al total.
+    const montoCrudo = Number(g.monto_mensual ?? 0) * recurringMonthlyMultiplier(pref.frequency);
+    if (montoCrudo <= 0 || hasSimilarMovement(movsMes, String(g.gasto ?? ""), montoCrudo, mes)) return s;
+    return s + convertAmount(montoCrudo, g.moneda, targetCurrency, tc);
   }, 0);
 
   const cuotasTarjeta = tarjetas.reduce((s, c) => {
@@ -483,7 +487,7 @@ export function buildUpcomingEvents({
         id: `gasto-fijo-${g.id}-${isoLocal(date)}-${index}`,
         date: isoLocal(date),
         title: String(g.gasto ?? "Gasto fijo"),
-        amount: Number(g.monto_mensual ?? 0),
+        amount: convertAmount(Number(g.monto_mensual ?? 0), g.moneda, targetCurrency, tc),
         type: "gasto_fijo",
         detail: `${g.categoria ?? "Gasto fijo"} · ${recurringFrequencyLabel(frequency)}`,
       });
