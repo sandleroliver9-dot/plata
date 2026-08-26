@@ -229,6 +229,11 @@ function MovimientosPage() {
         <MiniStat label="Gastos" value={formatMoney(totales.gas, currency)} tone="destructive" />
         <MiniStat label="Balance" value={formatMoney(totales.balance, currency)} tone={totales.balance >= 0 ? "success" : "destructive"} />
       </div>
+      <div className="grid grid-cols-3 gap-3">
+        <MiniStat label="Ingresos (USD)" value={formatMoney(convertAmount(totales.ing, currency, "USD", tc), "USD")} tone="success" />
+        <MiniStat label="Gastos (USD)" value={formatMoney(convertAmount(totales.gas, currency, "USD", tc), "USD")} tone="destructive" />
+        <MiniStat label="Balance (USD)" value={formatMoney(convertAmount(totales.balance, currency, "USD", tc), "USD")} tone={totales.balance >= 0 ? "success" : "destructive"} />
+      </div>
 
       {gastosPorCategoria.length > 0 && (
         <Card className="p-4">

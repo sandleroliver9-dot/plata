@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney, todayISO } from "@/lib/finance";
+import { formatMoney, convertAmount, todayISO } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, detectUnusualSpending, getMonthlyCashflow } from "@/lib/financial-centers";
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
@@ -158,6 +158,11 @@ function AlertasPage() {
           <Metric label="Ingresos" value={formatMoney(cash.ingresos, currency)} />
           <Metric label="Gastos estimados" value={formatMoney(cash.gastos, currency)} />
           <Metric label="Disponible" value={formatMoney(cash.disponible, currency)} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Metric label="Ingresos (USD)" value={formatMoney(convertAmount(cash.ingresos, currency, "USD", tc), "USD")} />
+          <Metric label="Gastos estimados (USD)" value={formatMoney(convertAmount(cash.gastos, currency, "USD", tc), "USD")} />
+          <Metric label="Disponible (USD)" value={formatMoney(convertAmount(cash.disponible, currency, "USD", tc), "USD")} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
         </div>
         <p className="text-xs text-muted-foreground mt-3">
           "Gastos estimados" suma lo que ya registraste más las cuotas y gastos fijos pendientes de pago este mes: puede diferir del total de Movimientos, que solo cuenta lo ya registrado.
