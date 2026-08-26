@@ -54,6 +54,9 @@ function AlertasPage() {
   });
   const unusual = detectUnusualSpending(data?.movimientos, profile, preferences, tc);
   const sensitivity = riskProfileSettings(preferences.riskProfile);
+  const tieneUSD = (data?.movimientos ?? []).some((m: any) => m.moneda === "USD")
+    || (data?.ingresos ?? []).some((i: any) => i.moneda === "USD")
+    || (data?.fijos ?? []).some((g: any) => g.moneda === "USD");
 
   const alerts: Alert[] = [];
 
@@ -159,11 +162,13 @@ function AlertasPage() {
           <Metric label="Gastos estimados" value={formatMoney(cash.gastos, currency)} />
           <Metric label="Disponible" value={formatMoney(cash.disponible, currency)} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
         </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <Metric label="Ingresos (USD)" value={formatMoney(convertAmount(cash.ingresos, currency, "USD", tc), "USD")} />
-          <Metric label="Gastos estimados (USD)" value={formatMoney(convertAmount(cash.gastos, currency, "USD", tc), "USD")} />
-          <Metric label="Disponible (USD)" value={formatMoney(convertAmount(cash.disponible, currency, "USD", tc), "USD")} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
-        </div>
+        {tieneUSD && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <Metric label="Ingresos (USD)" value={formatMoney(convertAmount(cash.ingresos, currency, "USD", tc), "USD")} />
+            <Metric label="Gastos estimados (USD)" value={formatMoney(convertAmount(cash.gastos, currency, "USD", tc), "USD")} />
+            <Metric label="Disponible (USD)" value={formatMoney(convertAmount(cash.disponible, currency, "USD", tc), "USD")} tone={cash.disponible < 0 ? "text-destructive" : "text-success"} />
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-3">
           "Gastos estimados" suma lo que ya registraste más las cuotas y gastos fijos pendientes de pago este mes: puede diferir del total de Movimientos, que solo cuenta lo ya registrado.
         </p>

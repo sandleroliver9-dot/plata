@@ -243,6 +243,12 @@ function Dashboard() {
   const ingresosUSD = convertAmount(ingresos, currency, "USD", tc);
   const gastosUSD = convertAmount(gastos, currency, "USD", tc);
   const balanceUSD = convertAmount(balance, currency, "USD", tc);
+  // Solo mostrar la fila en USD si el usuario efectivamente cargó algo en
+  // dólares: si todo está en pesos, mostrar igual el "equivalente en USD"
+  // no aporta nada y hace parecer que todo se dolarizó.
+  const tieneUSD = (movs ?? []).some((m: any) => m.moneda === "USD")
+    || (ingresosCargados ?? []).some((i: any) => i.moneda === "USD")
+    || (gastosFijos ?? []).some((g: any) => g.moneda === "USD");
 
   return (
     <div className="space-y-8">
@@ -260,11 +266,13 @@ function Dashboard() {
         <KpiCard label="Balance" value={formatMoney(balance, currency)} icon={<Wallet className="size-5" />} tone={balance >= 0 ? "success" : "destructive"} subtitle={`${ahorroPct >= 0 ? "+" : ""}${ahorroPct.toFixed(0)}% de ahorro · objetivo ${ahorroObjetivo}%`} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Ingresos (USD)" value={formatMoney(ingresosUSD, "USD")} icon={<TrendingUp className="size-5" />} tone="success" />
-        <KpiCard label="Gastos (USD)" value={formatMoney(gastosUSD, "USD")} icon={<TrendingDown className="size-5" />} tone="destructive" />
-        <KpiCard label="Balance (USD)" value={formatMoney(balanceUSD, "USD")} icon={<Wallet className="size-5" />} tone={balanceUSD >= 0 ? "success" : "destructive"} />
-      </div>
+      {tieneUSD && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <KpiCard label="Ingresos (USD)" value={formatMoney(ingresosUSD, "USD")} icon={<TrendingUp className="size-5" />} tone="success" />
+          <KpiCard label="Gastos (USD)" value={formatMoney(gastosUSD, "USD")} icon={<TrendingDown className="size-5" />} tone="destructive" />
+          <KpiCard label="Balance (USD)" value={formatMoney(balanceUSD, "USD")} icon={<Wallet className="size-5" />} tone={balanceUSD >= 0 ? "success" : "destructive"} />
+        </div>
+      )}
 
       <Card className="p-5" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex items-center gap-4">
