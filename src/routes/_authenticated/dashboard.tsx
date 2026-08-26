@@ -104,7 +104,7 @@ function Dashboard() {
   });
 
 
-  const { ingresos, gastos, balance, topCats, serie, anomalias } = useMemo(() => {
+  const { ingresos, gastos, balance, ingresosUSD, gastosUSD, topCats, serie, anomalias } = useMemo(() => {
     // Cualquier movimiento (Gasto o Ingreso) puede traer su propia `moneda`
     // (ej: sueldo en USD, un gasto en dólares) y se normaliza acá a
     // `currency` antes de sumar nada. convertAmount es un no-op cuando la
@@ -113,8 +113,12 @@ function Dashboard() {
     // queda con `monto` ya convertido pero `moneda` todavía apuntando a la
     // original — y cualquier convertAmount() más adelante (ej. dentro de
     // detectUnusualSpending) la volvería a convertir por segunda vez.
+    // montoOriginal/monedaOriginal se guardan aparte (sin tocar) para poder
+    // mostrar el total "nativo" en USD más abajo: NO es el total convertido
+    // a dólares (eso dolarizaría también lo que está en pesos), es la suma
+    // de lo que el usuario efectivamente cargó en dólares.
     const movsConCuotas: any[] = (movs ?? []).map((m: any) =>
-      ({ ...m, monto: convertAmount(Number(m.monto), m.moneda, currency, tc), moneda: currency }),
+      ({ ...m, montoOriginal: Number(m.monto), monedaOriginal: m.moneda, monto: convertAmount(Number(m.monto), m.moneda, currency, tc), moneda: currency }),
     );
     (cuotasActivas ?? []).forEach((c) => {
       meses6.forEach((m) => {
@@ -161,6 +165,8 @@ function Dashboard() {
       movsConCuotas.push({
         tipo: "Ingreso",
         monto,
+        montoOriginal: Number(ingreso.monto ?? 0),
+        monedaOriginal: ingreso.moneda,
         categoria: ingreso.tipo ?? "Ingreso",
         mes_financiero: ingreso.mes_financiero,
         descripcion: ingreso.concepto,
@@ -185,6 +191,8 @@ function Dashboard() {
       movsConCuotas.push({
         tipo: "Gasto",
         monto: montoConvertido,
+        montoOriginal: Number(g.monto_mensual),
+        monedaOriginal: (g as any).moneda,
         moneda: currency,
         categoria: g.categoria ?? "Fijo",
         mes_financiero: mes,
@@ -200,6 +208,10 @@ function Dashboard() {
     const enMes = movsConCuotas.filter(m => m.mes_financiero === mes);
     const ingresos = enMes.filter(m => m.tipo === "Ingreso").reduce((s, m) => s + Number(m.monto), 0);
     const gastos = enMes.filter(m => m.tipo === "Gasto").reduce((s, m) => s + Number(m.monto), 0);
+    // Total nativo en USD: solo lo que se cargó en dólares, sin convertir
+    // nada de lo que está en pesos. Da $0 si no hay nada cargado en USD.
+    const ingresosUSD = enMes.filter(m => m.tipo === "Ingreso" && m.monedaOriginal === "USD").reduce((s, m) => s + Number(m.montoOriginal ?? 0), 0);
+    const gastosUSD = enMes.filter(m => m.tipo === "Gasto" && m.monedaOriginal === "USD").reduce((s, m) => s + Number(m.montoOriginal ?? 0), 0);
 
     // Top categorías (mes)
     const catMap = new Map<string, number>();
@@ -229,7 +241,7 @@ function Dashboard() {
       .slice(0, 3)
       .map((u) => ({ cat: u.categoria, monto: u.monto }));
 
-    return { ingresos, gastos, balance: ingresos - gastos, topCats, serie, anomalias };
+    return { ingresos, gastos, balance: ingresos - gastos, ingresosUSD, gastosUSD, topCats, serie, anomalias };
   }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6, profile, preferences, currency, tc]);
 
   const overdraft = Number(profile?.overdraft_allowed ?? 0);
@@ -238,17 +250,7 @@ function Dashboard() {
   const ahorroPct = ingresos > 0 ? (balance / ingresos) * 100 : 0;
   const ahorroObjetivo = getSavingTargetPercent(profile);
   const topMax = topCats[0]?.[1] ?? 0;
-  // Equivalente en USD de los totales del mes: convertAmount(valor, currency, "ARS"/"USD", tc)
-  // anda para cualquier `currency` de base (ARS o USD), no solo cuando el perfil es ARS.
-  const ingresosUSD = convertAmount(ingresos, currency, "USD", tc);
-  const gastosUSD = convertAmount(gastos, currency, "USD", tc);
-  const balanceUSD = convertAmount(balance, currency, "USD", tc);
-  // Solo mostrar la fila en USD si el usuario efectivamente cargó algo en
-  // dólares: si todo está en pesos, mostrar igual el "equivalente en USD"
-  // no aporta nada y hace parecer que todo se dolarizó.
-  const tieneUSD = (movs ?? []).some((m: any) => m.moneda === "USD")
-    || (ingresosCargados ?? []).some((i: any) => i.moneda === "USD")
-    || (gastosFijos ?? []).some((g: any) => g.moneda === "USD");
+  const balanceUSD = ingresosUSD - gastosUSD;
 
   return (
     <div className="space-y-8">
@@ -266,13 +268,11 @@ function Dashboard() {
         <KpiCard label="Balance" value={formatMoney(balance, currency)} icon={<Wallet className="size-5" />} tone={balance >= 0 ? "success" : "destructive"} subtitle={`${ahorroPct >= 0 ? "+" : ""}${ahorroPct.toFixed(0)}% de ahorro · objetivo ${ahorroObjetivo}%`} />
       </div>
 
-      {tieneUSD && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <KpiCard label="Ingresos (USD)" value={formatMoney(ingresosUSD, "USD")} icon={<TrendingUp className="size-5" />} tone="success" />
-          <KpiCard label="Gastos (USD)" value={formatMoney(gastosUSD, "USD")} icon={<TrendingDown className="size-5" />} tone="destructive" />
-          <KpiCard label="Balance (USD)" value={formatMoney(balanceUSD, "USD")} icon={<Wallet className="size-5" />} tone={balanceUSD >= 0 ? "success" : "destructive"} />
-        </div>
-      )}
+      <div className="grid gap-4 md:grid-cols-3">
+        <KpiCard label="Ingresos (USD)" value={formatMoney(ingresosUSD, "USD")} icon={<TrendingUp className="size-5" />} tone="success" />
+        <KpiCard label="Gastos (USD)" value={formatMoney(gastosUSD, "USD")} icon={<TrendingDown className="size-5" />} tone="destructive" />
+        <KpiCard label="Balance (USD)" value={formatMoney(balanceUSD, "USD")} icon={<Wallet className="size-5" />} tone={balanceUSD >= 0 ? "success" : "destructive"} />
+      </div>
 
       <Card className="p-5" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex items-center gap-4">
