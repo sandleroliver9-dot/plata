@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app/app-shell";
 import { FeedbackWidget } from "@/components/app/feedback-widget";
 import { SimulatorChat } from "@/components/app/simulator-chat";
 import { OnboardingWizard } from "@/components/app/onboarding-wizard";
+import { PaywallScreen } from "@/components/app/paywall-screen";
 
 // waitForSession() puede tardar hasta 6s reintentando (ver comentario abajo)
 // antes de saber si hay sesion o redirigir a /auth. Sin pendingComponent, esos
@@ -37,6 +38,27 @@ async function waitForSession() {
   return null;
 }
 
+// El bloqueo REAL de datos ya está en Supabase (RLS vía
+// has_active_entitlement()) — esto es solo para decidir qué pantalla
+// mostrar. Si la consulta falla (red, etc.) se deja pasar: en el peor caso
+// alguien sin trial activo ve el shell de la app, pero igual no puede leer
+// ni escribir ningún dato financiero real, así que no es un agujero de
+// seguridad, solo una UX de emergencia.
+async function isEntitled(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("entitlements")
+      .select("status, trial_ends_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error || !data) return true;
+    if (data.status === "paid") return true;
+    return new Date(data.trial_ends_at).getTime() > Date.now();
+  } catch {
+    return true;
+  }
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   pendingComponent: AuthPending,
@@ -44,14 +66,19 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const session = await waitForSession();
     if (!session) throw redirect({ to: "/auth" });
-    return { user: session.user };
+    const entitled = await isEntitled(session.user.id);
+    return { user: session.user, entitled };
   },
-  component: () => (
-    <AppShell>
-      <Outlet />
-      <FeedbackWidget />
-      <SimulatorChat />
-      <OnboardingWizard />
-    </AppShell>
-  ),
+  component: () => {
+    const { entitled } = Route.useRouteContext();
+    if (!entitled) return <PaywallScreen />;
+    return (
+      <AppShell>
+        <Outlet />
+        <FeedbackWidget />
+        <SimulatorChat />
+        <OnboardingWizard />
+      </AppShell>
+    );
+  },
 });
