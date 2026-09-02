@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { TrendingUp, TrendingDown, Wallet, Sparkles, AlertTriangle } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatMoney, formatCompact, convertAmount, currentCalendarMonthLabel, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
 import { DolarWidget } from "@/components/app/dolar-widget";
 import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorded } from "@/lib/financial-centers";
@@ -252,6 +253,16 @@ function Dashboard() {
   const topMax = topCats[0]?.[1] ?? 0;
   const balanceUSD = ingresosUSD - gastosUSD;
 
+  // Toggle ARS/USD del balance: SIEMPRE nativo, nunca convertido — cambiar a
+  // "USD" muestra lo que efectivamente está cargado en dólares (0 si no hay
+  // nada), nunca el balance en pesos "traducido" a dólares. Ya nos pasamos
+  // mostrando una conversión sin querer (ver dashboard.tsx history) y
+  // confundía: parecía plata en dólares que el usuario no tiene.
+  const [monedaVista, setMonedaVista] = useState<"ARS" | "USD">("ARS");
+  const vista = monedaVista === "ARS"
+    ? { moneda: currency, ingresos, gastos, balance, subtitle: `${ahorroPct >= 0 ? "+" : ""}${ahorroPct.toFixed(0)}% de ahorro · objetivo ${ahorroObjetivo}%` }
+    : { moneda: "USD", ingresos: ingresosUSD, gastos: gastosUSD, balance: balanceUSD, subtitle: undefined };
+
   return (
     <div className="space-y-8">
       <header>
@@ -262,17 +273,19 @@ function Dashboard() {
         )}
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Ingresos" value={formatMoney(ingresos, currency)} icon={<TrendingUp className="size-5" />} tone="success" />
-        <KpiCard label="Gastos" value={formatMoney(gastos, currency)} icon={<TrendingDown className="size-5" />} tone="destructive" />
-        <KpiCard label="Balance" value={formatMoney(balance, currency)} icon={<Wallet className="size-5" />} tone={balance >= 0 ? "success" : "destructive"} subtitle={`${ahorroPct >= 0 ? "+" : ""}${ahorroPct.toFixed(0)}% de ahorro · objetivo ${ahorroObjetivo}%`} />
+      <div className="inline-flex rounded-lg border border-border p-1 gap-1">
+        <Button size="sm" variant={monedaVista === "ARS" ? "default" : "ghost"} onClick={() => setMonedaVista("ARS")}>ARS</Button>
+        <Button size="sm" variant={monedaVista === "USD" ? "default" : "ghost"} onClick={() => setMonedaVista("USD")}>USD</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Ingresos (USD)" value={formatMoney(ingresosUSD, "USD")} icon={<TrendingUp className="size-5" />} tone="success" />
-        <KpiCard label="Gastos (USD)" value={formatMoney(gastosUSD, "USD")} icon={<TrendingDown className="size-5" />} tone="destructive" />
-        <KpiCard label="Balance (USD)" value={formatMoney(balanceUSD, "USD")} icon={<Wallet className="size-5" />} tone={balanceUSD >= 0 ? "success" : "destructive"} />
+        <KpiCard label="Ingresos" value={formatMoney(vista.ingresos, vista.moneda)} icon={<TrendingUp className="size-5" />} tone="success" />
+        <KpiCard label="Gastos" value={formatMoney(vista.gastos, vista.moneda)} icon={<TrendingDown className="size-5" />} tone="destructive" />
+        <KpiCard label="Balance" value={formatMoney(vista.balance, vista.moneda)} icon={<Wallet className="size-5" />} tone={vista.balance >= 0 ? "success" : "destructive"} subtitle={vista.subtitle} />
       </div>
+      {monedaVista === "USD" && ingresosUSD === 0 && gastosUSD === 0 && (
+        <p className="text-xs text-muted-foreground -mt-2">No tenés nada cargado en dólares este mes — por eso da $0, no es una conversión.</p>
+      )}
 
       <Card className="p-5" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex items-center gap-4">
