@@ -10,9 +10,9 @@ import { buildUpcomingEvents, daysUntil, detectUnusualSpending, getMonthlyCashfl
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 
-export const Route = createFileRoute("/_authenticated/alertas")({
-  head: () => ({ meta: [{ title: "Alertas · Platium" }] }),
-  component: AlertasPage,
+export const Route = createFileRoute("/_authenticated/notificaciones")({
+  head: () => ({ meta: [{ title: "Notificaciones · Platium" }] }),
+  component: NotificacionesPage,
 });
 
 type Alert = {
@@ -22,7 +22,7 @@ type Alert = {
   icon: typeof AlertTriangle;
 };
 
-function AlertasPage() {
+function NotificacionesPage() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
@@ -158,7 +158,7 @@ function AlertasPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Alertas</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Notificaciones</h1>
         <p className="text-sm text-muted-foreground mt-1">Advertencias financieras simples según tus datos actuales.</p>
       </header>
 

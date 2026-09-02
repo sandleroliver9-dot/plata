@@ -21,6 +21,7 @@ import { Route as AuthenticatedTarjetasRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProyeccionesRouteImport } from './routes/_authenticated/proyecciones'
 import { Route as AuthenticatedPrestamoRouteImport } from './routes/_authenticated/prestamo'
 import { Route as AuthenticatedPatrimonioRouteImport } from './routes/_authenticated/patrimonio'
+import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedMovimientosRouteImport } from './routes/_authenticated/movimientos'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedInversionesRouteImport } from './routes/_authenticated/inversiones'
@@ -30,8 +31,6 @@ import { Route as AuthenticatedIngresosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedGastosFijosRouteImport } from './routes/_authenticated/gastos-fijos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
-import { Route as AuthenticatedCalendarioFinancieroRouteImport } from './routes/_authenticated/calendario-financiero'
-import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 
 const TerminosRoute = TerminosRouteImport.update({
   id: '/terminos',
@@ -94,6 +93,12 @@ const AuthenticatedPatrimonioRoute = AuthenticatedPatrimonioRouteImport.update({
   path: '/patrimonio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificacionesRoute =
+  AuthenticatedNotificacionesRouteImport.update({
+    id: '/notificaciones',
+    path: '/notificaciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMovimientosRoute =
   AuthenticatedMovimientosRouteImport.update({
     id: '/movimientos',
@@ -143,17 +148,6 @@ const AuthenticatedConfiguracionRoute =
     path: '/configuracion',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCalendarioFinancieroRoute =
-  AuthenticatedCalendarioFinancieroRouteImport.update({
-    id: '/calendario-financiero',
-    path: '/calendario-financiero',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
-  id: '/alertas',
-  path: '/alertas',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,8 +156,6 @@ export interface FileRoutesByFullPath {
   '/privacidad': typeof PrivacidadRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminos': typeof TerminosRoute
-  '/alertas': typeof AuthenticatedAlertasRoute
-  '/calendario-financiero': typeof AuthenticatedCalendarioFinancieroRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/gastos-fijos': typeof AuthenticatedGastosFijosRoute
@@ -173,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/inversiones': typeof AuthenticatedInversionesRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/movimientos': typeof AuthenticatedMovimientosRoute
+  '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/patrimonio': typeof AuthenticatedPatrimonioRoute
   '/prestamo': typeof AuthenticatedPrestamoRoute
   '/proyecciones': typeof AuthenticatedProyeccionesRoute
@@ -186,8 +179,6 @@ export interface FileRoutesByTo {
   '/privacidad': typeof PrivacidadRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminos': typeof TerminosRoute
-  '/alertas': typeof AuthenticatedAlertasRoute
-  '/calendario-financiero': typeof AuthenticatedCalendarioFinancieroRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/gastos-fijos': typeof AuthenticatedGastosFijosRoute
@@ -197,6 +188,7 @@ export interface FileRoutesByTo {
   '/inversiones': typeof AuthenticatedInversionesRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/movimientos': typeof AuthenticatedMovimientosRoute
+  '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/patrimonio': typeof AuthenticatedPatrimonioRoute
   '/prestamo': typeof AuthenticatedPrestamoRoute
   '/proyecciones': typeof AuthenticatedProyeccionesRoute
@@ -212,8 +204,6 @@ export interface FileRoutesById {
   '/privacidad': typeof PrivacidadRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminos': typeof TerminosRoute
-  '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
-  '/_authenticated/calendario-financiero': typeof AuthenticatedCalendarioFinancieroRoute
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/gastos-fijos': typeof AuthenticatedGastosFijosRoute
@@ -223,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/inversiones': typeof AuthenticatedInversionesRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/movimientos': typeof AuthenticatedMovimientosRoute
+  '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/patrimonio': typeof AuthenticatedPatrimonioRoute
   '/_authenticated/prestamo': typeof AuthenticatedPrestamoRoute
   '/_authenticated/proyecciones': typeof AuthenticatedProyeccionesRoute
@@ -238,8 +229,6 @@ export interface FileRouteTypes {
     | '/privacidad'
     | '/reset-password'
     | '/terminos'
-    | '/alertas'
-    | '/calendario-financiero'
     | '/configuracion'
     | '/dashboard'
     | '/gastos-fijos'
@@ -249,6 +238,7 @@ export interface FileRouteTypes {
     | '/inversiones'
     | '/metas'
     | '/movimientos'
+    | '/notificaciones'
     | '/patrimonio'
     | '/prestamo'
     | '/proyecciones'
@@ -262,8 +252,6 @@ export interface FileRouteTypes {
     | '/privacidad'
     | '/reset-password'
     | '/terminos'
-    | '/alertas'
-    | '/calendario-financiero'
     | '/configuracion'
     | '/dashboard'
     | '/gastos-fijos'
@@ -273,6 +261,7 @@ export interface FileRouteTypes {
     | '/inversiones'
     | '/metas'
     | '/movimientos'
+    | '/notificaciones'
     | '/patrimonio'
     | '/prestamo'
     | '/proyecciones'
@@ -287,8 +276,6 @@ export interface FileRouteTypes {
     | '/privacidad'
     | '/reset-password'
     | '/terminos'
-    | '/_authenticated/alertas'
-    | '/_authenticated/calendario-financiero'
     | '/_authenticated/configuracion'
     | '/_authenticated/dashboard'
     | '/_authenticated/gastos-fijos'
@@ -298,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inversiones'
     | '/_authenticated/metas'
     | '/_authenticated/movimientos'
+    | '/_authenticated/notificaciones'
     | '/_authenticated/patrimonio'
     | '/_authenticated/prestamo'
     | '/_authenticated/proyecciones'
@@ -401,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatrimonioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notificaciones': {
+      id: '/_authenticated/notificaciones'
+      path: '/notificaciones'
+      fullPath: '/notificaciones'
+      preLoaderRoute: typeof AuthenticatedNotificacionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/movimientos': {
       id: '/_authenticated/movimientos'
       path: '/movimientos'
@@ -464,26 +459,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/calendario-financiero': {
-      id: '/_authenticated/calendario-financiero'
-      path: '/calendario-financiero'
-      fullPath: '/calendario-financiero'
-      preLoaderRoute: typeof AuthenticatedCalendarioFinancieroRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/alertas': {
-      id: '/_authenticated/alertas'
-      path: '/alertas'
-      fullPath: '/alertas'
-      preLoaderRoute: typeof AuthenticatedAlertasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
-  AuthenticatedCalendarioFinancieroRoute: typeof AuthenticatedCalendarioFinancieroRoute
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGastosFijosRoute: typeof AuthenticatedGastosFijosRoute
@@ -493,6 +472,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInversionesRoute: typeof AuthenticatedInversionesRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedMovimientosRoute: typeof AuthenticatedMovimientosRoute
+  AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedPatrimonioRoute: typeof AuthenticatedPatrimonioRoute
   AuthenticatedPrestamoRoute: typeof AuthenticatedPrestamoRoute
   AuthenticatedProyeccionesRoute: typeof AuthenticatedProyeccionesRoute
@@ -501,9 +481,6 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
-  AuthenticatedCalendarioFinancieroRoute:
-    AuthenticatedCalendarioFinancieroRoute,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGastosFijosRoute: AuthenticatedGastosFijosRoute,
@@ -513,6 +490,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInversionesRoute: AuthenticatedInversionesRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedMovimientosRoute: AuthenticatedMovimientosRoute,
+  AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedPatrimonioRoute: AuthenticatedPatrimonioRoute,
   AuthenticatedPrestamoRoute: AuthenticatedPrestamoRoute,
   AuthenticatedProyeccionesRoute: AuthenticatedProyeccionesRoute,
