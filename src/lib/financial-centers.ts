@@ -132,6 +132,36 @@ export function getBaseMonthlyIncome(profile: Row | null | undefined, ingresos: 
   return fromIncome > 0 ? fromIncome : Math.max(0, fromProfile);
 }
 
+// Sugerencia de "cuánto deberías haber cobrado este período", para el
+// recordatorio de sueldo (cron) y el estado inicial del formulario en
+// Ingresos. A propósito NO convierte de moneda (a diferencia de
+// getBaseMonthlyIncome): la sugerencia tiene que quedar en la MISMA moneda
+// del último sueldo real, porque es lo que el usuario va a confirmar/editar
+// como un ingreso nuevo en esa moneda. Tampoco ajusta por inflación si el
+// último sueldo fue en USD — la inflación de acá es la de pesos argentinos,
+// no tiene sentido aplicarla a un monto en dólares.
+export function computeSuggestedSalary({
+  ultimoSueldo,
+  profileSalary,
+  profileCurrency = "ARS",
+  inflacionPct = 0,
+}: {
+  ultimoSueldo?: { monto: number | string; moneda?: string | null } | null;
+  profileSalary?: number | string | null;
+  profileCurrency?: string | null;
+  inflacionPct?: number;
+}): { monto: number; moneda: string } | null {
+  if (ultimoSueldo && Number(ultimoSueldo.monto) > 0) {
+    const moneda = ultimoSueldo.moneda || profileCurrency || "ARS";
+    const factor = moneda === "USD" ? 1 : 1 + inflacionPct / 100;
+    return { monto: Math.round(Number(ultimoSueldo.monto) * factor), moneda };
+  }
+  if (profileSalary && Number(profileSalary) > 0) {
+    return { monto: Math.round(Number(profileSalary)), moneda: profileCurrency || "ARS" };
+  }
+  return null;
+}
+
 export function hasSimilarMovement(movs: Row[], descripcion: string, monto: number, mes: string) {
   const desc = descripcion.toLowerCase();
   return movs.some((mov) => {
