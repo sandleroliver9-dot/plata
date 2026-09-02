@@ -748,6 +748,24 @@ export type Database = {
         }
         Relationships: []
       }
+      salary_reminder_dismissals: {
+        Row: {
+          dismissed_at: string
+          mes_financiero: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          mes_financiero: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          mes_financiero?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tarjetas_cuotas: {
         Row: {
           activo: boolean

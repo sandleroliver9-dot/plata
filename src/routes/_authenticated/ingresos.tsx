@@ -99,7 +99,10 @@ function IngresosPage() {
   // de quedar pegada sugiriendo un período que ya cargó.
   const targetLabel = ultimoSueldo ? nextFinancialMonth(ultimoSueldo.mes_financiero, payDay) : currentFinancialMonth(payDay);
   const inflacionPct = infl?.promedio3m ? Number(infl.promedio3m.toFixed(1)) : 0;
-  const sugeridoRaw = baseSueldo > 0 ? Math.round(baseSueldo * (1 + inflacionPct / 100)) : 0;
+  // Sin ajuste por inflación en dólares: el índice de acá es en pesos
+  // argentinos, no tiene sentido aplicarlo a un sueldo en USD.
+  const factorInflacion = monedaSueldo === "USD" ? 1 : 1 + inflacionPct / 100;
+  const sugeridoRaw = baseSueldo > 0 ? Math.round(baseSueldo * factorInflacion) : 0;
 
   const [sugerenciaTexto, setSugerenciaTexto] = useState("");
   const [sugerenciaTouched, setSugerenciaTouched] = useState(false);

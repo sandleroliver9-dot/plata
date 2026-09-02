@@ -2,12 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildUpcomingEvents, daysUntil } from "@/lib/financial-centers";
-import { formatMoney } from "@/lib/finance";
+import { buildUpcomingEvents, computeSuggestedSalary, daysUntil } from "@/lib/financial-centers";
+import { appNow, financialMonth, formatMoney, toISODate } from "@/lib/finance";
+import { normalizePayDateMode } from "@/lib/financial-preferences";
+import { resolveSalaryPayDate } from "@/lib/profile.functions";
+import { fetchInflacion } from "@/lib/quotes.functions";
 import type { Database } from "@/integrations/supabase/types";
 
 /**
- * Notificaciones de vencimientos próximos por email/push.
+ * Notificaciones por email/push: vencimientos próximos y recordatorio de
+ * sueldo (avisa cuando llega el día de cobro, o una vez por semana en modo
+ * "variable", si todavía no se cargó el sueldo del período actual).
  *
  * Gateado igual que el resto de la infra opcional de la app (IA, mail): sin
  * las env vars correspondientes (RESEND_API_KEY, VAPID_*, CRON_SECRET) los
@@ -69,16 +74,151 @@ export const runNotificacionesCron = createServerFn({ method: "GET" }).handler(a
 
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
-    .select("id, currency, pay_day, alert_days, notify_email, notify_push")
+    .select("id, currency, pay_day, pay_date_mode, salary, alert_days, notify_email, notify_push")
     .or("notify_email.eq.true,notify_push.eq.true");
   if (profilesError) throw profilesError;
+
+  // Se pide una sola vez para todos los usuarios (no depende de cada uno) —
+  // mismo dato que ya usa Ingresos para la sugerencia de sueldo.
+  const inflacion = await fetchInflacion();
+  const inflacionPct = inflacion.promedio3m ?? 0;
 
   let usersProcessed = 0;
   let emailsSent = 0;
   let pushSent = 0;
+  let salaryRemindersSent = 0;
 
   for (const profile of profiles ?? []) {
     usersProcessed++;
+
+    // Recordatorio de sueldo: se resuelve entero acá arriba, ANTES del
+    // bloque de vencimientos de abajo (que corta el resto del loop con
+    // `continue` si no hay eventos próximos) — alguien sin ningún
+    // vencimiento cargado igual quiere que le avisen de cargar el sueldo.
+    try {
+      const payDateMode = normalizePayDateMode(profile.pay_date_mode);
+      const payDay = Number(profile.pay_day) || 1;
+      const now = appNow();
+      const mesActual = financialMonth(now, payDay);
+
+      const { data: sueldoDelMes } = await supabase
+        .from("ingresos")
+        .select("id")
+        .eq("user_id", profile.id)
+        .eq("activo", true)
+        .eq("tipo", "Sueldo")
+        .eq("mes_financiero", mesActual)
+        .limit(1);
+
+      if (!sueldoDelMes || sueldoDelMes.length === 0) {
+        const { data: dismissRows } = await supabase
+          .from("salary_reminder_dismissals")
+          .select("mes_financiero")
+          .eq("user_id", profile.id)
+          .eq("mes_financiero", mesActual)
+          .limit(1);
+        const dismissed = (dismissRows?.length ?? 0) > 0;
+
+        // Con día fijo/hábil: ventana de 3 días desde el día de cobro
+        // resuelto. Con "variable" (sin fecha fija): un recordatorio suave
+        // todos los lunes, sin límite de 3 — no hay una fecha "vencida" de
+        // la cual dejar de insistir.
+        let dentroDeLaVentana = false;
+        if (!dismissed) {
+          if (payDateMode === "variable") {
+            dentroDeLaVentana = now.getDay() === 1;
+          } else {
+            const payDate = resolveSalaryPayDate(payDay, payDateMode, now);
+            const diasDesdeCobro = Math.floor((now.getTime() - payDate.getTime()) / 86400000);
+            dentroDeLaVentana = diasDesdeCobro >= 0 && diasDesdeCobro <= 2;
+          }
+        }
+
+        if (dentroDeLaVentana) {
+          const refId = `sueldo-${mesActual}-${toISODate(now)}`;
+          const { data: yaEnviadosMes } = await supabase
+            .from("notificaciones_enviadas")
+            .select("referencia_id")
+            .eq("user_id", profile.id)
+            .like("referencia_id", `sueldo-${mesActual}-%`);
+          const diasEnviados = new Set((yaEnviadosMes ?? []).map((n) => n.referencia_id));
+          const dentroDelLimite = payDateMode === "variable" || diasEnviados.size < 3;
+
+          if (!diasEnviados.has(refId) && dentroDelLimite) {
+            const { data: sueldoHist } = await supabase
+              .from("ingresos")
+              .select("monto, moneda")
+              .eq("user_id", profile.id)
+              .eq("activo", true)
+              .eq("tipo", "Sueldo")
+              .order("fecha_cobro", { ascending: false })
+              .limit(1);
+
+            const sugerido = computeSuggestedSalary({
+              ultimoSueldo: sueldoHist?.[0],
+              profileSalary: profile.salary,
+              profileCurrency: profile.currency,
+              inflacionPct,
+            });
+
+            const title = "¿Ya cobraste este mes?";
+            const body = sugerido
+              ? `Te sugerimos ${formatMoney(sugerido.monto, sugerido.moneda)} según tu último sueldo. Confirmalo en Platium.`
+              : "No te olvides de cargar tu sueldo de este mes en Platium.";
+
+            let enviadoAlgun = false;
+
+            if (profile.notify_email && resend) {
+              const { data: userData } = await supabase.auth.admin.getUserById(profile.id);
+              const email = userData?.user?.email;
+              if (email) {
+                try {
+                  await resend.emails.send({
+                    from: process.env.EMAIL_FROM || "Platium <onboarding@resend.dev>",
+                    to: email,
+                    subject: title,
+                    html: `<p>Hola,</p><p>${body}</p>`,
+                  });
+                  enviadoAlgun = true;
+                  await supabase.from("notificaciones_enviadas").insert({ user_id: profile.id, referencia_id: refId, canal: "email" });
+                } catch (err) {
+                  console.error(`[cron-notificaciones] salary email failed for ${profile.id}`, err);
+                }
+              }
+            }
+
+            if (profile.notify_push && webpush) {
+              const { data: subs } = await supabase.from("push_subscriptions").select("*").eq("user_id", profile.id);
+              if (subs && subs.length > 0) {
+                const payload = JSON.stringify({ title, body, url: "/ingresos" });
+                let anySent = false;
+                for (const sub of subs) {
+                  try {
+                    await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
+                    anySent = true;
+                  } catch (err: any) {
+                    if (err?.statusCode === 404 || err?.statusCode === 410) {
+                      await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+                    } else {
+                      console.error(`[cron-notificaciones] salary push failed for ${profile.id}`, err);
+                    }
+                  }
+                }
+                if (anySent) {
+                  enviadoAlgun = true;
+                  await supabase.from("notificaciones_enviadas").insert({ user_id: profile.id, referencia_id: refId, canal: "push" });
+                }
+              }
+            }
+
+            if (enviadoAlgun) salaryRemindersSent++;
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`[cron-notificaciones] salary reminder failed for ${profile.id}`, err);
+    }
+
     const [vencimientos, tarjetas, prestamos, fijos] = await Promise.all([
       supabase.from("vencimientos").select("*").eq("user_id", profile.id).eq("pagado", false),
       supabase.from("tarjetas_cuotas").select("*").eq("user_id", profile.id).eq("activo", true),
@@ -172,7 +312,7 @@ export const runNotificacionesCron = createServerFn({ method: "GET" }).handler(a
     }
   }
 
-  return { ok: true, usersProcessed, emailsSent, pushSent };
+  return { ok: true, usersProcessed, emailsSent, pushSent, salaryRemindersSent };
 });
 
 export const updateNotificationPreferences = createServerFn({ method: "POST" })

@@ -150,7 +150,11 @@ export type Inflacion = {
   fetched_at: string;
 };
 
-export const getInflacion = createServerFn({ method: "GET" }).handler(async (): Promise<Inflacion> => {
+// Función plana (no createServerFn) para poder llamarla directo desde otro
+// código server-side, como el cron de notificaciones — un createServerFn está
+// pensado para invocarse vía el cliente, llamarlo directo funciona pero es
+// una capa de ceremonia de más para un uso puramente interno al servidor.
+export async function fetchInflacion(): Promise<Inflacion> {
   try {
     const res = await fetch("https://api.argentinadatos.com/v1/finanzas/indices/inflacion", { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(`argentinadatos ${res.status}`);
@@ -169,4 +173,6 @@ export const getInflacion = createServerFn({ method: "GET" }).handler(async (): 
   } catch {
     return { serie: [], fetched_at: new Date().toISOString() };
   }
-});
+}
+
+export const getInflacion = createServerFn({ method: "GET" }).handler(fetchInflacion);
