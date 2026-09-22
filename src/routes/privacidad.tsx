@@ -17,17 +17,43 @@ function PrivacidadPage() {
         <Card className="p-6 md:p-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-1">Política de Privacidad</h1>
-            <p className="text-xs">Última actualización: julio 2026</p>
+            <p className="text-xs">Última actualización: septiembre 2026</p>
           </div>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">1. Qué datos guardamos</h2>
+            <h2 className="font-semibold text-foreground">1. Responsable del tratamiento</h2>
+            <p>
+              El responsable del tratamiento de tus datos personales es Oliver Sandler, persona física
+              domiciliada en la Provincia de Buenos Aires, Argentina, en su carácter de titular de Platium.
+              Podés contactarnos por cualquier tema relacionado a tus datos escribiendo a{" "}
+              <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+                sandleroliver9@gmail.com
+              </a>
+              .
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground">2. Qué datos guardamos</h2>
             <p>Al usar Platium guardamos:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Datos de cuenta: nombre y email (o los datos básicos que comparte Google si entrás con ese método).</li>
               <li>
                 Datos financieros que vos cargás manualmente: ingresos, gastos, tarjetas y cuotas, préstamos,
                 metas de ahorro, inversiones e inmuebles.
+              </li>
+              <li>
+                Preferencias de la app: día de cobro, moneda, objetivo de ahorro y configuración de
+                notificaciones.
+              </li>
+              <li>
+                Si activás las notificaciones push, un identificador técnico de tu navegador o dispositivo
+                que nos permite enviártelas (no identifica quién sos por sí solo).
+              </li>
+              <li>
+                Datos de pago: si comprás el acceso completo, el medio de pago (Stripe, Apple o Google)
+                procesa tu tarjeta y nos informa únicamente si el pago fue aprobado — nunca vemos ni
+                guardamos el número completo de tu tarjeta.
               </li>
             </ul>
             <p>
@@ -37,30 +63,76 @@ function PrivacidadPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">2. Para qué usamos tus datos</h2>
+            <h2 className="font-semibold text-foreground">3. Para qué usamos tus datos</h2>
+            <p>Usamos tus datos únicamente para:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Mostrarte tu propia información dentro de la app (dashboard, gráficos, proyecciones).</li>
+              <li>Procesar el pago del acceso completo y habilitar tu cuenta cuando corresponda.</li>
+              <li>Enviarte emails funcionales: confirmación de cuenta, recuperación de contraseña, y
+                recordatorios que vos mismo activás (vencimientos próximos, sueldo pendiente de cargar).</li>
+              <li>Enviarte notificaciones push, solo si las activaste vos.</li>
+              <li>Si usás la carga rápida por IA, procesar el texto que ingresás para sugerirte cómo cargar
+                un movimiento.</li>
+            </ul>
+            <p>No vendemos ni compartimos tus datos con terceros con fines comerciales o publicitarios.</p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground">4. Con quién compartimos datos</h2>
             <p>
-              Únicamente para mostrarte tu propia información dentro de la app (dashboard, gráficos,
-              proyecciones) y para enviarte emails funcionales (confirmación de cuenta, recuperación de
-              contraseña). No vendemos ni compartimos tus datos con terceros con fines comerciales o
-              publicitarios.
+              Para poder ofrecerte Platium, algunos datos pasan por proveedores que actúan como encargados
+              del tratamiento, únicamente para prestar el servicio que les corresponde:
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>Supabase</strong>: aloja la base de datos y la autenticación de tu cuenta.</li>
+              <li><strong>Stripe, Apple App Store y Google Play</strong>: procesan el pago del acceso completo, según desde dónde compres.</li>
+              <li><strong>Anthropic</strong>: procesa el texto que ingresás si usás la carga rápida por IA (solo ese texto puntual, no tu información financiera histórica).</li>
+              <li><strong>Resend</strong>: envía los emails funcionales de la app.</li>
+              <li>Proveedores de notificaciones push (navegadores/sistemas operativos), únicamente si activaste esa función.</li>
+            </ul>
+            <p>
+              Ninguno de estos proveedores está autorizado a usar tus datos para fines propios ajenos a
+              prestarle el servicio a Platium.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">3. Dónde se almacenan</h2>
+            <h2 className="font-semibold text-foreground">5. Transferencia internacional de datos</h2>
             <p>
-              Los datos se almacenan en Supabase (infraestructura en la nube con cifrado), con controles de
-              acceso a nivel de base de datos que aseguran que cada usuario solo puede ver su propia
+              Algunos de los proveedores mencionados en la Sección 4 procesan datos en servidores ubicados
+              fuera de Argentina (por ejemplo, en Estados Unidos). Al usar Platium, aceptás esta
+              transferencia internacional, necesaria para el funcionamiento del servicio, y que estos
+              proveedores cuenten con estándares de seguridad y confidencialidad adecuados para proteger tu
               información.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">4. Tus derechos</h2>
+            <h2 className="font-semibold text-foreground">6. Dónde y cómo se almacenan</h2>
+            <p>
+              Los datos se almacenan en Supabase (infraestructura en la nube con cifrado en tránsito y en
+              reposo), con controles de acceso a nivel de base de datos (Row Level Security) que aseguran que
+              cada usuario solo puede ver y modificar su propia información, incluso frente a un error en la
+              aplicación.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground">7. Cuánto tiempo conservamos tus datos</h2>
+            <p>
+              Conservamos tus datos mientras tu cuenta esté activa. Si pedís la eliminación de tu cuenta (ver
+              Sección 9), los borramos de forma permanente dentro de un plazo razonable, salvo la información
+              que estemos obligados a conservar por ley (por ejemplo, comprobantes de pago, según la
+              normativa impositiva y de defensa del consumidor aplicable).
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground">8. Tus derechos</h2>
             <p>
               De acuerdo a la Ley 25.326 de Protección de Datos Personales de Argentina, tenés derecho a
-              acceder, rectificar y eliminar tus datos personales. Podés ejercer estos derechos escribiendo
-              a{" "}
+              acceder, rectificar, actualizar y eliminar tus datos personales (derechos ARCO). Podés ejercer
+              estos derechos escribiendo a{" "}
               <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
                 sandleroliver9@gmail.com
               </a>
@@ -71,23 +143,44 @@ function PrivacidadPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">5. Eliminación de cuenta</h2>
+            <h2 className="font-semibold text-foreground">9. Eliminación de cuenta</h2>
             <p>
-              Podés pedir la baja de tu cuenta en cualquier momento. Al hacerlo, se elimina de forma
-              permanente toda tu información financiera asociada.
+              Podés pedir la baja de tu cuenta en cualquier momento, escribiendo a{" "}
+              <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+                sandleroliver9@gmail.com
+              </a>
+              . Al hacerlo, se elimina de forma permanente toda tu información financiera asociada
+              (movimientos, tarjetas, préstamos, metas, inversiones, inmuebles).
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">6. Cambios a esta política</h2>
+            <h2 className="font-semibold text-foreground">10. Cookies y almacenamiento local</h2>
+            <p>
+              Platium usa el almacenamiento local de tu navegador (localStorage) para mantener tu sesión
+              iniciada y recordar algunas preferencias de uso. No usamos cookies de seguimiento publicitario
+              ni compartimos esta información con redes de publicidad.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground">11. Menores de edad</h2>
+            <p>
+              Platium no está dirigido a menores de 18 años y no recopilamos a sabiendas datos de menores. Si
+              creés que un menor nos proporcionó datos personales, escribinos y lo vamos a eliminar.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground">12. Cambios a esta política</h2>
             <p>
               Como Platium está en etapa de pruebas, esta política puede actualizarse. Si hay cambios
-              importantes, te vamos a avisar por email.
+              importantes, te vamos a avisar por email o dentro de la app.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-semibold text-foreground">7. Contacto</h2>
+            <h2 className="font-semibold text-foreground">13. Contacto</h2>
             <p>
               Consultas sobre privacidad:{" "}
               <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
