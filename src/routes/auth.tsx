@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Wallet, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TerminosContent, PrivacidadContent } from "@/components/app/legal-content";
 import { toast } from "sonner";
 import { passwordIssue, PASSWORD_RULES } from "@/lib/password";
 
@@ -32,6 +34,7 @@ function AuthPage() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [legalOpen, setLegalOpen] = useState<"terminos" | "privacidad" | null>(null);
 
   const pwChecks = PASSWORD_RULES.map((rule) => ({ label: rule.label, ok: rule.test(password) }));
 
@@ -209,9 +212,9 @@ function AuthPage() {
                   />
                   <Label htmlFor="accept-terms" className="text-xs font-normal text-muted-foreground leading-relaxed cursor-pointer">
                     Acepto los{" "}
-                    <Link to="/terminos" target="_blank" className="text-primary hover:underline">Términos y Condiciones</Link>{" "}
+                    <button type="button" onClick={() => setLegalOpen("terminos")} className="text-primary hover:underline">Términos y Condiciones</button>{" "}
                     y la{" "}
-                    <Link to="/privacidad" target="_blank" className="text-primary hover:underline">Política de Privacidad</Link>.
+                    <button type="button" onClick={() => setLegalOpen("privacidad")} className="text-primary hover:underline">Política de Privacidad</button>.
                   </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={formLoading || !acceptedTerms}>Crear cuenta</Button>
@@ -237,6 +240,18 @@ function AuthPage() {
           )}
         </Card>
       </div>
+
+      <Dialog open={legalOpen !== null} onOpenChange={(open) => !open && setLegalOpen(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{legalOpen === "terminos" ? "Términos y Condiciones" : "Política de Privacidad"}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto pr-2 -mr-2">
+            {legalOpen === "terminos" ? <TerminosContent /> : <PrivacidadContent />}
+          </div>
+          <Button type="button" className="w-full" onClick={() => setLegalOpen(null)}>Cerrar</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
