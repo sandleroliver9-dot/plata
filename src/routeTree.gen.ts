@@ -16,6 +16,7 @@ import { Route as CronNotificacionesRouteImport } from './routes/cron-notificaci
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WebhooksLemonsqueezyRouteImport } from './routes/webhooks/lemonsqueezy'
 import { Route as AuthenticatedVencimientosRouteImport } from './routes/_authenticated/vencimientos'
 import { Route as AuthenticatedTarjetasRouteImport } from './routes/_authenticated/tarjetas'
 import { Route as AuthenticatedProyeccionesRouteImport } from './routes/_authenticated/proyecciones'
@@ -64,6 +65,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebhooksLemonsqueezyRoute = WebhooksLemonsqueezyRouteImport.update({
+  id: '/webhooks/lemonsqueezy',
+  path: '/webhooks/lemonsqueezy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedVencimientosRoute =
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/proyecciones': typeof AuthenticatedProyeccionesRoute
   '/tarjetas': typeof AuthenticatedTarjetasRoute
   '/vencimientos': typeof AuthenticatedVencimientosRoute
+  '/webhooks/lemonsqueezy': typeof WebhooksLemonsqueezyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/proyecciones': typeof AuthenticatedProyeccionesRoute
   '/tarjetas': typeof AuthenticatedTarjetasRoute
   '/vencimientos': typeof AuthenticatedVencimientosRoute
+  '/webhooks/lemonsqueezy': typeof WebhooksLemonsqueezyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/proyecciones': typeof AuthenticatedProyeccionesRoute
   '/_authenticated/tarjetas': typeof AuthenticatedTarjetasRoute
   '/_authenticated/vencimientos': typeof AuthenticatedVencimientosRoute
+  '/webhooks/lemonsqueezy': typeof WebhooksLemonsqueezyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/proyecciones'
     | '/tarjetas'
     | '/vencimientos'
+    | '/webhooks/lemonsqueezy'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/proyecciones'
     | '/tarjetas'
     | '/vencimientos'
+    | '/webhooks/lemonsqueezy'
   id:
     | '__root__'
     | '/'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/proyecciones'
     | '/_authenticated/tarjetas'
     | '/_authenticated/vencimientos'
+    | '/webhooks/lemonsqueezy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   PrivacidadRoute: typeof PrivacidadRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TerminosRoute: typeof TerminosRoute
+  WebhooksLemonsqueezyRoute: typeof WebhooksLemonsqueezyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/webhooks/lemonsqueezy': {
+      id: '/webhooks/lemonsqueezy'
+      path: '/webhooks/lemonsqueezy'
+      fullPath: '/webhooks/lemonsqueezy'
+      preLoaderRoute: typeof WebhooksLemonsqueezyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/vencimientos': {
@@ -509,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadRoute: PrivacidadRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TerminosRoute: TerminosRoute,
+  WebhooksLemonsqueezyRoute: WebhooksLemonsqueezyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
