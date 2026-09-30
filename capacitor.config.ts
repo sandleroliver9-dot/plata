@@ -13,14 +13,16 @@ const config: CapacitorConfig = {
     url: "https://www.platium.app",
     androidScheme: "https",
     iosScheme: "https",
-    // Login con Google (vía Supabase Auth) redirecciona por accounts.google.com
-    // y por el dominio de Supabase antes de volver a platium.app — sin
-    // esto la WebView de Capacitor corta la navegación a esos dominios.
+    // Login con Google y con Apple (vía Supabase Auth) redirecciona por
+    // accounts.google.com / appleid.apple.com y por el dominio de Supabase
+    // antes de volver a platium.app — sin esto la WebView de Capacitor
+    // corta la navegación a esos dominios.
     allowNavigation: [
       "*.platium.app",
       "*.supabase.co",
       "accounts.google.com",
       "*.google.com",
+      "appleid.apple.com",
     ],
   },
 };
