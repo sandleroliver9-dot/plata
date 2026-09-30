@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Lock, LogOut, RefreshCw, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { buildLemonSqueezyCheckoutUrl } from "@/lib/lemonsqueezy";
+import { isRevenueCatAvailable, purchaseLifetime } from "@/lib/revenuecat-native";
 
 /**
  * Se muestra cuando el trial gratis de 7 días venció y el usuario todavía
@@ -16,10 +19,31 @@ import { buildLemonSqueezyCheckoutUrl } from "@/lib/lemonsqueezy";
  * en una pestaña nueva para no perder esta, y el usuario vuelve y recarga.
  * Sin VITE_LEMONSQUEEZY_CHECKOUT_URL configurada (todavía no está en
  * Vercel), el botón queda deshabilitado en vez de romper.
+ *
+ * Adentro de la app nativa (Capacitor, iOS/Android) se usa RevenueCat en
+ * vez de Lemon Squeezy — ver isRevenueCatAvailable/purchaseLifetime en
+ * src/lib/revenuecat-native.ts. En la web (import.meta.env sin
+ * Capacitor.isNativePlatform()) esa función siempre da false, así que este
+ * componente sigue andando igual que antes para todos los que entran por
+ * el navegador.
  */
 export function PaywallScreen({ userId, email }: { userId: string; email?: string | null }) {
+  const [purchasing, setPurchasing] = useState(false);
+  const nativeAvailable = isRevenueCatAvailable();
   const checkoutBase = import.meta.env.VITE_LEMONSQUEEZY_CHECKOUT_URL as string | undefined;
   const checkoutUrl = checkoutBase ? buildLemonSqueezyCheckoutUrl(checkoutBase, { userId, email }) : null;
+
+  async function handleNativePurchase() {
+    setPurchasing(true);
+    const result = await purchaseLifetime(userId);
+    setPurchasing(false);
+    if (result.ok) {
+      toast.success("¡Listo! Ya tenés acceso completo.");
+      window.location.reload();
+    } else if (!result.cancelled) {
+      toast.error(result.message);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#EAF2FA" }}>
@@ -46,7 +70,16 @@ export function PaywallScreen({ userId, email }: { userId: string; email?: strin
           <p className="text-xs" style={{ color: "#5C6E8C" }}>Acceso completo, sin vencimiento.</p>
         </div>
 
-        {checkoutUrl ? (
+        {nativeAvailable ? (
+          <Button
+            className="w-full"
+            disabled={purchasing}
+            onClick={handleNativePurchase}
+            style={{ background: "#17366C", color: "#FFFFFF", opacity: purchasing ? 0.6 : 1 }}
+          >
+            {purchasing ? "Procesando..." : "Suscribirme"}
+          </Button>
+        ) : checkoutUrl ? (
           <Button asChild className="w-full" style={{ background: "#17366C", color: "#FFFFFF" }}>
             <a href={checkoutUrl} target="_blank" rel="noopener noreferrer">
               Suscribirme
@@ -58,7 +91,7 @@ export function PaywallScreen({ userId, email }: { userId: string; email?: strin
           </Button>
         )}
 
-        {checkoutUrl && (
+        {checkoutUrl && !nativeAvailable && (
           <>
             <p className="text-xs" style={{ color: "#5C6E8C" }}>
               Se abre en una pestaña nueva. Después de pagar, volvé acá y tocá "Ya pagué".

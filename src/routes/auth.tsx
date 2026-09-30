@@ -30,6 +30,7 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
@@ -135,6 +136,29 @@ function AuthPage() {
     // apagar el loading, la página se va a ir de acá.
   }
 
+  // Apple exige (guideline 4.8) ofrecer "Sign in with Apple" con la misma
+  // prominencia que cualquier otro login social de terceros — por eso este
+  // botón es un calco del de Google, no una alternativa secundaria. Requiere
+  // el provider "apple" habilitado en Supabase Auth (Service ID + private
+  // key de Apple Developer), configuración pendiente del lado de Oliver.
+  async function handleApple() {
+    if (appleLoading) return;
+    if (tab === "signup" && !acceptedTerms) {
+      toast.error("Tenés que aceptar los Términos y Condiciones y la Política de Privacidad para crear la cuenta.");
+      return;
+    }
+    setAppleLoading(true);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (error) {
+      toast.error(error.message);
+      setAppleLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
       <div className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse at top, oklch(0.30 0.18 280 / 0.35), transparent 60%)" }} />
@@ -229,10 +253,16 @@ function AuthPage() {
             </div>
           </div>
 
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={tab === "signup" && !acceptedTerms}>
-            <svg viewBox="0 0 24 24" className="size-4 mr-2"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            {googleLoading ? "Abriendo Google..." : "Continuar con Google"}
-          </Button>
+          <div className="space-y-2">
+            <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={tab === "signup" && !acceptedTerms}>
+              <svg viewBox="0 0 24 24" className="size-4 mr-2"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              {googleLoading ? "Abriendo Google..." : "Continuar con Google"}
+            </Button>
+            <Button type="button" variant="outline" className="w-full bg-black text-white hover:bg-black/90 hover:text-white border-black" onClick={handleApple} disabled={tab === "signup" && !acceptedTerms}>
+              <svg viewBox="0 0 24 24" className="size-4 mr-2" fill="currentColor"><path d="M16.365 1.43c0 1.14-.462 2.146-1.21 2.883-.828.818-2.19 1.451-3.247 1.375-.137-1.11.45-2.257 1.196-2.972.828-.82 2.28-1.437 3.26-1.286zm2.76 16.977c-.507 1.163-.75 1.683-1.4 2.717-.906 1.44-2.184 3.237-3.766 3.25-1.406.013-1.77-.914-3.674-.9-1.905.012-2.3.917-3.706.9-1.583-.013-2.79-1.632-3.696-3.07C.61 18.77-.34 15.05.868 12.55c.848-1.766 2.363-2.88 4.022-2.9 1.634-.02 3.17 1.098 4.16 1.098.99 0 2.85-1.357 4.804-1.158.818.033 3.115.33 4.59 2.49-.12.074-2.742 1.6-2.71 4.776.034 3.798 3.332 5.06 3.39 5.06z"/></svg>
+              {appleLoading ? "Abriendo Apple..." : "Continuar con Apple"}
+            </Button>
+          </div>
           {tab === "signup" && !acceptedTerms && (
             <p className="text-xs text-center text-muted-foreground mt-2">
               Tildá el checkbox de arriba para poder continuar con Google.
