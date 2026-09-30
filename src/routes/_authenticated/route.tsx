@@ -70,8 +70,8 @@ export const Route = createFileRoute("/_authenticated")({
     return { user: session.user, entitled };
   },
   component: () => {
-    const { entitled } = Route.useRouteContext();
-    if (!entitled) return <PaywallScreen />;
+    const { entitled, user } = Route.useRouteContext();
+    if (!entitled) return <PaywallScreen userId={user.id} email={user.email} />;
     return (
       <AppShell>
         <Outlet />
