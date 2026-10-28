@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildUpcomingEvents, computeSuggestedSalary, daysUntil } from "@/lib/financial-centers";
@@ -19,11 +18,12 @@ import type { Database } from "@/integrations/supabase/types";
  * envíos correspondientes simplemente se saltan, sin romper nada.
  *
  * `runNotificacionesCron` corre server-side, disparado por Vercel Cron (ver
- * vercel.json) contra la ruta pública `/cron-notificaciones`, que llama a
- * esta función. No usa `requireSupabaseAuth` (no hay un usuario logueado
- * disparando el cron) — se protege con un secret propio comparado contra el
- * header `Authorization: Bearer <CRON_SECRET>` que Vercel agrega solo si la
- * env var `CRON_SECRET` está configurada en el proyecto.
+ * vercel.json) contra la ruta pública `/cron-notificaciones`. No usa
+ * `requireSupabaseAuth` (no hay un usuario logueado disparando el cron) —
+ * esta función en sí no valida nada, la verificación del header
+ * `Authorization: Bearer <CRON_SECRET>` la hace el `server.handlers.GET` de
+ * la ruta (directo sobre el `Request` real, sin pasar por `getRequest()`),
+ * antes de siquiera llamar a esta función.
  */
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
@@ -48,14 +48,7 @@ function diasLabel(dias: number) {
   return `${dias} día${dias === 1 ? "" : "s"}`;
 }
 
-export const runNotificacionesCron = createServerFn({ method: "GET" }).handler(async () => {
-  const request = getRequest();
-  const secret = process.env.CRON_SECRET;
-  const authHeader = request?.headers.get("authorization");
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    throw new Error("Unauthorized");
-  }
-
+export async function runNotificacionesCron() {
   const supabase = getAdminSupabase();
   const resendKey = process.env.RESEND_API_KEY;
   const vapidPublic = process.env.VAPID_PUBLIC_KEY;
@@ -313,7 +306,7 @@ export const runNotificacionesCron = createServerFn({ method: "GET" }).handler(a
   }
 
   return { ok: true, usersProcessed, emailsSent, pushSent, salaryRemindersSent };
-});
+}
 
 export const updateNotificationPreferences = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
