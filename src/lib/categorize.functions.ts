@@ -15,7 +15,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const suggestCategories = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { filas: { descripcion: string; tipo: string }[]; categorias: string[] }) => data)
+  .validator((data: { filas: { descripcion: string; tipo: string }[]; categorias: string[] }) => data)
   .handler(async ({ data }) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {

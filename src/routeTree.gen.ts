@@ -9,49 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TerminosRouteImport } from './routes/terminos'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PrivacidadRouteImport } from './routes/privacidad'
-import { Route as CronNotificacionesRouteImport } from './routes/cron-notificaciones'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WebhooksRevenuecatRouteImport } from './routes/webhooks/revenuecat'
-import { Route as WebhooksLemonsqueezyRouteImport } from './routes/webhooks/lemonsqueezy'
-import { Route as AuthenticatedVencimientosRouteImport } from './routes/_authenticated/vencimientos'
-import { Route as AuthenticatedTarjetasRouteImport } from './routes/_authenticated/tarjetas'
-import { Route as AuthenticatedProyeccionesRouteImport } from './routes/_authenticated/proyecciones'
-import { Route as AuthenticatedPrestamoRouteImport } from './routes/_authenticated/prestamo'
-import { Route as AuthenticatedPatrimonioRouteImport } from './routes/_authenticated/patrimonio'
-import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
-import { Route as AuthenticatedMovimientosRouteImport } from './routes/_authenticated/movimientos'
-import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
-import { Route as AuthenticatedInversionesRouteImport } from './routes/_authenticated/inversiones'
-import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
-import { Route as AuthenticatedInmueblesRouteImport } from './routes/_authenticated/inmuebles'
-import { Route as AuthenticatedIngresosRouteImport } from './routes/_authenticated/ingresos'
-import { Route as AuthenticatedGastosFijosRouteImport } from './routes/_authenticated/gastos-fijos'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CronNotificacionesRouteImport } from './routes/cron-notificaciones'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TerminosRouteImport } from './routes/terminos'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedGastosFijosRouteImport } from './routes/_authenticated/gastos-fijos'
+import { Route as AuthenticatedIngresosRouteImport } from './routes/_authenticated/ingresos'
+import { Route as AuthenticatedInmueblesRouteImport } from './routes/_authenticated/inmuebles'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedInversionesRouteImport } from './routes/_authenticated/inversiones'
+import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
+import { Route as AuthenticatedMovimientosRouteImport } from './routes/_authenticated/movimientos'
+import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
+import { Route as AuthenticatedPatrimonioRouteImport } from './routes/_authenticated/patrimonio'
+import { Route as AuthenticatedPrestamoRouteImport } from './routes/_authenticated/prestamo'
+import { Route as AuthenticatedProyeccionesRouteImport } from './routes/_authenticated/proyecciones'
+import { Route as AuthenticatedTarjetasRouteImport } from './routes/_authenticated/tarjetas'
+import { Route as AuthenticatedVencimientosRouteImport } from './routes/_authenticated/vencimientos'
+import { Route as WebhooksLemonsqueezyRouteImport } from './routes/webhooks/lemonsqueezy'
+import { Route as WebhooksRevenuecatRouteImport } from './routes/webhooks/revenuecat'
 
-const TerminosRoute = TerminosRouteImport.update({
-  id: '/terminos',
-  path: '/terminos',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacidadRoute = PrivacidadRouteImport.update({
-  id: '/privacidad',
-  path: '/privacidad',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CronNotificacionesRoute = CronNotificacionesRouteImport.update({
-  id: '/cron-notificaciones',
-  path: '/cron-notificaciones',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -59,88 +48,35 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const CronNotificacionesRoute = CronNotificacionesRouteImport.update({
+  id: '/cron-notificaciones',
+  path: '/cron-notificaciones',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WebhooksRevenuecatRoute = WebhooksRevenuecatRouteImport.update({
-  id: '/webhooks/revenuecat',
-  path: '/webhooks/revenuecat',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WebhooksLemonsqueezyRoute = WebhooksLemonsqueezyRouteImport.update({
-  id: '/webhooks/lemonsqueezy',
-  path: '/webhooks/lemonsqueezy',
+const TerminosRoute = TerminosRouteImport.update({
+  id: '/terminos',
+  path: '/terminos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedVencimientosRoute =
-  AuthenticatedVencimientosRouteImport.update({
-    id: '/vencimientos',
-    path: '/vencimientos',
+const AuthenticatedConfiguracionRoute =
+  AuthenticatedConfiguracionRouteImport.update({
+    id: '/configuracion',
+    path: '/configuracion',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedTarjetasRoute = AuthenticatedTarjetasRouteImport.update({
-  id: '/tarjetas',
-  path: '/tarjetas',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProyeccionesRoute =
-  AuthenticatedProyeccionesRouteImport.update({
-    id: '/proyecciones',
-    path: '/proyecciones',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPrestamoRoute = AuthenticatedPrestamoRouteImport.update({
-  id: '/prestamo',
-  path: '/prestamo',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPatrimonioRoute = AuthenticatedPatrimonioRouteImport.update({
-  id: '/patrimonio',
-  path: '/patrimonio',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedNotificacionesRoute =
-  AuthenticatedNotificacionesRouteImport.update({
-    id: '/notificaciones',
-    path: '/notificaciones',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMovimientosRoute =
-  AuthenticatedMovimientosRouteImport.update({
-    id: '/movimientos',
-    path: '/movimientos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
-  id: '/metas',
-  path: '/metas',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInversionesRoute =
-  AuthenticatedInversionesRouteImport.update({
-    id: '/inversiones',
-    path: '/inversiones',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInmueblesRoute = AuthenticatedInmueblesRouteImport.update({
-  id: '/inmuebles',
-  path: '/inmuebles',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedIngresosRoute = AuthenticatedIngresosRouteImport.update({
-  id: '/ingresos',
-  path: '/ingresos',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedGastosFijosRoute =
@@ -149,17 +85,81 @@ const AuthenticatedGastosFijosRoute =
     path: '/gastos-fijos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedIngresosRoute = AuthenticatedIngresosRouteImport.update({
+  id: '/ingresos',
+  path: '/ingresos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedConfiguracionRoute =
-  AuthenticatedConfiguracionRouteImport.update({
-    id: '/configuracion',
-    path: '/configuracion',
+const AuthenticatedInmueblesRoute = AuthenticatedInmueblesRouteImport.update({
+  id: '/inmuebles',
+  path: '/inmuebles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInversionesRoute =
+  AuthenticatedInversionesRouteImport.update({
+    id: '/inversiones',
+    path: '/inversiones',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMovimientosRoute =
+  AuthenticatedMovimientosRouteImport.update({
+    id: '/movimientos',
+    path: '/movimientos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNotificacionesRoute =
+  AuthenticatedNotificacionesRouteImport.update({
+    id: '/notificaciones',
+    path: '/notificaciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPatrimonioRoute = AuthenticatedPatrimonioRouteImport.update({
+  id: '/patrimonio',
+  path: '/patrimonio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPrestamoRoute = AuthenticatedPrestamoRouteImport.update({
+  id: '/prestamo',
+  path: '/prestamo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProyeccionesRoute =
+  AuthenticatedProyeccionesRouteImport.update({
+    id: '/proyecciones',
+    path: '/proyecciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTarjetasRoute = AuthenticatedTarjetasRouteImport.update({
+  id: '/tarjetas',
+  path: '/tarjetas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVencimientosRoute =
+  AuthenticatedVencimientosRouteImport.update({
+    id: '/vencimientos',
+    path: '/vencimientos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const WebhooksLemonsqueezyRoute = WebhooksLemonsqueezyRouteImport.update({
+  id: '/webhooks/lemonsqueezy',
+  path: '/webhooks/lemonsqueezy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebhooksRevenuecatRoute = WebhooksRevenuecatRouteImport.update({
+  id: '/webhooks/revenuecat',
+  path: '/webhooks/revenuecat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -331,39 +331,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terminos': {
-      id: '/terminos'
-      path: '/terminos'
-      fullPath: '/terminos'
-      preLoaderRoute: typeof TerminosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacidad': {
-      id: '/privacidad'
-      path: '/privacidad'
-      fullPath: '/privacidad'
-      preLoaderRoute: typeof PrivacidadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cron-notificaciones': {
-      id: '/cron-notificaciones'
-      path: '/cron-notificaciones'
-      fullPath: '/cron-notificaciones'
-      preLoaderRoute: typeof CronNotificacionesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -373,116 +345,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/webhooks/revenuecat': {
-      id: '/webhooks/revenuecat'
-      path: '/webhooks/revenuecat'
-      fullPath: '/webhooks/revenuecat'
-      preLoaderRoute: typeof WebhooksRevenuecatRouteImport
+    '/cron-notificaciones': {
+      id: '/cron-notificaciones'
+      path: '/cron-notificaciones'
+      fullPath: '/cron-notificaciones'
+      preLoaderRoute: typeof CronNotificacionesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/webhooks/lemonsqueezy': {
-      id: '/webhooks/lemonsqueezy'
-      path: '/webhooks/lemonsqueezy'
-      fullPath: '/webhooks/lemonsqueezy'
-      preLoaderRoute: typeof WebhooksLemonsqueezyRouteImport
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/vencimientos': {
-      id: '/_authenticated/vencimientos'
-      path: '/vencimientos'
-      fullPath: '/vencimientos'
-      preLoaderRoute: typeof AuthenticatedVencimientosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tarjetas': {
-      id: '/_authenticated/tarjetas'
-      path: '/tarjetas'
-      fullPath: '/tarjetas'
-      preLoaderRoute: typeof AuthenticatedTarjetasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/terminos': {
+      id: '/terminos'
+      path: '/terminos'
+      fullPath: '/terminos'
+      preLoaderRoute: typeof TerminosRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/proyecciones': {
-      id: '/_authenticated/proyecciones'
-      path: '/proyecciones'
-      fullPath: '/proyecciones'
-      preLoaderRoute: typeof AuthenticatedProyeccionesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/prestamo': {
-      id: '/_authenticated/prestamo'
-      path: '/prestamo'
-      fullPath: '/prestamo'
-      preLoaderRoute: typeof AuthenticatedPrestamoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/patrimonio': {
-      id: '/_authenticated/patrimonio'
-      path: '/patrimonio'
-      fullPath: '/patrimonio'
-      preLoaderRoute: typeof AuthenticatedPatrimonioRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notificaciones': {
-      id: '/_authenticated/notificaciones'
-      path: '/notificaciones'
-      fullPath: '/notificaciones'
-      preLoaderRoute: typeof AuthenticatedNotificacionesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/movimientos': {
-      id: '/_authenticated/movimientos'
-      path: '/movimientos'
-      fullPath: '/movimientos'
-      preLoaderRoute: typeof AuthenticatedMovimientosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/metas': {
-      id: '/_authenticated/metas'
-      path: '/metas'
-      fullPath: '/metas'
-      preLoaderRoute: typeof AuthenticatedMetasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inversiones': {
-      id: '/_authenticated/inversiones'
-      path: '/inversiones'
-      fullPath: '/inversiones'
-      preLoaderRoute: typeof AuthenticatedInversionesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/insights': {
-      id: '/_authenticated/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inmuebles': {
-      id: '/_authenticated/inmuebles'
-      path: '/inmuebles'
-      fullPath: '/inmuebles'
-      preLoaderRoute: typeof AuthenticatedInmueblesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ingresos': {
-      id: '/_authenticated/ingresos'
-      path: '/ingresos'
-      fullPath: '/ingresos'
-      preLoaderRoute: typeof AuthenticatedIngresosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/gastos-fijos': {
-      id: '/_authenticated/gastos-fijos'
-      path: '/gastos-fijos'
-      fullPath: '/gastos-fijos'
-      preLoaderRoute: typeof AuthenticatedGastosFijosRouteImport
+    '/_authenticated/configuracion': {
+      id: '/_authenticated/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -492,12 +394,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/configuracion': {
-      id: '/_authenticated/configuracion'
-      path: '/configuracion'
-      fullPath: '/configuracion'
-      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
+    '/_authenticated/gastos-fijos': {
+      id: '/_authenticated/gastos-fijos'
+      path: '/gastos-fijos'
+      fullPath: '/gastos-fijos'
+      preLoaderRoute: typeof AuthenticatedGastosFijosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ingresos': {
+      id: '/_authenticated/ingresos'
+      path: '/ingresos'
+      fullPath: '/ingresos'
+      preLoaderRoute: typeof AuthenticatedIngresosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inmuebles': {
+      id: '/_authenticated/inmuebles'
+      path: '/inmuebles'
+      fullPath: '/inmuebles'
+      preLoaderRoute: typeof AuthenticatedInmueblesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inversiones': {
+      id: '/_authenticated/inversiones'
+      path: '/inversiones'
+      fullPath: '/inversiones'
+      preLoaderRoute: typeof AuthenticatedInversionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/metas': {
+      id: '/_authenticated/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof AuthenticatedMetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/movimientos': {
+      id: '/_authenticated/movimientos'
+      path: '/movimientos'
+      fullPath: '/movimientos'
+      preLoaderRoute: typeof AuthenticatedMovimientosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notificaciones': {
+      id: '/_authenticated/notificaciones'
+      path: '/notificaciones'
+      fullPath: '/notificaciones'
+      preLoaderRoute: typeof AuthenticatedNotificacionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/patrimonio': {
+      id: '/_authenticated/patrimonio'
+      path: '/patrimonio'
+      fullPath: '/patrimonio'
+      preLoaderRoute: typeof AuthenticatedPatrimonioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/prestamo': {
+      id: '/_authenticated/prestamo'
+      path: '/prestamo'
+      fullPath: '/prestamo'
+      preLoaderRoute: typeof AuthenticatedPrestamoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/proyecciones': {
+      id: '/_authenticated/proyecciones'
+      path: '/proyecciones'
+      fullPath: '/proyecciones'
+      preLoaderRoute: typeof AuthenticatedProyeccionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tarjetas': {
+      id: '/_authenticated/tarjetas'
+      path: '/tarjetas'
+      fullPath: '/tarjetas'
+      preLoaderRoute: typeof AuthenticatedTarjetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/vencimientos': {
+      id: '/_authenticated/vencimientos'
+      path: '/vencimientos'
+      fullPath: '/vencimientos'
+      preLoaderRoute: typeof AuthenticatedVencimientosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/webhooks/lemonsqueezy': {
+      id: '/webhooks/lemonsqueezy'
+      path: '/webhooks/lemonsqueezy'
+      fullPath: '/webhooks/lemonsqueezy'
+      preLoaderRoute: typeof WebhooksLemonsqueezyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/webhooks/revenuecat': {
+      id: '/webhooks/revenuecat'
+      path: '/webhooks/revenuecat'
+      fullPath: '/webhooks/revenuecat'
+      preLoaderRoute: typeof WebhooksRevenuecatRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

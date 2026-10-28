@@ -26,7 +26,7 @@ const MAX_MESES = 12;
 
 export const simulateScenario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { pregunta: string; historial: Turno[]; moneda: string; proyeccion: ProyeccionMes[]; categorias?: string[]; fechaHoy: string }) => data)
+  .validator((data: { pregunta: string; historial: Turno[]; moneda: string; proyeccion: ProyeccionMes[]; categorias?: string[]; fechaHoy: string }) => data)
   .handler(async ({ data }) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {

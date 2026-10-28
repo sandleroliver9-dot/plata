@@ -48,7 +48,7 @@ export function resolveEffectivePayDay(rawPayDay: number, payDateMode: PayDateMo
 
 export const updateSavingTarget = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { savingTarget: number }) => data)
+  .validator((data: { savingTarget: number }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     // Antes solo lo limitaba el <Slider min={0} max={60}> del cliente; sin
@@ -65,7 +65,7 @@ export const updateSavingTarget = createServerFn({ method: "POST" })
 
 export const updateFinancialProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { payDay: number; salary: number; savingTarget: number; payDateMode?: PayDateMode; incomeFrequency?: "mensual" | "quincenal" | "semanal" | "variable" }) => data)
+  .validator((data: { payDay: number; salary: number; savingTarget: number; payDateMode?: PayDateMode; incomeFrequency?: "mensual" | "quincenal" | "semanal" | "variable" }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rawPayDay = Math.max(1, Math.min(31, Math.round(Number(data.payDay) || 1)));
