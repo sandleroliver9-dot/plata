@@ -56,7 +56,7 @@ async function getCoinbaseSpot(sym: string): Promise<number | undefined> {
 }
 
 export const getCryptoQuotes = createServerFn({ method: "POST" })
-  .inputValidator((d: { tickers: string[] }) => d)
+  .validator((d: { tickers: string[] }) => d)
   .handler(async ({ data }): Promise<CryptoQuote[]> => {
     const req = [...new Set(data.tickers.map((t) => t.toUpperCase()))];
     const out: CryptoQuote[] = [];
@@ -119,7 +119,7 @@ export const getCryptoQuotes = createServerFn({ method: "POST" })
 export type StockQuote = { symbol: string; usd: number; change?: number; currency?: string };
 
 export const getStockQuotes = createServerFn({ method: "POST" })
-  .inputValidator((d: { tickers: string[] }) => d)
+  .validator((d: { tickers: string[] }) => d)
   .handler(async ({ data }): Promise<StockQuote[]> => {
     const unique = [...new Set(data.tickers.map((t) => t.toUpperCase().trim()).filter(Boolean))];
     if (unique.length === 0) return [];

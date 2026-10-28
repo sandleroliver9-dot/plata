@@ -18,7 +18,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const parseQuickEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { texto: string; categorias: string[]; fechaHoy: string; monedaPorDefecto?: string }) => data)
+  .validator((data: { texto: string; categorias: string[]; fechaHoy: string; monedaPorDefecto?: string }) => data)
   .handler(async ({ data }) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {

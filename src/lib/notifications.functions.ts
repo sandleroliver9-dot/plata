@@ -317,7 +317,7 @@ export const runNotificacionesCron = createServerFn({ method: "GET" }).handler(a
 
 export const updateNotificationPreferences = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { notifyEmail: boolean; notifyPush: boolean; alertDays: number }) => data)
+  .validator((data: { notifyEmail: boolean; notifyPush: boolean; alertDays: number }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const alertDays = Math.max(1, Math.min(30, Math.round(Number(data.alertDays) || 7)));
@@ -331,7 +331,7 @@ export const updateNotificationPreferences = createServerFn({ method: "POST" })
 
 export const savePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { endpoint: string; p256dh: string; auth: string }) => data)
+  .validator((data: { endpoint: string; p256dh: string; auth: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase
@@ -345,7 +345,7 @@ export const savePushSubscription = createServerFn({ method: "POST" })
 
 export const deletePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { endpoint: string }) => data)
+  .validator((data: { endpoint: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase.from("push_subscriptions").delete().eq("user_id", userId).eq("endpoint", data.endpoint);
