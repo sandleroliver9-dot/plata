@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MovimientoDialog, type Form as MovimientoDefaults } from "@/components/app/movimiento-dialog";
+import { PLATIUM_INPUT } from "@/components/app/platium-ui";
 
 type MovimientoParseado = { tipo: "Ingreso" | "Gasto"; monto: string; moneda: "ARS" | "USD"; descripcion: string; categoria: string; fecha: string };
 type Turno =
@@ -166,8 +167,7 @@ export function SimulatorChat() {
       <Button
         onClick={() => setOpen(true)}
         size="sm"
-        className="fixed bottom-20 right-4 z-40 shadow-lg rounded-full h-12 w-12 p-0"
-        style={{ background: "var(--gradient-primary)" }}
+        className="fixed bottom-4 right-4 z-40 shadow-lg rounded-full h-12 w-12 p-0 bg-[#20376b] hover:bg-[#20376b]/90 text-white"
         aria-label="Abrir chat con la IA"
       >
         <Sparkles className="size-5" />
@@ -219,13 +219,13 @@ export function SimulatorChat() {
                       )}
                       {t.status === "pending" && (
                         <div className="flex gap-2 pt-1">
-                          <Button size="sm" onClick={() => guardarMut.mutate(t.movimiento)} disabled={guardarMut.isPending}>
+                          <Button size="sm" className="bg-[#c7dbf1] hover:bg-[#c7dbf1]/80 text-[#111] shadow-none rounded-[11px]" onClick={() => guardarMut.mutate(t.movimiento)} disabled={guardarMut.isPending}>
                             <Check className="size-4 mr-1" />Guardar
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => editar(t.movimiento)}>
+                          <Button size="sm" className="bg-white border border-[#d9d9d9] hover:bg-[#f5f5f4] text-[#111] shadow-none rounded-[11px]" onClick={() => editar(t.movimiento)}>
                             <Pencil className="size-4 mr-1" />Editar
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => descartar(t.movimiento)}>
+                          <Button size="sm" variant="ghost" className="text-[#70706a] hover:text-[#111] rounded-[11px]" onClick={() => descartar(t.movimiento)}>
                             <X className="size-4 mr-1" />Descartar
                           </Button>
                         </div>
@@ -262,19 +262,20 @@ export function SimulatorChat() {
               placeholder={escuchando ? "Escuchando..." : "Preguntame lo que quieras..."}
               maxLength={500}
               disabled={escuchando}
+              className={PLATIUM_INPUT}
             />
             {speechSupported && (
               <Button
                 type="button"
                 size="icon"
-                variant={escuchando ? "default" : "outline"}
                 onClick={toggleMic}
                 aria-label={escuchando ? "Detener dictado" : "Dictar por voz"}
+                className={escuchando ? "bg-[#20376b] hover:bg-[#20376b]/90 text-white rounded-[11px]" : "bg-white border border-[#d9d9d9] hover:bg-[#f5f5f4] text-[#20376b] rounded-[11px]"}
               >
                 {escuchando ? <MicOff className="size-4" /> : <Mic className="size-4" />}
               </Button>
             )}
-            <Button type="submit" size="icon" disabled={mut.isPending || !texto.trim()}><Send className="size-4" /></Button>
+            <Button type="submit" size="icon" disabled={mut.isPending || !texto.trim()} className="bg-[#20376b] hover:bg-[#20376b]/90 text-white rounded-[11px]"><Send className="size-4" /></Button>
           </form>
         </DialogContent>
       </Dialog>

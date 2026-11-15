@@ -2,7 +2,6 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app/app-shell";
-import { FeedbackWidget } from "@/components/app/feedback-widget";
 import { SimulatorChat } from "@/components/app/simulator-chat";
 import { OnboardingWizard } from "@/components/app/onboarding-wizard";
 import { PaywallScreen } from "@/components/app/paywall-screen";
@@ -73,7 +72,6 @@ export const Route = createFileRoute("/_authenticated")({
     return (
       <AppShell>
         <Outlet />
-        <FeedbackWidget />
         <SimulatorChat />
         <OnboardingWizard />
       </AppShell>
