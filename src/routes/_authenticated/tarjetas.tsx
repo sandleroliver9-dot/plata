@@ -10,13 +10,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { formatMoney, currentFinancialMonth, financialMonth, todayISO } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DecimalInput, IntegerInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { parseIntegerInput, parsePositiveNumberInput } from "@/lib/number-input";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/tarjetas")({
   head: () => ({ meta: [{ title: "Tarjetas y cuotas · Platium" }] }),
@@ -177,48 +177,48 @@ function TarjetasPage() {
   const totalMes = (items ?? []).filter(i => i.cuota_actual <= i.cuotas_totales).reduce((s, i) => s + Number(i.valor_cuota), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tarjetas y cuotas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Resumen y cuotas activas.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Tarjetas y cuotas</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Resumen y cuotas activas.</p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nueva compra</Button>
+        <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nueva compra</Button>
       </header>
 
-      <Card className="p-5">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">Cuotas activas este mes</div>
-        <div className="num text-3xl font-bold mt-1">{formatMoney(totalMes, currency)}</div>
-      </Card>
+      <div className={`${PLATIUM_CARD} p-5`}>
+        <div className={PLATIUM_LABEL}>Cuotas activas este mes</div>
+        <div className="num text-2xl font-bold mt-1 text-[#20376b]">{formatMoney(totalMes, currency)}</div>
+      </div>
 
       {grupos.size === 0 ? (
-        <Card className="p-10 text-center text-muted-foreground">Sin compras en cuotas cargadas.</Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center text-[#70706a] text-[13px]`}>Sin compras en cuotas cargadas.</div>
       ) : (
         <div className="space-y-4">
           {Array.from(grupos.entries()).map(([tarjeta, lista]) => {
             const totalTarjeta = (lista as any[]).filter(i => i.cuota_actual <= i.cuotas_totales).reduce((s, i) => s + Number(i.valor_cuota), 0);
             return (
-              <Card key={tarjeta}>
-                <div className="flex items-center justify-between p-4 border-b border-border">
+              <div key={tarjeta} className={PLATIUM_CARD}>
+                <div className="flex items-center justify-between p-4 border-b border-[#d9d9d9]">
                   <div>
-                    <div className="font-semibold">{tarjeta}</div>
-                    <div className="text-xs text-muted-foreground">Próximo pago: {formatMoney(totalTarjeta, currency)}</div>
+                    <div className="font-semibold text-[13px] text-[#20376b]">{tarjeta}</div>
+                    <div className="text-xs text-[#70706a]">Próximo pago: {formatMoney(totalTarjeta, currency)}</div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => pagar.mutate(tarjeta)} disabled={pagar.isPending || totalTarjeta <= 0}>
+                  <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => pagar.mutate(tarjeta)} disabled={pagar.isPending || totalTarjeta <= 0}>
                     <CheckCircle2 className="size-4 mr-2" />Registrar pago
                   </Button>
                 </div>
-                <div className="divide-y divide-border">
+                <div className="divide-y divide-[#d9d9d9]">
                   {(lista as any[]).map(i => (
                     <div key={i.id} className="flex items-center gap-3 p-3">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{i.compra}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="font-medium truncate text-[13px] text-[#111]">{i.compra}</div>
+                        <div className="text-xs text-[#70706a]">
                           Cuota {i.cuota_actual}/{i.cuotas_totales}
                           {i.cuota_actual > i.cuotas_totales && <Badge variant="secondary" className="ml-2 text-xs">Pagada</Badge>}
                         </div>
                       </div>
-                      <div className="num font-semibold">{formatMoney(Number(i.valor_cuota), currency)}</div>
+                      <div className="num font-semibold text-[#111]">{formatMoney(Number(i.valor_cuota), currency)}</div>
                       <ConfirmDeleteButton
                         title="¿Eliminar esta compra en cuotas?"
                         description={`${i.compra} (cuota ${i.cuota_actual}/${i.cuotas_totales}) se va a borrar.`}
@@ -227,7 +227,7 @@ function TarjetasPage() {
                     </div>
                   ))}
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
