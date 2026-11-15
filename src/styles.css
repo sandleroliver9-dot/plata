@@ -126,4 +126,8 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
   }
+
+  .font-plus-jakarta {
+    font-family: "Plus Jakarta Sans", var(--font-sans);
+  }
 }

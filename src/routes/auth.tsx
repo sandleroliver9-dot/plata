@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, Check, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TerminosContent, PrivacidadContent } from "@/components/app/legal-content";
 import { toast } from "sonner";
@@ -159,72 +158,91 @@ function AuthPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      <div className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse at top, oklch(0.30 0.18 280 / 0.35), transparent 60%)" }} />
+  const inputClass = "h-[45px] rounded-[11px] border-0 bg-[#d9d9d9] px-4 text-[13px] text-[#111] placeholder:text-[#70706a] focus-visible:ring-2 focus-visible:ring-[#20376b] font-plus-jakarta";
+  const labelClass = "text-[13px] font-normal text-[#111] font-plus-jakarta";
+  const providerButtonClass = "w-full h-[45px] rounded-[11px] bg-[#20376b] text-[13px] font-normal text-white shadow-none hover:bg-[#20376b]/90 font-plus-jakarta";
 
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <div className="size-14 rounded-2xl grid place-items-center mb-4" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-            <Wallet className="size-7 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">Platium</h1>
-          <p className="text-sm text-muted-foreground mt-1">Tu copiloto financiero</p>
+        <div className="flex flex-col items-center mb-6">
+          <img src="/brand/platium-logo.png" alt="Platium" className="w-[100px] h-[107px]" />
+          <p className="text-[16px] text-[#20376b] mt-1 font-plus-jakarta">Tu copiloto financiero</p>
         </div>
 
-        <Card className="p-6 bg-card border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="border border-[#20376b] rounded-[23px] bg-white p-[30px]">
           <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup")}>
-            <TabsList className="grid grid-cols-2 w-full mb-6">
-              <TabsTrigger value="signin">Ingresar</TabsTrigger>
-              <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
+            <TabsList className="grid grid-cols-2 w-full h-8 bg-[#d9d9d9] rounded-[11px] p-0.5 mb-6">
+              <TabsTrigger
+                value="signin"
+                className="rounded-[9px] text-[13px] font-plus-jakarta data-[state=active]:bg-[#20376b] data-[state=active]:text-white data-[state=active]:shadow-none data-[state=inactive]:text-[#8e8e88]"
+              >
+                Ingresar
+              </TabsTrigger>
+              <TabsTrigger
+                value="signup"
+                className="rounded-[9px] text-[13px] font-plus-jakarta data-[state=active]:bg-[#20376b] data-[state=active]:text-white data-[state=active]:shadow-none data-[state=inactive]:text-[#8e8e88]"
+              >
+                Crear cuenta
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email-in">Email</Label>
-                  <Input id="email-in" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                  <Label htmlFor="email-in" className={labelClass}>Email</Label>
+                  <Input id="email-in" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" className={inputClass} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pw-in">Contraseña</Label>
-                  <PasswordInput id="pw-in" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+                  <Label htmlFor="pw-in" className={labelClass}>Contraseña</Label>
+                  <PasswordInput id="pw-in" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" className={inputClass} />
                 </div>
-                <Button type="submit" className="w-full" disabled={formLoading}>Ingresar</Button>
-                <Button type="button" variant="ghost" className="w-full" onClick={handleForgotPassword} disabled={resetLoading}>
+                <Button type="submit" className="w-full h-[34px] rounded-[11px] bg-[#c7dbf1] text-[13px] font-normal text-[#111] shadow-none hover:bg-[#c7dbf1]/80 font-plus-jakarta" disabled={formLoading}>Ingresar</Button>
+                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="w-full text-center text-[13px] text-[#111] font-plus-jakarta hover:underline">
                   {resetLoading ? "Enviando..." : "Olvidé mi contraseña"}
-                </Button>
+                </button>
                 {resetEmailSent && (
-                  <p className="text-xs text-center text-muted-foreground">
+                  <p className="text-xs text-center text-[#70706a] font-plus-jakarta">
                     Revisá tu email. Te enviamos un link para cambiar la contraseña.
                   </p>
                 )}
+                <div className="space-y-2 pt-2">
+                  <Button type="button" className={providerButtonClass} onClick={handleGoogle} disabled={googleLoading}>
+                    <svg viewBox="0 0 24 24" className="size-4 mr-2"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    {googleLoading ? "Abriendo Google..." : "Continuar con Google"}
+                  </Button>
+                  <Button type="button" className={providerButtonClass} onClick={handleApple} disabled={appleLoading}>
+                    <svg viewBox="0 0 24 24" className="size-4 mr-2" fill="currentColor"><path d="M16.365 1.43c0 1.14-.462 2.146-1.21 2.883-.828.818-2.19 1.451-3.247 1.375-.137-1.11.45-2.257 1.196-2.972.828-.82 2.28-1.437 3.26-1.286zm2.76 16.977c-.507 1.163-.75 1.683-1.4 2.717-.906 1.44-2.184 3.237-3.766 3.25-1.406.013-1.77-.914-3.674-.9-1.905.012-2.3.917-3.706.9-1.583-.013-2.79-1.632-3.696-3.07C.61 18.77-.34 15.05.868 12.55c.848-1.766 2.363-2.88 4.022-2.9 1.634-.02 3.17 1.098 4.16 1.098.99 0 2.85-1.357 4.804-1.158.818.033 3.115.33 4.59 2.49-.12.074-2.742 1.6-2.71 4.776.034 3.798 3.332 5.06 3.39 5.06z"/></svg>
+                    {appleLoading ? "Abriendo Apple..." : "Continuar con Apple"}
+                  </Button>
+                </div>
               </form>
             </TabsContent>
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name-up">Nombre</Label>
-                  <Input id="name-up" value={name} onChange={e => setName(e.target.value)} required />
+                  <Label htmlFor="name-up" className={labelClass}>Nombre</Label>
+                  <Input id="name-up" value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email-up">Email</Label>
-                  <Input id="email-up" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                  <Label htmlFor="email-up" className={labelClass}>Email</Label>
+                  <Input id="email-up" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" className={inputClass} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pw-up">Contraseña</Label>
-                  <PasswordInput id="pw-up" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
+                  <Label htmlFor="pw-up" className={labelClass}>Contraseña</Label>
+                  <PasswordInput id="pw-up" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" className={inputClass} />
                   {password ? (
-                    <ul className="text-xs space-y-0.5 mt-1">
+                    <ul className="text-xs space-y-0.5 mt-1 font-plus-jakarta">
                       {pwChecks.map((c) => (
-                        <li key={c.label} className={`flex items-center gap-1.5 ${c.ok ? "text-success" : "text-muted-foreground"}`}>
+                        <li key={c.label} className={`flex items-center gap-1.5 ${c.ok ? "text-success" : "text-[#70706a]"}`}>
                           {c.ok ? <Check className="size-3" /> : <X className="size-3" />}
                           {c.label}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
+                    <p className="text-xs text-[#70706a] font-plus-jakarta">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
                   )}
                 </div>
                 <div className="flex items-start gap-2">
@@ -234,41 +252,33 @@ function AuthPage() {
                     onCheckedChange={(v) => setAcceptedTerms(v === true)}
                     className="mt-0.5"
                   />
-                  <Label htmlFor="accept-terms" className="text-xs font-normal text-muted-foreground leading-relaxed cursor-pointer">
+                  <Label htmlFor="accept-terms" className="text-xs font-normal text-[#70706a] leading-relaxed cursor-pointer font-plus-jakarta">
                     Acepto los{" "}
-                    <button type="button" onClick={() => setLegalOpen("terminos")} className="text-primary hover:underline">Términos y Condiciones</button>{" "}
+                    <button type="button" onClick={() => setLegalOpen("terminos")} className="text-[#20376b] hover:underline">Términos y Condiciones</button>{" "}
                     y la{" "}
-                    <button type="button" onClick={() => setLegalOpen("privacidad")} className="text-primary hover:underline">Política de Privacidad</button>.
+                    <button type="button" onClick={() => setLegalOpen("privacidad")} className="text-[#20376b] hover:underline">Política de Privacidad</button>.
                   </Label>
                 </div>
-                <Button type="submit" className="w-full" disabled={formLoading || !acceptedTerms}>Crear cuenta</Button>
+                <Button type="submit" className="w-full h-[34px] rounded-[11px] bg-[#c7dbf1] text-[13px] font-normal text-[#111] shadow-none hover:bg-[#c7dbf1]/80 font-plus-jakarta" disabled={formLoading || !acceptedTerms}>Crear cuenta</Button>
+                <div className="space-y-2 pt-2">
+                  <Button type="button" className={providerButtonClass} onClick={handleGoogle} disabled={googleLoading || !acceptedTerms}>
+                    <svg viewBox="0 0 24 24" className="size-4 mr-2"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    {googleLoading ? "Abriendo Google..." : "Continuar con Google"}
+                  </Button>
+                  <Button type="button" className={providerButtonClass} onClick={handleApple} disabled={appleLoading || !acceptedTerms}>
+                    <svg viewBox="0 0 24 24" className="size-4 mr-2" fill="currentColor"><path d="M16.365 1.43c0 1.14-.462 2.146-1.21 2.883-.828.818-2.19 1.451-3.247 1.375-.137-1.11.45-2.257 1.196-2.972.828-.82 2.28-1.437 3.26-1.286zm2.76 16.977c-.507 1.163-.75 1.683-1.4 2.717-.906 1.44-2.184 3.237-3.766 3.25-1.406.013-1.77-.914-3.674-.9-1.905.012-2.3.917-3.706.9-1.583-.013-2.79-1.632-3.696-3.07C.61 18.77-.34 15.05.868 12.55c.848-1.766 2.363-2.88 4.022-2.9 1.634-.02 3.17 1.098 4.16 1.098.99 0 2.85-1.357 4.804-1.158.818.033 3.115.33 4.59 2.49-.12.074-2.742 1.6-2.71 4.776.034 3.798 3.332 5.06 3.39 5.06z"/></svg>
+                    {appleLoading ? "Abriendo Apple..." : "Continuar con Apple"}
+                  </Button>
+                  {!acceptedTerms && (
+                    <p className="text-xs text-center text-[#70706a] font-plus-jakarta">
+                      Tildá el checkbox de arriba para poder continuar.
+                    </p>
+                  )}
+                </div>
               </form>
             </TabsContent>
           </Tabs>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">o</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={tab === "signup" && !acceptedTerms}>
-              <svg viewBox="0 0 24 24" className="size-4 mr-2"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-              {googleLoading ? "Abriendo Google..." : "Continuar con Google"}
-            </Button>
-            <Button type="button" variant="outline" className="w-full bg-black text-white hover:bg-black/90 hover:text-white border-black" onClick={handleApple} disabled={tab === "signup" && !acceptedTerms}>
-              <svg viewBox="0 0 24 24" className="size-4 mr-2" fill="currentColor"><path d="M16.365 1.43c0 1.14-.462 2.146-1.21 2.883-.828.818-2.19 1.451-3.247 1.375-.137-1.11.45-2.257 1.196-2.972.828-.82 2.28-1.437 3.26-1.286zm2.76 16.977c-.507 1.163-.75 1.683-1.4 2.717-.906 1.44-2.184 3.237-3.766 3.25-1.406.013-1.77-.914-3.674-.9-1.905.012-2.3.917-3.706.9-1.583-.013-2.79-1.632-3.696-3.07C.61 18.77-.34 15.05.868 12.55c.848-1.766 2.363-2.88 4.022-2.9 1.634-.02 3.17 1.098 4.16 1.098.99 0 2.85-1.357 4.804-1.158.818.033 3.115.33 4.59 2.49-.12.074-2.742 1.6-2.71 4.776.034 3.798 3.332 5.06 3.39 5.06z"/></svg>
-              {appleLoading ? "Abriendo Apple..." : "Continuar con Apple"}
-            </Button>
-          </div>
-          {tab === "signup" && !acceptedTerms && (
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              Tildá el checkbox de arriba para poder continuar con Google.
-            </p>
-          )}
-        </Card>
+        </div>
       </div>
 
       <Dialog open={legalOpen !== null} onOpenChange={(open) => !open && setLegalOpen(null)}>
