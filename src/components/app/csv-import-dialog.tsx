@@ -197,7 +197,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
         {!parsed.length ? (
           <label className="block border-2 border-dashed border-border rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 transition-colors">
-            <Upload className="size-8 mx-auto text-muted-foreground mb-2" />
+            <Upload className="size-8 mx-auto text-[#70706a] mb-2" />
             <p className="text-sm">Seleccioná un archivo CSV</p>
             <input type="file" accept=".csv" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </label>
@@ -207,7 +207,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
               <FileText className="size-5 text-primary" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{filename}</p>
-                <p className="text-xs text-muted-foreground">{parsed.length} filas listas{errorCount ? ` · ${errorCount} error${errorCount === 1 ? "" : "es"}` : ""}</p>
+                <p className="text-xs text-[#70706a]">{parsed.length} filas listas{errorCount ? ` · ${errorCount} error${errorCount === 1 ? "" : "es"}` : ""}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={reset}>Cambiar</Button>
             </Card>
@@ -220,15 +220,15 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
             )}
 
             {suggesting && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="size-3" />Sugiriendo categorías con IA...</p>
+              <p className="text-xs text-[#70706a] flex items-center gap-1.5"><Sparkles className="size-3" />Sugiriendo categorías con IA...</p>
             )}
             {aiUnavailable && (
-              <p className="text-xs text-muted-foreground">La sugerencia automática de categorías todavía no está configurada en esta cuenta — podés asignarlas a mano abajo.</p>
+              <p className="text-xs text-[#70706a]">La sugerencia automática de categorías todavía no está configurada en esta cuenta — podés asignarlas a mano abajo.</p>
             )}
 
             <div className="max-h-60 overflow-y-auto border border-border rounded-lg">
               <table className="w-full text-xs">
-                <thead className="bg-muted/30 sticky top-0">
+                <thead className="bg-[#f5f5f4] sticky top-0">
                   <tr className="text-left">
                     <th className="p-2">Fecha</th><th className="p-2">Descripción</th><th className="p-2">Tipo</th><th className="p-2 text-right">Monto</th><th className="p-2">Categoría</th>
                   </tr>
@@ -258,7 +258,7 @@ export function CsvImportDialog({ open, onOpenChange }: { open: boolean; onOpenC
                   ))}
                 </tbody>
               </table>
-              {parsed.length > 50 && <p className="text-xs text-muted-foreground p-2">+{parsed.length - 50} filas más...</p>}
+              {parsed.length > 50 && <p className="text-xs text-[#70706a] p-2">+{parsed.length - 50} filas más...</p>}
             </div>
 
             <div className="flex justify-end gap-2">
