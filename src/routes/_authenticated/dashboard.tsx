@@ -1,20 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { TrendingUp, TrendingDown, Wallet, Sparkles, AlertTriangle } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { TrendingUp, TrendingDown, Eye, EyeOff, Info, Sparkles, AlertTriangle, ChevronRight } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatMoney, formatCompact, convertAmount, currentCalendarMonthLabel, currentFinancialMonth, formatFinancialPeriodRange, installmentForFinancialMonth, listFinancialMonths, financialScore, smartMessage } from "@/lib/finance";
 import { DolarWidget } from "@/components/app/dolar-widget";
 import { getSavingTargetPercent, detectUnusualSpending, isCardInstallmentRecorded } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { useDolarTC } from "@/lib/supabase-queries";
+
+const cardClass = "bg-white border border-[#d9d9d9] rounded-[11px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.08)] p-4";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Resumen · Platium" }] }),
@@ -22,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const [preferences] = useFinancialPreferences(user?.id, { payDateMode: profile?.pay_date_mode, payDay: profile?.pay_day });
@@ -105,7 +105,7 @@ function Dashboard() {
   });
 
 
-  const { ingresos, gastos, balance, ingresosUSD, gastosUSD, topCats, serie, anomalias } = useMemo(() => {
+  const { ingresos, gastos, balance, ingresosUSD, gastosUSD, topCats, serie, anomalias, pctIngresos, pctGastos, mesAnteriorLabel } = useMemo(() => {
     // Cualquier movimiento (Gasto o Ingreso) puede traer su propia `moneda`
     // (ej: sueldo en USD, un gasto en dólares) y se normaliza acá a
     // `currency` antes de sumar nada. convertAmount es un no-op cuando la
@@ -242,7 +242,16 @@ function Dashboard() {
       .slice(0, 3)
       .map((u) => ({ cat: u.categoria, monto: u.monto }));
 
-    return { ingresos, gastos, balance: ingresos - gastos, ingresosUSD, gastosUSD, topCats, serie, anomalias };
+    // Comparación vs. el mes anterior (sobre `currency`, el penúltimo punto de
+    // `serie`): solo tiene sentido en la vista nativa ARS, igual que
+    // `ahorroPct` más abajo — en USD no hay una serie histórica nativa armada.
+    const prevIngresos = serie.length >= 2 ? serie[serie.length - 2].ingresos : 0;
+    const prevGastos = serie.length >= 2 ? serie[serie.length - 2].gastos : 0;
+    const pctIngresos = prevIngresos > 0 ? ((ingresos - prevIngresos) / prevIngresos) * 100 : null;
+    const pctGastos = prevGastos > 0 ? ((gastos - prevGastos) / prevGastos) * 100 : null;
+    const mesAnteriorLabel = meses6.length >= 2 ? meses6[meses6.length - 2] : null;
+
+    return { ingresos, gastos, balance: ingresos - gastos, ingresosUSD, gastosUSD, topCats, serie, anomalias, pctIngresos, pctGastos, mesAnteriorLabel };
   }, [movs, cuotasActivas, gastosFijos, ingresosCargados, mes, meses6, profile, preferences, currency, tc]);
 
   const overdraft = Number(profile?.overdraft_allowed ?? 0);
@@ -259,127 +268,172 @@ function Dashboard() {
   // mostrando una conversión sin querer (ver dashboard.tsx history) y
   // confundía: parecía plata en dólares que el usuario no tiene.
   const [monedaVista, setMonedaVista] = useState<"ARS" | "USD">("ARS");
+  const [hideBalance, setHideBalance] = useState(false);
   const vista = monedaVista === "ARS"
     ? { moneda: currency, ingresos, gastos, balance, subtitle: `${ahorroPct >= 0 ? "+" : ""}${ahorroPct.toFixed(0)}% de ahorro · objetivo ${ahorroObjetivo}%` }
     : { moneda: "USD", ingresos: ingresosUSD, gastos: gastosUSD, balance: balanceUSD, subtitle: undefined };
 
+  // vs. mes anterior solo tiene sentido comparando contra una serie histórica
+  // real (la vista ARS nativa); en USD no mostramos esta comparación.
+  const pctIngresosVisible = monedaVista === "ARS" ? pctIngresos : null;
+  const pctGastosVisible = monedaVista === "ARS" ? pctGastos : null;
+
   return (
-    <div className="space-y-8">
+    <div className="bg-white -m-4 p-4 pb-36 md:-m-8 md:p-8 min-h-full space-y-4 font-plus-jakarta">
       <header>
-        <p className="text-sm text-muted-foreground">Hola{profile?.display_name ? `, ${profile.display_name}` : ""} 👋</p>
-        <h1 className="text-3xl font-bold tracking-tight mt-1">Tu resumen de {headerMes}</h1>
+        <p className="text-[16px] text-[#20376b]">Hola{profile?.display_name ? `, ${profile.display_name}` : ""} 👋</p>
+        <h1 className="text-[18px] font-bold text-[#20376b] mt-1">Tu resumen de {headerMes}</h1>
         {periodoRango && (
-          <p className="text-xs text-muted-foreground mt-1">Incluye tus movimientos desde tu último cobro ({periodoRango}), hasta el próximo</p>
+          <p className="text-xs text-[#8e8e88] mt-1">Incluye tus movimientos desde tu último cobro ({periodoRango}), hasta el próximo</p>
         )}
       </header>
 
-      <div className="inline-flex rounded-lg border border-border p-1 gap-1">
-        <Button size="sm" variant={monedaVista === "ARS" ? "default" : "ghost"} onClick={() => setMonedaVista("ARS")}>ARS</Button>
-        <Button size="sm" variant={monedaVista === "USD" ? "default" : "ghost"} onClick={() => setMonedaVista("USD")}>USD</Button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Ingresos" value={formatMoney(vista.ingresos, vista.moneda)} icon={<TrendingUp className="size-5" />} tone="success" />
-        <KpiCard label="Gastos" value={formatMoney(vista.gastos, vista.moneda)} icon={<TrendingDown className="size-5" />} tone="destructive" />
-        <KpiCard label="Balance" value={formatMoney(vista.balance, vista.moneda)} icon={<Wallet className="size-5" />} tone={vista.balance >= 0 ? "success" : "destructive"} subtitle={vista.subtitle} />
-      </div>
-      {monedaVista === "USD" && ingresosUSD === 0 && gastosUSD === 0 && (
-        <p className="text-xs text-muted-foreground -mt-2">No tenés nada cargado en dólares este mes — por eso da $0, no es una conversión.</p>
-      )}
-
-      <Card className="p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-        <div className="flex items-center gap-4">
-          <div className={`size-16 rounded-full grid place-items-center font-bold text-2xl ${score.tone === "success" ? "bg-success/20 text-success" : score.tone === "warning" ? "bg-warning/20 text-warning" : "bg-destructive/20 text-destructive"}`}>
-            {score.score}
+      <div className={cardClass}>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] tracking-wider text-[#8e8e88] uppercase">Balance disponible</span>
+          <button onClick={() => setHideBalance((v) => !v)} aria-label={hideBalance ? "Mostrar balance" : "Ocultar balance"}>
+            {hideBalance ? <EyeOff className="size-4 text-[#8e8e88]" /> : <Eye className="size-4 text-[#8e8e88]" />}
+          </button>
+        </div>
+        <div className="flex items-end justify-between mt-2 gap-3">
+          <div className="min-w-0">
+            <div className="num text-2xl font-bold text-[#20376b]">{hideBalance ? "••••••" : formatMoney(vista.balance, vista.moneda)}</div>
+            {vista.subtitle && <div className={`text-xs mt-1 ${vista.balance >= 0 ? "text-success" : "text-destructive"}`}>{vista.subtitle}</div>}
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold">Score financiero</h3>
-              <Badge variant={score.tone === "success" ? "default" : "secondary"}>{score.label}</Badge>
-            </div>
-            <Progress value={score.score} className="mt-2 h-2" />
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2">
-              <Sparkles className="size-4 mt-0.5 text-primary shrink-0" />
-              <span>{mensaje}</span>
-            </p>
+          <div className="flex flex-col rounded-[11px] overflow-hidden border border-[#d9d9d9] text-[11px] shrink-0">
+            <button onClick={() => setMonedaVista("ARS")} className={`px-3 py-1 ${monedaVista === "ARS" ? "bg-[#20376b] text-white" : "text-[#8e8e88]"}`}>ARS</button>
+            <button onClick={() => setMonedaVista("USD")} className={`px-3 py-1 ${monedaVista === "USD" ? "bg-[#20376b] text-white" : "text-[#8e8e88]"}`}>USD</button>
           </div>
         </div>
-      </Card>
+        {monedaVista === "USD" && ingresosUSD === 0 && gastosUSD === 0 && (
+          <p className="text-xs text-[#8e8e88] mt-2">No tenés nada cargado en dólares este mes — por eso da $0, no es una conversión.</p>
+        )}
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">Últimos 6 meses</h3>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={serie}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => formatCompact(v, currency)} />
-                <Tooltip
-                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: any) => formatMoney(Number(v), currency)}
-                />
-                <Bar dataKey="ingresos" fill="var(--success)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="gastos" fill="var(--destructive)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+      <div className="grid grid-cols-2 gap-3">
+        <div className={cardClass}>
+          <div className="flex items-center justify-between text-[11px] tracking-wider text-[#8e8e88] uppercase">
+            <span>Ingresos</span>
+            <TrendingUp className="size-4 text-success" />
           </div>
-        </Card>
+          <div className="num text-xl font-bold text-[#20376b] mt-2">{formatMoney(vista.ingresos, vista.moneda)}</div>
+          {pctIngresosVisible !== null && mesAnteriorLabel && (
+            <div className={`text-xs mt-1 ${pctIngresosVisible >= 0 ? "text-success" : "text-destructive"}`}>
+              {pctIngresosVisible >= 0 ? "+" : ""}{pctIngresosVisible.toFixed(0)}% vs. {mesAnteriorLabel}
+            </div>
+          )}
+        </div>
+        <div className={cardClass}>
+          <div className="flex items-center justify-between text-[11px] tracking-wider text-[#8e8e88] uppercase">
+            <span>Gastos</span>
+            <TrendingDown className="size-4 text-destructive" />
+          </div>
+          <div className="num text-xl font-bold text-[#20376b] mt-2">{formatMoney(vista.gastos, vista.moneda)}</div>
+          {pctGastosVisible !== null && mesAnteriorLabel && (
+            <div className={`text-xs mt-1 ${pctGastosVisible <= 0 ? "text-success" : "text-destructive"}`}>
+              {pctGastosVisible >= 0 ? "+" : ""}{pctGastosVisible.toFixed(0)}% vs. {mesAnteriorLabel}
+            </div>
+          )}
+        </div>
+      </div>
 
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">Top categorías de gasto</h3>
+      <div className={cardClass}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[11px] font-semibold text-[#20376b] uppercase tracking-wide">Evolución de ingresos y gastos</h3>
+          <span className="text-xs text-[#8e8e88]">6 meses</span>
+        </div>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={serie}>
+              <defs>
+                <linearGradient id="ingresosGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--success)" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gastosGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--destructive)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="var(--destructive)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
+              <XAxis dataKey="mes" stroke="#8e8e88" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#8e8e88" fontSize={11} tickFormatter={(v) => formatCompact(v, currency)} tickLine={false} axisLine={false} width={40} />
+              <Tooltip
+                contentStyle={{ background: "#fff", border: "1px solid #d9d9d9", borderRadius: 8, fontSize: 12 }}
+                formatter={(v: any) => formatMoney(Number(v), currency)}
+              />
+              <Area type="monotone" dataKey="ingresos" stroke="var(--success)" strokeWidth={2} fill="url(#ingresosGrad)" dot={{ r: 3 }} />
+              <Area type="monotone" dataKey="gastos" stroke="var(--destructive)" strokeWidth={2} fill="url(#gastosGrad)" dot={{ r: 3 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex items-center gap-4 mt-2 justify-center text-xs">
+          <span className="flex items-center gap-1.5 text-[#8e8e88]"><span className="size-2 rounded-full bg-[var(--success)]" /> Ingresos</span>
+          <span className="flex items-center gap-1.5 text-[#8e8e88]"><span className="size-2 rounded-full bg-[var(--destructive)]" /> Gastos</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className={cardClass}>
+          <div className="flex items-center gap-1 text-[11px] tracking-wider text-[#8e8e88] uppercase mb-2">
+            <span>Score financiero</span>
+            <Info className="size-3" />
+          </div>
+          <div className="text-2xl font-bold text-[#20376b]">
+            {score.score}<span className="text-sm text-[#8e8e88] font-normal"> / 100</span>
+          </div>
+          <Progress value={score.score} className="mt-2 h-1.5" />
+          <p className={`text-xs mt-2 flex items-start gap-1.5 ${score.tone === "success" ? "text-success" : score.tone === "warning" ? "text-warning" : "text-destructive"}`}>
+            <Sparkles className="size-3.5 mt-0.5 shrink-0" />
+            <span>{score.label}</span>
+          </p>
+        </div>
+
+        <div className={cardClass}>
+          <h3 className="text-[11px] tracking-wider text-[#8e8e88] uppercase mb-2">Top categorías de gasto</h3>
           {topCats.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Sin gastos este mes.</p>
+            <p className="text-xs text-[#8e8e88] py-4 text-center">Sin gastos este mes.</p>
           ) : (
-            <div className="space-y-3">
-              {topCats.map(([cat, monto]) => (
+            <div className="space-y-2">
+              {topCats.slice(0, 3).map(([cat, monto]) => (
                 <div key={cat}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{cat}</span>
-                    <span className="num font-medium">{formatMoney(monto, currency)}</span>
+                  <div className="flex justify-between text-[11px] text-[#111] gap-1">
+                    <span className="truncate">{cat}</span>
+                    <span className="num font-medium shrink-0">{formatMoney(monto, currency)}</span>
                   </div>
-                  <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${topMax > 0 ? (monto / topMax) * 100 : 0}%`, background: "var(--gradient-primary)" }} />
+                  <div className="h-1.5 bg-[#d9d9d9] rounded-full overflow-hidden mt-1">
+                    <div className="h-full rounded-full bg-[#20376b]" style={{ width: `${topMax > 0 ? (monto / topMax) * 100 : 0}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </Card>
+          {topCats.length > 3 && (
+            <button onClick={() => navigate({ to: "/movimientos" })} className="text-[11px] text-[#20376b] mt-2 flex items-center gap-0.5">
+              Ver todas <ChevronRight className="size-3" />
+            </button>
+          )}
+        </div>
       </div>
+
       <DolarWidget />
 
-
       {anomalias.length > 0 && (
-        <Card className="p-5 border-warning/40 bg-warning/5">
+        <div className="bg-white border border-warning/40 bg-warning/5 rounded-[11px] p-4">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="size-5 text-warning" />
-            <h3 className="font-semibold">Gastos fuera de tu patrón</h3>
+            <h3 className="font-semibold text-[#20376b]">Gastos fuera de tu patrón</h3>
           </div>
           <ul className="space-y-2 text-sm">
             {anomalias.map((a, i) => (
               <li key={i} className="flex justify-between">
-                <span className="font-medium">{a.cat}</span>
+                <span className="font-medium text-[#20376b]">{a.cat}</span>
                 <span className="num font-semibold text-warning">{formatMoney(a.monto, currency)}</span>
               </li>
             ))}
           </ul>
-        </Card>
+        </div>
       )}
     </div>
-  );
-}
-
-function KpiCard({ label, value, icon, tone, subtitle }: { label: string; value: string; icon: React.ReactNode; tone: "success" | "destructive" | "warning"; subtitle?: string }) {
-  const toneClass = { success: "text-success", destructive: "text-destructive", warning: "text-warning" }[tone];
-  return (
-    <Card className="p-5 bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-center justify-between text-muted-foreground">
-        <span className="text-xs uppercase tracking-wider">{label}</span>
-        <span className={toneClass}>{icon}</span>
-      </div>
-      <div className="num text-3xl font-bold mt-3 tracking-tight">{value}</div>
-      {subtitle && <div className={`text-xs mt-1 ${toneClass}`}>{subtitle}</div>}
-    </Card>
   );
 }

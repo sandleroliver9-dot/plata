@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { DollarSign, RefreshCw } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { getDolares } from "@/lib/quotes.functions";
 
 function formatARS(n?: number) {
@@ -29,27 +27,24 @@ export function DolarWidget() {
   ];
 
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <DollarSign className="size-5 text-success" />
-          <h3 className="font-semibold">Cotización del dólar</h3>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} />
-        </Button>
+    <div className="bg-white border border-[#d9d9d9] rounded-[11px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.08)] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[11px] tracking-wider text-[#8e8e88] uppercase font-plus-jakarta">Dólar hoy</h3>
+        <button onClick={() => refetch()} disabled={isFetching} aria-label="Actualizar cotizaciones">
+          <RefreshCw className={`size-4 text-[#8e8e88] ${isFetching ? "animate-spin" : ""}`} />
+        </button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {items.map((it) => (
-          <div key={it.label} className={`p-3 rounded-lg border ${it.accent ? "border-primary/40 bg-primary/5" : "border-border bg-card/40"}`}>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">{it.label}</div>
-            <div className="num text-lg font-bold mt-1">{formatARS(it.value)}</div>
+          <div key={it.label} className={`p-2.5 rounded-[11px] border ${it.accent ? "border-[#20376b] bg-[#eaf2fa]" : "border-[#d9d9d9]"}`}>
+            <div className="text-[10px] text-[#8e8e88] uppercase tracking-wider font-plus-jakarta">{it.label}</div>
+            <div className="num text-base font-bold mt-1 text-[#20376b] font-plus-jakarta">{formatARS(it.value)}</div>
           </div>
         ))}
       </div>
       {dataUpdatedAt > 0 && (
-        <p className="text-xs text-muted-foreground mt-3">Actualizado: {new Date(dataUpdatedAt).toLocaleTimeString("es-AR")}</p>
+        <p className="text-[11px] text-[#8e8e88] font-plus-jakarta mt-3">Actualizado: {new Date(dataUpdatedAt).toLocaleTimeString("es-AR")}</p>
       )}
-    </Card>
+    </div>
   );
 }
