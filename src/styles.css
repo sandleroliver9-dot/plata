@@ -129,5 +129,6 @@
 
   .font-plus-jakarta {
     font-family: "Plus Jakarta Sans", var(--font-sans);
+    font-feature-settings: normal;
   }
 }
