@@ -9,7 +9,6 @@ import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DecimalInput, IntegerInput } from "@/components/ui/number-input";
@@ -32,6 +31,7 @@ import { updateFinancialProfile } from "@/lib/profile.functions";
 import { recalculateFinancialMonths } from "@/lib/maintenance.functions";
 import { updateNotificationPreferences, savePushSubscription, deletePushSubscription } from "@/lib/notifications.functions";
 import { isPushSupported, subscribeToPush, unsubscribeFromPush } from "@/lib/push-client";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE, PLATIUM_INPUT } from "@/components/app/platium-ui";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
@@ -194,13 +194,13 @@ function ConfiguracionPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Configuracion</h1>
-          <p className="text-sm text-muted-foreground mt-1">Datos simples para que la app entienda mejor tus cobros, pagos y objetivos.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Configuración</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Datos simples para que la app entienda mejor tus cobros, pagos y objetivos.</p>
         </div>
-        <Button onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending}>
+        <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending}>
           <Save className="size-4" />
           Guardar
         </Button>
@@ -212,7 +212,7 @@ function ConfiguracionPage() {
         <SummaryCard label="Fondo actual" value={formatMoney(emergency.current, currency)} detail={`Cubre ${emergency.coveredMonths.toFixed(1)} meses.`} icon={<Wallet className="size-5" />} />
       </div>
 
-      <Card className="p-5 space-y-4">
+      <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
         <SectionTitle icon={<Wallet className="size-5" />} title="Ingresos" detail="¿Cuando cobras normalmente? Esto ayuda a proyectar tu liquidez con mas precision." />
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Field label="Tipo de fecha de cobro">
@@ -223,7 +223,7 @@ function ConfiguracionPage() {
                 income: { ...prev.income, payDateMode: value as PayDateMode },
               }))}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className={PLATIUM_INPUT}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="fixed_day">Dia fijo del mes</SelectItem>
                 <SelectItem value="first_business_day">Primer dia habil del mes</SelectItem>
@@ -233,20 +233,20 @@ function ConfiguracionPage() {
                 <SelectItem value="variable">Personalizado / variable</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">{payDateModeLabel(preferences.income.payDateMode)}</p>
+            <p className="text-xs text-[#70706a]">{payDateModeLabel(preferences.income.payDateMode)}</p>
           </Field>
           {preferences.income.payDateMode === "fixed_day" ? (
             <Field label="Dia de cobro">
-              <IntegerInput value={profileForm.payDay} onChange={(e) => setProfileForm({ ...profileForm, payDay: e.target.value })} placeholder="1 a 31" />
+              <IntegerInput className={PLATIUM_INPUT} value={profileForm.payDay} onChange={(e) => setProfileForm({ ...profileForm, payDay: e.target.value })} placeholder="1 a 31" />
             </Field>
           ) : preferences.income.payDateMode === "variable" ? (
-            <div className="rounded-md border border-border/70 bg-muted/20 p-3 text-sm text-muted-foreground">
+            <div className="rounded-md border border-[#d9d9d9] bg-[#f5f5f4] p-3 text-sm text-[#70706a]">
               Si tu fecha cambia mucho, carga cada ingreso manualmente cuando lo sepas.
             </div>
           ) : null}
           <Field label="Frecuencia de cobro">
             <Select value={preferences.income.frequency} onValueChange={(value) => updatePreferences((prev) => ({ ...prev, income: { ...prev.income, frequency: value as IncomeFrequency } }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className={PLATIUM_INPUT}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="mensual">Mensual</SelectItem>
                 <SelectItem value="quincenal">Quincenal</SelectItem>
@@ -254,31 +254,31 @@ function ConfiguracionPage() {
                 <SelectItem value="variable">Variable</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Esto indica cada cuanto suele entrar ese ingreso.</p>
+            <p className="text-xs text-[#70706a]">Esto indica cada cuanto suele entrar ese ingreso.</p>
           </Field>
           <Field label="Sueldo o ingreso principal">
-            <DecimalInput value={profileForm.salary} onChange={(e) => setProfileForm({ ...profileForm, salary: e.target.value })} placeholder="Ej: 1500000" />
+            <DecimalInput className={PLATIUM_INPUT} value={profileForm.salary} onChange={(e) => setProfileForm({ ...profileForm, salary: e.target.value })} placeholder="Ej: 1500000" />
           </Field>
           <Field label="Objetivo de ahorro (%)">
-            <IntegerInput value={profileForm.savingTarget} onChange={(e) => setProfileForm({ ...profileForm, savingTarget: e.target.value })} />
+            <IntegerInput className={PLATIUM_INPUT} value={profileForm.savingTarget} onChange={(e) => setProfileForm({ ...profileForm, savingTarget: e.target.value })} />
           </Field>
         </div>
 
         {(data?.ingresos?.length ?? 0) > 0 ? (
           <div className="space-y-2">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Ingresos cargados</div>
+            <div className="text-xs uppercase tracking-wider text-[#70706a]">Ingresos cargados</div>
             <div className="grid gap-3">
               {data?.ingresos.map((income: any) => {
                 const item = preferences.incomeSettings[income.id] ?? {};
                 return (
-                  <div key={income.id} className="grid gap-3 rounded-md border border-border/70 p-3 md:grid-cols-[1fr_120px_160px]">
+                  <div key={income.id} className="grid gap-3 rounded-md border border-[#d9d9d9] p-3 md:grid-cols-[1fr_120px_160px]">
                     <div className="min-w-0">
                       <div className="font-medium truncate">{income.concepto}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
+                      <div className="text-xs text-[#70706a] mt-0.5">
                         {income.tipo ?? "Ingreso"} · {formatMoney(Number(income.monto), currency)} · {income.fecha_cobro}
                       </div>
                     </div>
-                    <IntegerInput
+                    <IntegerInput className={PLATIUM_INPUT}
                       aria-label={`Dia de cobro de ${income.concepto}`}
                       value={item.payDay ? String(item.payDay) : ""}
                       placeholder="Dia"
@@ -303,7 +303,7 @@ function ConfiguracionPage() {
                         },
                       }))}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className={PLATIUM_INPUT}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mensual">Mensual</SelectItem>
                         <SelectItem value="quincenal">Quincenal</SelectItem>
@@ -317,26 +317,26 @@ function ConfiguracionPage() {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Primero carga un ingreso en la seccion Ingresos. Despues vas a poder ajustar cada uno si hace falta.</p>
+          <p className="text-sm text-[#70706a]">Primero carga un ingreso en la seccion Ingresos. Despues vas a poder ajustar cada uno si hace falta.</p>
         )}
-      </Card>
+      </div>
 
-      <Card className="p-5 space-y-4">
+      <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
         <SectionTitle icon={<CreditCard className="size-5" />} title="Tarjetas" detail="Esto permite ubicar mejor tus pagos de tarjeta en el calendario financiero." />
         {cards.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Primero carga una compra en cuotas o una tarjeta. Cuando exista, vas a poder definir cierre y vencimiento.</p>
+          <p className="text-sm text-[#70706a]">Primero carga una compra en cuotas o una tarjeta. Cuando exista, vas a poder definir cierre y vencimiento.</p>
         ) : (
           <div className="grid gap-3">
             {cards.map((card) => {
               const item = preferences.cardSettings[card.tarjeta] ?? {};
               return (
-                <div key={card.tarjeta} className="grid gap-3 rounded-md border border-border/70 p-3 md:grid-cols-[1fr_130px_130px]">
+                <div key={card.tarjeta} className="grid gap-3 rounded-md border border-[#d9d9d9] p-3 md:grid-cols-[1fr_130px_130px]">
                   <div>
                     <div className="font-medium">{card.tarjeta}</div>
-                    <div className="text-xs text-muted-foreground">Fechas habituales de esta tarjeta.</div>
+                    <div className="text-xs text-[#70706a]">Fechas habituales de esta tarjeta.</div>
                   </div>
                   <Field label="Dia de cierre">
-                    <IntegerInput
+                    <IntegerInput className={PLATIUM_INPUT}
                       value={item.closingDay ? String(item.closingDay) : ""}
                       placeholder="Dia"
                       onChange={(e) => updatePreferences((prev) => ({
@@ -352,7 +352,7 @@ function ConfiguracionPage() {
                     />
                   </Field>
                   <Field label="Dia de vencimiento">
-                    <IntegerInput
+                    <IntegerInput className={PLATIUM_INPUT}
                       value={item.dueDay ? String(item.dueDay) : ""}
                       placeholder="Dia"
                       onChange={(e) => updatePreferences((prev) => ({
@@ -372,27 +372,27 @@ function ConfiguracionPage() {
             })}
           </div>
         )}
-      </Card>
+      </div>
 
-      <Card className="p-5 space-y-4">
+      <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
         <SectionTitle icon={<Receipt className="size-5" />} title="Gastos recurrentes" detail="Ubicamos alquiler, servicios y suscripciones en la fecha en que suelen debitarse." />
         {(data?.fijos?.length ?? 0) === 0 ? (
-          <p className="text-sm text-muted-foreground">Primero carga gastos fijos como alquiler, internet o gimnasio. Despues los vas a poder ordenar por fecha.</p>
+          <p className="text-sm text-[#70706a]">Primero carga gastos fijos como alquiler, internet o gimnasio. Despues los vas a poder ordenar por fecha.</p>
         ) : (
           <div className="grid gap-3">
             {data?.fijos.map((expense: any) => {
               const item = preferences.recurringSettings[expense.id] ?? {};
               const frequency = item.frequency ?? "mensual";
               return (
-                <div key={expense.id} className="grid gap-3 rounded-md border border-border/70 p-3 md:grid-cols-[1fr_130px_160px]">
+                <div key={expense.id} className="grid gap-3 rounded-md border border-[#d9d9d9] p-3 md:grid-cols-[1fr_130px_160px]">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{expense.gasto}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
+                    <div className="text-xs text-[#70706a] mt-0.5">
                       {expense.categoria ?? "Gasto fijo"} · {formatMoney(Number(expense.monto_mensual), expense.moneda || currency)}
                     </div>
                   </div>
                   <Field label="¿Que dia suele debitarse?">
-                    <IntegerInput
+                    <IntegerInput className={PLATIUM_INPUT}
                       value={item.debitDay ? String(item.debitDay) : ""}
                       placeholder="Dia"
                       onChange={(e) => updatePreferences((prev) => ({
@@ -418,7 +418,7 @@ function ConfiguracionPage() {
                         },
                       }))}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className={PLATIUM_INPUT}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mensual">Mensual</SelectItem>
                         <SelectItem value="quincenal">Quincenal</SelectItem>
@@ -432,10 +432,10 @@ function ConfiguracionPage() {
             })}
           </div>
         )}
-      </Card>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-5 space-y-4">
+        <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
           <SectionTitle icon={<Shield className="size-5" />} title="Fondo de emergencia" detail="Compara tu fondo actual contra tus gastos estimados." />
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Meses objetivo">
@@ -446,7 +446,7 @@ function ConfiguracionPage() {
                   emergencyFund: { ...prev.emergencyFund, months: Number(value) as 3 | 6 | 12 },
                 }))}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className={PLATIUM_INPUT}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="3">3 meses</SelectItem>
                   <SelectItem value="6">6 meses</SelectItem>
@@ -455,7 +455,7 @@ function ConfiguracionPage() {
               </Select>
             </Field>
             <Field label="Fondo actual">
-              <DecimalInput
+              <DecimalInput className={PLATIUM_INPUT}
                 value={preferences.emergencyFund.current ? String(preferences.emergencyFund.current) : ""}
                 placeholder="Ej: 500000"
                 onChange={(e) => updatePreferences((prev) => ({
@@ -468,50 +468,50 @@ function ConfiguracionPage() {
               />
             </Field>
           </div>
-          <div className="rounded-md border border-border/70 p-3 text-sm">
+          <div className="rounded-md border border-[#d9d9d9] p-3 text-sm">
             <div className="flex justify-between gap-3">
-              <span className="text-muted-foreground">Falta para tu objetivo</span>
+              <span className="text-[#70706a]">Falta para tu objetivo</span>
               <span className="num font-semibold">{formatMoney(emergency.gap, currency)}</span>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-5 space-y-4">
+        <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
           <SectionTitle icon={<Target className="size-5" />} title="Perfil financiero" detail="Define que tan temprano queres que la app te avise." />
           <Select
             value={preferences.riskProfile}
             onValueChange={(value) => updatePreferences((prev) => ({ ...prev, riskProfile: value as FinancialPreferences["riskProfile"] }))}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className={PLATIUM_INPUT}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="conservador">Conservador</SelectItem>
               <SelectItem value="equilibrado">Equilibrado</SelectItem>
               <SelectItem value="agresivo">Agresivo</SelectItem>
             </SelectContent>
           </Select>
-          <div className="grid gap-2 text-sm text-muted-foreground">
+          <div className="grid gap-2 text-sm text-[#70706a]">
             <div><Badge variant="secondary">{preferences.riskProfile}</Badge></div>
-            <p><span className="font-medium text-foreground">Conservador:</span> alerta antes.</p>
-            <p><span className="font-medium text-foreground">Equilibrado:</span> balanceado.</p>
-            <p><span className="font-medium text-foreground">Agresivo:</span> tolera mas variacion.</p>
+            <p><span className="font-medium text-[#111]">Conservador:</span> alerta antes.</p>
+            <p><span className="font-medium text-[#111]">Equilibrado:</span> balanceado.</p>
+            <p><span className="font-medium text-[#111]">Agresivo:</span> tolera mas variacion.</p>
             <p>Ingreso principal: {incomeFrequencyLabel(preferences.income.frequency)}.</p>
             <p>Gastos recurrentes configurados: {Object.values(preferences.recurringSettings).filter((x) => x.frequency || x.debitDay).length}</p>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-5 space-y-4">
+        <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
           <SectionTitle icon={<Bell className="size-5" />} title="Notificaciones" detail="Te avisamos cuando tenés vencimientos próximos, por email y/o notificación push del navegador." />
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-medium">Avisarme por email</div>
-              <div className="text-xs text-muted-foreground">Un resumen cuando tenés vencimientos próximos.</div>
+              <div className="text-xs text-[#70706a]">Un resumen cuando tenés vencimientos próximos.</div>
             </div>
             <Switch checked={notifForm.notifyEmail} onCheckedChange={(v) => notifMutation.mutate({ notifyEmail: v })} />
           </div>
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-medium">Notificaciones push</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-[#70706a]">
                 {isPushSupported() ? "Directo en tu navegador, sin abrir la app." : "Tu navegador no soporta notificaciones push."}
               </div>
             </div>
@@ -522,32 +522,32 @@ function ConfiguracionPage() {
             />
           </div>
           <Field label="Avisarme con cuántos días de anticipación">
-            <IntegerInput
+            <IntegerInput className={PLATIUM_INPUT}
               value={notifForm.alertDays}
               onChange={(e) => setNotifForm({ ...notifForm, alertDays: e.target.value })}
               onBlur={() => notifMutation.mutate({ alertDays: notifForm.alertDays })}
               placeholder="7"
             />
           </Field>
-        </Card>
+        </div>
 
-        <Card className="p-5 space-y-4">
+        <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
           <SectionTitle icon={<RefreshCw className="size-5" />} title="Corregir meses viejos" detail="Si algún movimiento o ingreso quedó etiquetado con el mes que no corresponde (por ejemplo, después de cambiar tu día de cobro), esto lo recalcula." />
           <Button
-            variant="outline"
+            className={PLATIUM_BUTTON_OUTLINE}
             onClick={() => recalculateMonthsMutation.mutate()}
             disabled={recalculateMonthsMutation.isPending}
           >
             <RefreshCw className="size-4 mr-2" />
             {recalculateMonthsMutation.isPending ? "Corrigiendo..." : "Recalcular meses financieros"}
           </Button>
-        </Card>
+        </div>
       </div>
 
-      <p className="text-xs text-center text-muted-foreground pt-2">
-        <Link to="/terminos" className="hover:text-foreground hover:underline">Términos y Condiciones</Link>
+      <p className="text-xs text-center text-[#70706a] pt-2 font-plus-jakarta">
+        <Link to="/terminos" className="hover:text-[#20376b] hover:underline">Términos y Condiciones</Link>
         {" · "}
-        <Link to="/privacidad" className="hover:text-foreground hover:underline">Política de Privacidad</Link>
+        <Link to="/privacidad" className="hover:text-[#20376b] hover:underline">Política de Privacidad</Link>
       </p>
     </div>
   );
@@ -556,7 +556,7 @@ function ConfiguracionPage() {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
+      <Label className="text-xs uppercase tracking-wider text-[#70706a]">{label}</Label>
       {children}
     </div>
   );
@@ -565,10 +565,10 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 function SectionTitle({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-primary">{icon}</div>
+      <div className="mt-0.5 text-[#20376b]">{icon}</div>
       <div>
-        <h2 className="font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{detail}</p>
+        <h2 className="font-semibold text-[13px] text-[#20376b]">{title}</h2>
+        <p className="text-sm text-[#70706a] mt-0.5">{detail}</p>
       </div>
     </div>
   );
@@ -576,16 +576,16 @@ function SectionTitle({ icon, title, detail }: { icon: ReactNode; title: string;
 
 function SummaryCard({ label, value, detail, icon }: { label: string; value: string; detail: string; icon: ReactNode }) {
   return (
-    <Card className="p-5">
+    <div className={`${PLATIUM_CARD} p-5 font-plus-jakarta`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-          <div className="num text-2xl font-bold mt-2">{value}</div>
+          <div className={PLATIUM_LABEL}>{label}</div>
+          <div className="num text-2xl font-bold mt-2 text-[#20376b]">{value}</div>
         </div>
-        <div className="text-primary">{icon}</div>
+        <div className="text-[#20376b]">{icon}</div>
       </div>
-      <p className="text-sm text-muted-foreground mt-3">{detail}</p>
-    </Card>
+      <p className="text-sm text-[#70706a] mt-3">{detail}</p>
+    </div>
   );
 }
 

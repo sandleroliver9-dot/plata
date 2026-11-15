@@ -6,20 +6,20 @@ import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { appNow, formatMoney, todayISO } from "@/lib/finance";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 import { buildUpcomingEvents, daysUntil, type CalendarEvent } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/vencimientos")({
   head: () => ({ meta: [{ title: "Vencimientos · Platium" }] }),
@@ -44,6 +44,7 @@ function Vencimientos() {
   const currency = profile?.currency ?? "ARS";
   const qc = useQueryClient();
   const [view, setView] = useState<"calendario" | "lista">("calendario");
+  const [newOpen, setNewOpen] = useState(false);
   const [cursor, setCursor] = useState(() => {
     const d = appNow();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -116,53 +117,61 @@ function Vencimientos() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vencimientos</h1>
-          <p className="text-muted-foreground text-sm">Lo que anotás a mano (ABL, seguro, expensas...) más cuotas, préstamos, gastos fijos y próximos cobros, todo junto.</p>
-        </div>
-        <NewV userId={user?.id} onCreated={() => qc.invalidateQueries({ queryKey: ["financial-data", user?.id] })} />
+    <div className="space-y-6 font-plus-jakarta">
+      <header>
+        <h1 className={PLATIUM_PAGE_TITLE}>Vencimientos</h1>
+        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Lo que anotás a mano (ABL, seguro, expensas...) más cuotas, préstamos, gastos fijos y próximos cobros, todo junto.</p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="p-5">
-          <div className="text-xs text-muted-foreground uppercase">Pendientes</div>
-          <div className="num text-2xl font-bold mt-2">{pendientes.length}</div>
-        </Card>
-        <Card className="p-5">
-          <div className="text-xs text-muted-foreground uppercase">Monto pendiente</div>
-          <div className="num text-2xl font-bold mt-2">{formatMoney(totalPendiente, currency)}</div>
-        </Card>
-        <Card className={`p-5 ${vencidos.length > 0 ? "border-destructive/40 bg-destructive/5" : ""}`}>
-          <div className="flex items-center gap-2 text-xs uppercase">
-            {vencidos.length > 0 && <AlertTriangle className="size-4 text-destructive" />}
-            <span className="text-muted-foreground">Vencidos</span>
+      <div className={`${PLATIUM_CARD} p-5 grid grid-cols-3 divide-x divide-[#d9d9d9]`}>
+        <div className="text-center">
+          <div className={PLATIUM_LABEL}>Pendientes</div>
+          <div className="num text-2xl font-bold mt-2 text-[#20376b]">{pendientes.length}</div>
+        </div>
+        <div className="text-center">
+          <div className={PLATIUM_LABEL}>Monto pendiente</div>
+          <div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totalPendiente, currency)}</div>
+        </div>
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-1">
+            {vencidos.length > 0 && <AlertTriangle className="size-3.5 text-[#c7272b]" />}
+            <span className={PLATIUM_LABEL}>Vencidos</span>
           </div>
-          <div className={`num text-2xl font-bold mt-2 ${vencidos.length > 0 ? "text-destructive" : ""}`}>{vencidos.length}</div>
-        </Card>
+          <div className={`num text-2xl font-bold mt-2 ${vencidos.length > 0 ? "text-[#c7272b]" : "text-[#20376b]"}`}>{vencidos.length}</div>
+        </div>
       </div>
 
-      <div className="inline-flex rounded-lg border border-border p-1 gap-1">
-        <Button size="sm" variant={view === "calendario" ? "default" : "ghost"} onClick={() => setView("calendario")}>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          className={view === "calendario" ? "h-[34px] rounded-[11px] bg-[#20376b] text-[13px] font-normal text-white shadow-none hover:bg-[#20376b]/90 font-plus-jakarta" : PLATIUM_BUTTON_PRIMARY}
+          onClick={() => setView("calendario")}
+        >
           <LayoutGrid className="size-4 mr-2" /> Calendario
         </Button>
-        <Button size="sm" variant={view === "lista" ? "default" : "ghost"} onClick={() => setView("lista")}>
+        <Button
+          size="sm"
+          className={view === "lista" ? "h-[34px] rounded-[11px] bg-[#20376b] text-[13px] font-normal text-white shadow-none hover:bg-[#20376b]/90 font-plus-jakarta" : PLATIUM_BUTTON_PRIMARY}
+          onClick={() => setView("lista")}
+        >
           <List className="size-4 mr-2" /> Lista
+        </Button>
+        <Button size="sm" className={PLATIUM_BUTTON_PRIMARY} onClick={() => setNewOpen(true)}>
+          <Plus className="size-4 mr-2" /> Nuevo
         </Button>
       </div>
 
       {view === "calendario" ? (
-        <Card className="p-5">
+        <div className={`${PLATIUM_CARD} p-5`}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold capitalize">{monthName}</h3>
+            <h3 className="font-semibold capitalize text-[13px] text-[#20376b]">{monthName}</h3>
             <div className="flex gap-1">
-              <Button size="sm" variant="outline" onClick={() => setCursor(c => { const m = c.m - 1; return m < 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m }; })}>‹</Button>
-              <Button size="sm" variant="outline" onClick={() => setCursor(() => { const d = appNow(); return { y: d.getFullYear(), m: d.getMonth() }; })}>Hoy</Button>
-              <Button size="sm" variant="outline" onClick={() => setCursor(c => { const m = c.m + 1; return m > 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m }; })}>›</Button>
+              <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(c => { const m = c.m - 1; return m < 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m }; })}>‹</Button>
+              <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(() => { const d = appNow(); return { y: d.getFullYear(), m: d.getMonth() }; })}>Hoy</Button>
+              <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(c => { const m = c.m + 1; return m > 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m }; })}>›</Button>
             </div>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground mb-1">
+          <div className="grid grid-cols-7 gap-1 text-xs text-[#70706a] mb-1">
             {["D", "L", "M", "X", "J", "V", "S"].map(d => <div key={d} className="text-center font-medium">{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
@@ -170,36 +179,36 @@ function Vencimientos() {
               const iso = cell.date ? isoLocal(cell.date) : undefined;
               const isToday = iso === today;
               return (
-                <div key={i} className={`min-h-16 rounded-md border p-1 text-xs ${cell.date ? "bg-card/40" : "opacity-30"} ${isToday ? "border-primary bg-primary/10" : "border-border"}`}>
-                  {cell.date && <div className="font-semibold">{cell.date.getDate()}</div>}
+                <div key={i} className={`min-h-16 rounded-md border p-1 text-xs ${cell.date ? "bg-white" : "opacity-30"} ${isToday ? "border-[#20376b] bg-[#eaf2fa]" : "border-[#d9d9d9]"}`}>
+                  {cell.date && <div className="font-semibold text-[#111]">{cell.date.getDate()}</div>}
                   {cell.events.slice(0, 2).map(ev => {
-                    const color = ev.type === "cobro" ? "bg-success/20 text-success" : "bg-primary/10 text-primary";
+                    const color = ev.type === "cobro" ? "bg-success/20 text-success" : "bg-[#20376b]/10 text-[#20376b]";
                     return <div key={ev.id} className={`truncate mt-0.5 rounded px-1 ${color}`}>{ev.title}</div>;
                   })}
-                  {cell.events.length > 2 && <div className="text-muted-foreground mt-0.5">+{cell.events.length - 2}</div>}
+                  {cell.events.length > 2 && <div className="text-[#70706a] mt-0.5">+{cell.events.length - 2}</div>}
                 </div>
               );
             })}
           </div>
-        </Card>
+        </div>
       ) : (
-        <Card>
+        <div className={PLATIUM_CARD}>
           {groupedDates.length === 0 ? (
             <div className="p-10 text-center">
-              <CalendarDays className="size-10 mx-auto text-muted-foreground mb-3" />
-              <p className="font-medium">Todavía no hay nada próximo para mostrar</p>
-              <p className="text-sm text-muted-foreground mt-1">Cuotas, préstamos, gastos fijos, cobros y los vencimientos que cargues acá van a aparecer en esta lista.</p>
+              <CalendarDays className="size-10 mx-auto text-[#8e8e88] mb-3" />
+              <p className="font-medium text-[13px] text-[#111]">Todavía no hay nada próximo para mostrar</p>
+              <p className="text-sm text-[#70706a] mt-1">Cuotas, préstamos, gastos fijos, cobros y los vencimientos que cargues acá van a aparecer en esta lista.</p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-[#d9d9d9]">
               {groupedDates.map((date) => {
                 const dayEvents = grouped.get(date) ?? [];
                 return (
                   <div key={date} className="p-4">
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <div>
-                        <div className="font-semibold capitalize">{formatDate(date)}</div>
-                        <div className="text-xs text-muted-foreground">{relativeDate(date)}</div>
+                        <div className="font-semibold capitalize text-[13px] text-[#20376b]">{formatDate(date)}</div>
+                        <div className="text-xs text-[#70706a]">{relativeDate(date)}</div>
                       </div>
                       <Badge variant="secondary">{dayEvents.length} items</Badge>
                     </div>
@@ -207,20 +216,20 @@ function Vencimientos() {
                       {dayEvents.map((event) => {
                         const rawId = event.type === "vencimiento" ? event.id.replace(/^vencimiento-/, "") : null;
                         return (
-                          <div key={event.id} className="flex items-center gap-3 rounded-md border border-border/70 p-3">
-                            <div className={`size-9 rounded-md grid place-items-center ${event.type === "cobro" ? "bg-success/15 text-success" : "bg-primary/10 text-primary"}`}>
+                          <div key={event.id} className="flex items-center gap-3 rounded-md border border-[#d9d9d9] p-3">
+                            <div className={`size-9 rounded-md grid place-items-center ${event.type === "cobro" ? "bg-success/15 text-success" : "bg-[#20376b]/10 text-[#20376b]"}`}>
                               {event.type === "cobro" ? <CircleDollarSign className="size-5" /> : <CalendarDays className="size-5" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{event.title}</div>
-                              <div className="text-xs text-muted-foreground">{event.detail ?? eventLabel(event.type)}</div>
+                              <div className="font-medium truncate text-[13px] text-[#111]">{event.title}</div>
+                              <div className="text-xs text-[#70706a]">{event.detail ?? eventLabel(event.type)}</div>
                             </div>
-                            <div className={`num font-semibold whitespace-nowrap ${event.type === "cobro" ? "text-success" : ""}`}>
+                            <div className={`num font-semibold whitespace-nowrap ${event.type === "cobro" ? "text-success" : "text-[#111]"}`}>
                               {event.type === "cobro" ? "+" : "-"}{formatMoney(event.amount, currency)}
                             </div>
                             {rawId && (
                               <div className="flex gap-1 shrink-0">
-                                <Button size="sm" onClick={() => marcarPagado(rawId)}>
+                                <Button size="sm" className={PLATIUM_BUTTON_PRIMARY} onClick={() => marcarPagado(rawId)}>
                                   <Check className="size-4" />
                                 </Button>
                                 <ConfirmDeleteButton
@@ -240,8 +249,9 @@ function Vencimientos() {
               })}
             </div>
           )}
-        </Card>
+        </div>
       )}
+      <NewV userId={user?.id} open={newOpen} onOpenChange={setNewOpen} onCreated={() => qc.invalidateQueries({ queryKey: ["financial-data", user?.id] })} />
     </div>
   );
 }
@@ -269,8 +279,7 @@ function eventLabel(type: CalendarEvent["type"]) {
   return "Vencimiento";
 }
 
-function NewV({ userId, onCreated }: { userId?: string; onCreated: () => void }) {
-  const [open, setOpen] = useState(false);
+function NewV({ userId, open, onOpenChange, onCreated }: { userId?: string; open: boolean; onOpenChange: (open: boolean) => void; onCreated: () => void }) {
   const [form, setForm] = useState({ concepto: "", monto: "", fecha: todayISO(), recurrente: false });
 
   async function save() {
@@ -292,14 +301,13 @@ function NewV({ userId, onCreated }: { userId?: string; onCreated: () => void })
     });
     if (error) { toast.error(error.message); return; }
     toast.success("Vencimiento agregado");
-    setOpen(false);
+    onOpenChange(false);
     setForm({ concepto: "", monto: "", fecha: todayISO(), recurrente: false });
     onCreated();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm"><Plus className="size-4 mr-2" />Nuevo</Button></DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader><DialogTitle>Nuevo vencimiento</DialogTitle></DialogHeader>
         <div className="grid gap-3">
