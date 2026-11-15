@@ -137,7 +137,7 @@ export function OnboardingWizard() {
             <Label>{form.frequency === "mensual" ? "Día del mes que cobrás" : "Día de tu cobro principal del mes"}</Label>
             <IntegerInput value={form.pay_day} onChange={(e) => setForm({ ...form, pay_day: e.target.value })} />
             {form.frequency !== "mensual" && (
-              <p className="text-xs text-muted-foreground">Con este día anclamos tu mes financiero. Los demás cobros los cargás como ingresos cuando lleguen.</p>
+              <p className="text-xs text-[#70706a]">Con este día anclamos tu mes financiero. Los demás cobros los cargás como ingresos cuando lleguen.</p>
             )}
           </div>
         </div>
@@ -186,7 +186,7 @@ export function OnboardingWizard() {
         <div className="py-4">{cur.body}</div>
 
         <Progress value={pct} className="h-1" />
-        <div className="text-xs text-muted-foreground text-center">Paso {step + 1} de {steps.length}</div>
+        <div className="text-xs text-[#70706a] text-center">Paso {step + 1} de {steps.length}</div>
 
         <div className="flex gap-2 mt-4">
           {step > 0 && <Button variant="outline" className="flex-1" onClick={() => setStep(step - 1)}>Atrás</Button>}
