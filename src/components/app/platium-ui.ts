@@ -2,7 +2,7 @@
 // blanco, Plus Jakarta Sans. Se usan en las pantallas ya rediseñadas
 // (login, dashboard, flujo de caja, créditos, etc.) para no repetir los
 // mismos literales de Tailwind en cada archivo y mantenerlos consistentes.
-export const PLATIUM_CARD = "bg-white border border-[#d9d9d9] rounded-[11px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.08)]";
+export const PLATIUM_CARD = "bg-white border border-[#d9d9d9] rounded-[11px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.08)] text-[#111]";
 export const PLATIUM_PAGE_TITLE = "text-[18px] font-bold text-[#20376b] font-plus-jakarta";
 export const PLATIUM_PAGE_SUBTITLE = "text-[13px] text-[#70706a] font-plus-jakarta";
 export const PLATIUM_LABEL = "text-[11px] tracking-wider text-[#70706a] uppercase font-plus-jakarta";

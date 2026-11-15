@@ -228,7 +228,7 @@ function IngresosPage() {
   const totalUSD = (items ?? []).filter((i) => (i as any).moneda === "USD").reduce((s, i) => s + Number(i.monto), 0);
 
   return (
-    <div className="space-y-6 font-plus-jakarta">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className={PLATIUM_PAGE_TITLE}>Ingresos</h1>
