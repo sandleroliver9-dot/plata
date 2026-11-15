@@ -185,12 +185,12 @@ export function SimulatorChat() {
           <div className="flex-1 overflow-y-auto space-y-3 py-2 min-h-32">
             {turnos.length === 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Probá con:</p>
+                <p className="text-xs text-[#70706a]">Probá con:</p>
                 {SUGERENCIAS.map((s) => (
                   <button
                     key={s}
                     type="button"
-                    className="block w-full text-left text-sm px-3 py-2 rounded-md border border-border hover:bg-accent"
+                    className="block w-full text-left text-sm px-3 py-2 rounded-md border border-[#d9d9d9] hover:bg-[#f5f5f4]"
                     onClick={() => enviar(s)}
                   >
                     {s}
@@ -202,18 +202,18 @@ export function SimulatorChat() {
               if (t.role === "confirm") {
                 return (
                   <div key={i} className="flex justify-start">
-                    <div className="max-w-[90%] w-full rounded-lg border border-border bg-muted p-3 text-sm space-y-2">
+                    <div className="max-w-[90%] w-full rounded-lg border border-[#d9d9d9] bg-[#f5f5f4] p-3 text-sm space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-medium">{t.movimiento.descripcion}</span>
                         <span className={`num font-semibold ${t.movimiento.tipo === "Ingreso" ? "text-success" : ""}`}>
                           {t.movimiento.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(t.movimiento.monto), t.movimiento.moneda)}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-[#70706a]">
                         {t.movimiento.tipo} · {t.movimiento.categoria || "Sin categoría"} · {t.movimiento.fecha}
                       </div>
                       {t.movimiento.moneda !== currency && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-[#70706a]">
                           Se va a mostrar convertido a {currency} en el dashboard, con el tipo de cambio del día.
                         </div>
                       )}
@@ -231,14 +231,14 @@ export function SimulatorChat() {
                         </div>
                       )}
                       {t.status === "guardado" && <div className="text-xs text-success">✓ Guardado</div>}
-                      {t.status === "descartado" && <div className="text-xs text-muted-foreground">Descartado</div>}
+                      {t.status === "descartado" && <div className="text-xs text-[#70706a]">Descartado</div>}
                     </div>
                   </div>
                 );
               }
               return (
                 <div key={i} className={t.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${t.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${t.role === "user" ? "bg-primary text-primary-foreground" : "bg-[#f5f5f4]"}`}>
                     {t.content}
                   </div>
                 </div>
@@ -246,14 +246,14 @@ export function SimulatorChat() {
             })}
             {mut.isPending && (
               <div className="flex justify-start">
-                <div className="rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground">Pensando...</div>
+                <div className="rounded-lg px-3 py-2 text-sm bg-[#f5f5f4] text-[#70706a]">Pensando...</div>
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
           <form
-            className="flex gap-2 pt-2 border-t border-border"
+            className="flex gap-2 pt-2 border-t border-[#d9d9d9]"
             onSubmit={(e) => { e.preventDefault(); enviar(texto); }}
           >
             <Input

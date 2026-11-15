@@ -95,7 +95,7 @@ export function FeedbackWidget() {
                 maxLength={2000}
                 placeholder="Describí lo más claro posible..."
               />
-              <p className="text-xs text-muted-foreground mt-1">{mensaje.length}/2000 · Página: {pathname}</p>
+              <p className="text-xs text-[#70706a] mt-1">{mensaje.length}/2000 · Página: {pathname}</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
