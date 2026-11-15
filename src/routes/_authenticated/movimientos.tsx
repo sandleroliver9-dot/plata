@@ -14,7 +14,6 @@ import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
 import { useDolarTC } from "@/lib/supabase-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MovimientoDialog, type Form as MovimientoDefaults } from "@/components/app/movimiento-dialog";
@@ -22,6 +21,7 @@ import { QuickEntryDialog } from "@/components/app/quick-entry-dialog";
 import { CsvImportDialog } from "@/components/app/csv-import-dialog";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE, PLATIUM_INPUT } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/movimientos")({
   head: () => ({ meta: [{ title: "Movimientos · Platium" }] }),
@@ -208,11 +208,11 @@ function MovimientosPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Movimientos</h1>
-          <p className="text-sm text-muted-foreground mt-1">Ingresos y gastos de cada mes financiero.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Movimientos</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Ingresos y gastos de cada mes financiero.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {/* Importar/Exportar CSV son funciones de escritorio: en mobile
@@ -220,11 +220,11 @@ function MovimientosPage() {
               que un usuario nuevo busca primero), dejando el botón flotante
               de IA como lo único visible a simple vista. */}
           <div className="hidden sm:flex gap-2">
-            <Button variant="outline" onClick={() => setOpenImport(true)}><Upload className="size-4 mr-2" />Importar CSV</Button>
+            <Button className={PLATIUM_BUTTON_OUTLINE} onClick={() => setOpenImport(true)}><Upload className="size-4 mr-2" />Importar CSV</Button>
             <ExportCsvButton userId={user?.id} />
           </div>
-          <Button variant="outline" onClick={() => setOpenQuickEntry(true)}><Sparkles className="size-4 mr-2" />Carga rápida</Button>
-          <Button onClick={() => setOpenNew(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
+          <Button className={PLATIUM_BUTTON_OUTLINE} onClick={() => setOpenQuickEntry(true)}><Sparkles className="size-4 mr-2" />Carga rápida</Button>
+          <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => setOpenNew(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
         </div>
       </header>
 
@@ -240,10 +240,10 @@ function MovimientosPage() {
       </div>
 
       {gastosPorCategoria.length > 0 && (
-        <Card className="p-4">
+        <div className={`${PLATIUM_CARD} p-4`}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold">En qué estás gastando</h2>
-            <span className="text-xs text-muted-foreground">{mes}</span>
+            <h2 className="text-[13px] font-semibold text-[#20376b]">En qué estás gastando</h2>
+            <span className="text-xs text-[#70706a]">{mes}</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
             <div className="h-56">
@@ -266,23 +266,23 @@ function MovimientosPage() {
                   <div key={e.name} className="flex items-center gap-2 text-sm">
                     <span className="size-2.5 rounded-full shrink-0" style={{ background: e.color }} />
                     <span className="flex-1 truncate">{e.name}</span>
-                    <span className="text-xs text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
-                    <span className="num font-medium tabular-nums">{formatMoney(e.value, currency)}</span>
+                    <span className="text-xs text-[#70706a] tabular-nums">{pct.toFixed(0)}%</span>
+                    <span className="num font-medium tabular-nums text-[#111]">{formatMoney(e.value, currency)}</span>
                   </div>
                 );
               })}
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      <Card className="p-3 flex flex-wrap gap-2">
+      <div className={`${PLATIUM_CARD} p-3 flex flex-wrap gap-2`}>
         <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectTrigger className={`w-40 ${PLATIUM_INPUT}`}><SelectValue /></SelectTrigger>
           <SelectContent>{meses.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={tipo} onValueChange={setTipo}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className={`w-36 ${PLATIUM_INPUT}`}><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="Ingreso">Ingresos</SelectItem>
@@ -290,36 +290,36 @@ function MovimientosPage() {
           </SelectContent>
         </Select>
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar descripción..." className="pl-9" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#8e8e88]" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar descripción..." className={`pl-9 ${PLATIUM_INPUT}`} />
         </div>
-      </Card>
+      </div>
 
-      <Card className="overflow-hidden">
+      <div className={`${PLATIUM_CARD} overflow-hidden font-plus-jakarta`}>
         {isLoading ? (
-          <div className="p-10 text-center text-muted-foreground">Cargando...</div>
+          <div className="p-10 text-center text-[#70706a]">Cargando...</div>
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center">
-            <p className="text-muted-foreground">No hay movimientos para este filtro.</p>
-            <Button variant="link" onClick={() => setOpenNew(true)}>Agregar el primero →</Button>
+            <p className="text-[#70706a] text-[13px]">No hay movimientos para este filtro.</p>
+            <button className="text-[#20376b] text-[13px] mt-1" onClick={() => setOpenNew(true)}>Agregar el primero →</button>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-[#d9d9d9]">
             {filtered.map(m => (
-              <div key={m.id} className="flex items-center gap-3 p-3 hover:bg-muted/20">
+              <div key={m.id} className="flex items-center gap-3 p-3 hover:bg-[#f5f5f4]">
                 <div className="size-2 rounded-full shrink-0" style={{ background: catColor(m.categoria) }} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{m.descripcion ?? "(sin descripción)"}</span>
+                    <span className="font-medium truncate text-[13px] text-[#111]">{m.descripcion ?? "(sin descripción)"}</span>
                     {m.es_cuota && <Badge variant="secondary" className="text-xs">Cuota</Badge>}
                   </div>
-                  <div className="text-xs text-muted-foreground flex gap-2 flex-wrap mt-0.5">
+                  <div className="text-xs text-[#70706a] flex gap-2 flex-wrap mt-0.5">
                     <span>{m.fecha}</span>
                     {m.categoria && <span>· {m.categoria}</span>}
                     {m.medio && <span>· {m.medio}</span>}
                   </div>
                 </div>
-                <div className={`num font-semibold whitespace-nowrap ${m.tipo === "Ingreso" ? "text-success" : "text-foreground"}`}>
+                <div className={`num font-semibold whitespace-nowrap ${m.tipo === "Ingreso" ? "text-success" : "text-[#111]"}`}>
                   {m.tipo === "Ingreso" ? "+" : "-"}{formatMoney(Number(m.monto), (m as any).moneda || currency)}
                 </div>
                 {!String(m.id).startsWith("cuota-") && !String(m.id).startsWith("fijo-") && (
@@ -333,7 +333,7 @@ function MovimientosPage() {
             ))}
           </div>
         )}
-      </Card>
+      </div>
 
       <MovimientoDialog
         open={openNew}
@@ -361,10 +361,10 @@ function MovimientosPage() {
 
 function MiniStat({ label, value, tone }: { label: string; value: string; tone: "success" | "destructive" }) {
   return (
-    <Card className="p-3">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`num text-xl font-bold mt-1 ${tone === "success" ? "text-success" : ""}`}>{value}</div>
-    </Card>
+    <div className={`${PLATIUM_CARD} p-3`}>
+      <div className={PLATIUM_LABEL}>{label}</div>
+      <div className={`num text-xl font-bold mt-1 font-plus-jakarta ${tone === "success" ? "text-success" : "text-[#20376b]"}`}>{value}</div>
+    </div>
   );
 }
 
@@ -401,7 +401,7 @@ function ExportCsvButton({ userId }: { userId?: string }) {
   }
 
   return (
-    <Button variant="outline" onClick={handleExport} disabled={loading}>
+    <Button className={PLATIUM_BUTTON_OUTLINE} onClick={handleExport} disabled={loading}>
       <Download className="size-4 mr-2" />{loading ? "Exportando..." : "Exportar CSV"}
     </Button>
   );

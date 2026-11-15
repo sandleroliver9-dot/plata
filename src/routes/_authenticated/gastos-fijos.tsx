@@ -12,8 +12,6 @@ import { categoriasQuery } from "@/lib/queries";
 import { formatMoney, convertAmount } from "@/lib/finance";
 import { useDolarTC } from "@/lib/supabase-queries";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { DecimalInput, IntegerInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { categoryNamesFor } from "@/lib/categories";
 import { parsePositiveNumberInput } from "@/lib/number-input";
 import { clampDay, useFinancialPreferences } from "@/lib/financial-preferences";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/gastos-fijos")({
   head: () => ({ meta: [{ title: "Gastos fijos · Platium" }] }),
@@ -124,43 +123,41 @@ function GastosFijosPage() {
   const categoryOptions = categoryNamesFor(cats, "Gasto");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gastos fijos</h1>
-          <p className="text-sm text-muted-foreground mt-1">Servicios, alquiler y todo lo recurrente.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Gastos fijos</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Servicios, alquiler y todo lo recurrente.</p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
+        <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual</div>
-          <div className="num text-3xl font-bold mt-1">{formatMoney(total, currency)}</div>
-          {totalCuotas > 0 && (
-            <div className="text-xs text-muted-foreground mt-2">
-              Incluye {formatMoney(totalCuotas, currency)} de cuotas de tarjeta activas
-            </div>
-          )}
-        </Card>
-        <Card className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total mensual (USD)</div>
-          <div className="num text-3xl font-bold mt-1">{formatMoney(totalUSD, "USD")}</div>
-        </Card>
+      <div className={`${PLATIUM_CARD} p-5`}>
+        <div className={PLATIUM_LABEL}>Total mensual</div>
+        <div className="num text-2xl font-bold mt-1 text-[#20376b]">{formatMoney(total, currency)}</div>
+        {totalCuotas > 0 && (
+          <div className="text-xs text-[#70706a] mt-2">
+            Incluye {formatMoney(totalCuotas, currency)} de cuotas de tarjeta activas
+          </div>
+        )}
+      </div>
+      <div className={`${PLATIUM_CARD} p-5`}>
+        <div className={PLATIUM_LABEL}>Total mensual (USD)</div>
+        <div className="num text-2xl font-bold mt-1 text-[#20376b]">{formatMoney(totalUSD, "USD")}</div>
       </div>
 
-      <Card>
+      <div className={PLATIUM_CARD}>
         {!items?.length && !cuotasActivas?.length ? (
-          <div className="p-10 text-center text-muted-foreground">Sin gastos fijos cargados.</div>
+          <div className="p-10 text-center text-[#70706a] text-[13px]">Sin gastos fijos cargados.</div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-[#d9d9d9]">
             {(items ?? []).map(i => (
               <div key={i.id} className="flex items-center gap-3 p-4">
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium">{i.gasto}</div>
-                  <div className="text-xs text-muted-foreground">{i.categoria ?? "Sin categoría"}{i.medio ? ` · ${i.medio}` : ""}</div>
+                  <div className="font-medium text-[13px] text-[#111]">{i.gasto}</div>
+                  <div className="text-xs text-[#70706a]">{i.categoria ?? "Sin categoría"}{i.medio ? ` · ${i.medio}` : ""}</div>
                 </div>
-                <div className="num font-semibold">{formatMoney(Number(i.monto_mensual), (i as any).moneda || currency)}</div>
+                <div className="num font-semibold text-[#111]">{formatMoney(Number(i.monto_mensual), (i as any).moneda || currency)}</div>
                 <ConfirmDeleteButton
                   title="¿Eliminar este gasto fijo?"
                   description={`${i.gasto} (${formatMoney(Number(i.monto_mensual), (i as any).moneda || currency)}/mes) se va a borrar.`}
@@ -171,15 +168,15 @@ function GastosFijosPage() {
             {(cuotasActivas ?? []).filter(c => c.cuota_actual <= c.cuotas_totales).map(c => (
               <div key={`cuota-${c.id}`} className="flex items-center gap-3 p-4">
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium">{c.compra}</div>
-                  <div className="text-xs text-muted-foreground">Tarjeta · {c.tarjeta} · cuota {c.cuota_actual}/{c.cuotas_totales}</div>
+                  <div className="font-medium text-[13px] text-[#111]">{c.compra}</div>
+                  <div className="text-xs text-[#70706a]">Tarjeta · {c.tarjeta} · cuota {c.cuota_actual}/{c.cuotas_totales}</div>
                 </div>
-                <div className="num font-semibold">{formatMoney(Number(c.valor_cuota), currency)}</div>
+                <div className="num font-semibold text-[#111]">{formatMoney(Number(c.valor_cuota), currency)}</div>
               </div>
             ))}
           </div>
         )}
-      </Card>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

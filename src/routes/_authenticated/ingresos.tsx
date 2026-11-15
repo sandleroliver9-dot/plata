@@ -14,7 +14,6 @@ import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
 import { useDolarTC } from "@/lib/supabase-queries";
 import { getInflacion } from "@/lib/quotes.functions";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConceptCombo } from "@/components/app/concept-combo";
 import { parsePositiveNumberInput } from "@/lib/number-input";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_INPUT } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/ingresos")({
   head: () => ({ meta: [{ title: "Ingresos · Platium" }] }),
@@ -228,27 +228,27 @@ function IngresosPage() {
   const totalUSD = (items ?? []).filter((i) => (i as any).moneda === "USD").reduce((s, i) => s + Number(i.monto), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ingresos</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sueldos, freelance, extras y bonos.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Ingresos</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Sueldos, freelance, extras y bonos.</p>
         </div>
         <div className="flex gap-2">
           <Select value={mes} onValueChange={setMes}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className={`w-40 ${PLATIUM_INPUT}`}><SelectValue /></SelectTrigger>
             <SelectContent>{meses.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
           </Select>
-          <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
+          <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
         </div>
       </header>
 
-      <Card className="p-5 space-y-4">
+      <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
         <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold flex items-center gap-2"><TrendingUp className="size-4" />Sueldo</div>
+          <div className="text-[13px] font-bold text-[#20376b] flex items-center gap-2"><TrendingUp className="size-4" />Sueldo</div>
           {ultimoSueldo && (
-            <div className="text-xs text-muted-foreground">
-              Último: <span className="num font-medium text-foreground">{formatMoney(Number(ultimoSueldo.monto), ultimoSueldo.moneda || currency)}</span> ({ultimoSueldo.mes_financiero})
+            <div className="text-xs text-[#70706a]">
+              Último: <span className="num font-medium text-[#111]">{formatMoney(Number(ultimoSueldo.monto), ultimoSueldo.moneda || currency)}</span> ({ultimoSueldo.mes_financiero})
             </div>
           )}
         </div>
@@ -256,31 +256,32 @@ function IngresosPage() {
         {(sueldoHistorial?.length ?? 0) > 1 && (
           <div className="flex flex-wrap gap-2">
             {sueldoHistorial!.slice().reverse().map((h) => (
-              <div key={h.id} className="text-[11px] px-2 py-1 rounded-md bg-muted text-muted-foreground">
-                {h.mes_financiero}: <span className="num text-foreground">{formatMoney(Number(h.monto), h.moneda || currency)}</span>
+              <div key={h.id} className="text-[11px] px-2 py-1 rounded-md bg-[#f5f5f4] text-[#70706a]">
+                {h.mes_financiero}: <span className="num text-[#111]">{formatMoney(Number(h.monto), h.moneda || currency)}</span>
               </div>
             ))}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 items-end pt-2 border-t border-border">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 items-end pt-2 border-t border-[#d9d9d9]">
           <div>
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Sugerencia para {targetLabel}</Label>
+            <Label className={PLATIUM_LABEL}>Sugerencia para {targetLabel}</Label>
             <DecimalInput
               value={sugerenciaTexto}
               onChange={(e) => { setSugerenciaTexto(e.target.value); setSugerenciaTouched(true); }}
               placeholder="Monto del sueldo"
+              className={PLATIUM_INPUT}
             />
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-[11px] text-[#70706a] mt-1">
               {baseSueldo > 0 && inflacionPct > 0
                 ? `Auto: +${inflacionPct}% por inflación (prom. 3 meses INDEC). Cambialo si querés.`
                 : "Cargá el monto para registrarlo como sueldo de este período."}
             </p>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Moneda</Label>
+            <Label className={PLATIUM_LABEL}>Moneda</Label>
             <Select value={monedaSueldo} onValueChange={(v) => { setMonedaSueldo(v); setMonedaSueldoTouched(true); }}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+              <SelectTrigger className={`w-24 ${PLATIUM_INPUT}`}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ARS">ARS</SelectItem>
                 <SelectItem value="USD">USD</SelectItem>
@@ -288,35 +289,36 @@ function IngresosPage() {
             </Select>
           </div>
           <Button
+            className={PLATIUM_BUTTON_PRIMARY}
             onClick={() => registrarSueldo.mutate()}
             disabled={registrarSueldo.isPending || !sugerenciaTexto.trim()}
           >
             {registrarSueldo.isPending ? "Registrando..." : "Registrar"}
           </Button>
         </div>
-      </Card>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes}</div>
-          <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(total, currency)}</div>
-        </Card>
-        <Card className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total {mes} (USD)</div>
-          <div className="num text-3xl font-bold mt-1 text-success">{formatMoney(totalUSD, "USD")}</div>
-        </Card>
       </div>
 
-      <Card>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className={`${PLATIUM_CARD} p-5`}>
+          <div className={PLATIUM_LABEL}>Total {mes}</div>
+          <div className="num text-2xl font-bold mt-1 text-[#20376b] font-plus-jakarta">{formatMoney(total, currency)}</div>
+        </div>
+        <div className={`${PLATIUM_CARD} p-5`}>
+          <div className={PLATIUM_LABEL}>Total {mes} (USD)</div>
+          <div className="num text-2xl font-bold mt-1 text-[#20376b] font-plus-jakarta">{formatMoney(totalUSD, "USD")}</div>
+        </div>
+      </div>
+
+      <div className={PLATIUM_CARD}>
         {!items?.length ? (
-          <div className="p-10 text-center text-muted-foreground">Sin ingresos en {mes}.</div>
+          <div className="p-10 text-center text-[#70706a] text-[13px]">Sin ingresos en {mes}.</div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-[#d9d9d9]">
             {items.map(i => (
               <div key={i.id} className="flex items-center gap-3 p-4">
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium">{i.concepto}</div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                  <div className="font-medium text-[13px] text-[#111]">{i.concepto}</div>
+                  <div className="text-xs text-[#70706a] flex items-center gap-2 mt-0.5">
                     <span>{i.fecha_cobro}</span>
                     {i.tipo && <Badge variant="secondary" className="text-xs">{i.tipo}</Badge>}
                     {(i as any).moneda && (i as any).moneda !== currency && <Badge variant="outline" className="text-xs">{(i as any).moneda}</Badge>}
@@ -332,7 +334,7 @@ function IngresosPage() {
             ))}
           </div>
         )}
-      </Card>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowLeftRight, TrendingUp, Wallet, CreditCard, Landmark, LineChart, Building2, Target, Settings, LogOut, Receipt, Menu, Sparkles, Bell, Lightbulb, CalendarClock } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -9,34 +9,32 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { SubTabs, FLUJO_TABS, CREDITO_TABS } from "./sub-tabs";
 
-const navGroups: Array<{ label?: string; items: Array<{ to: string; label: string; icon: typeof LayoutDashboard; match?: string[] }> }> = [
-  { items: [{ to: "/dashboard", label: "Resumen", icon: LayoutDashboard }] },
+const navGroups: Array<{ label: string; items: Array<{ to: string; label: string; match?: string[] }> }> = [
   {
     label: "Día a día",
     items: [
-      { to: "/movimientos", label: "Flujo de caja", icon: ArrowLeftRight, match: ["/movimientos", "/ingresos", "/gastos-fijos"] },
-      { to: "/tarjetas", label: "Crédito y cuotas", icon: CreditCard, match: ["/tarjetas", "/prestamo"] },
-      
+      { to: "/movimientos", label: "Flujo de caja", match: ["/movimientos", "/ingresos", "/gastos-fijos"] },
+      { to: "/tarjetas", label: "Crédito y cuotas", match: ["/tarjetas", "/prestamo"] },
     ],
   },
   {
     label: "Patrimonio",
     items: [
-      { to: "/inmuebles", label: "Inmuebles", icon: Building2 },
-      { to: "/inversiones", label: "Inversiones", icon: LineChart },
-      { to: "/proyecciones", label: "Proyecciones", icon: Sparkles },
-      { to: "/metas", label: "Metas", icon: Target },
+      { to: "/inmuebles", label: "Inmuebles" },
+      { to: "/inversiones", label: "Inversiones" },
+      { to: "/proyecciones", label: "Proyecciones" },
+      { to: "/metas", label: "Metas" },
     ],
   },
   {
     label: "Control",
     items: [
-      { to: "/notificaciones", label: "Notificaciones", icon: Bell },
-      { to: "/insights", label: "Insights", icon: Lightbulb },
-      { to: "/vencimientos", label: "Vencimientos", icon: CalendarClock },
+      { to: "/notificaciones", label: "Notificaciones" },
+      { to: "/insights", label: "Insights" },
+      { to: "/vencimientos", label: "Vencimientos" },
+      { to: "/configuracion", label: "Configuración" },
     ],
   },
-  { items: [{ to: "/configuracion", label: "Configuración", icon: Settings }] },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -54,31 +52,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const NavList = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+    <nav className="flex-1 overflow-y-auto p-3 space-y-1 font-plus-jakarta">
       {navGroups.map((group, gi) => (
-        <div key={gi} className="space-y-1">
-          {group.label && (
-            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-              {group.label}
-            </div>
-          )}
+        <div key={gi}>
+          {gi > 0 && <div className="border-t border-[#d9d9d9] my-3" />}
+          <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-[#70706a]">
+            {group.label}
+          </div>
           {group.items.map((item) => {
             const matches = item.match ?? [item.to];
             const active = matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
-            const Icon = item.icon;
             return (
               <Link
                 key={item.to}
                 to={item.to as any}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                  "block px-3 py-2 rounded-lg text-[13px] transition-colors",
+                  active ? "text-[#20376b] font-semibold" : "text-[#111] hover:text-[#20376b]",
                 )}
               >
-                <Icon className="size-4" />
                 {item.label}
               </Link>
             );
@@ -89,21 +82,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   const Brand = () => (
-    <div className="h-16 flex items-center gap-3 px-5 border-b border-sidebar-border">
-      <div className="size-9 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)" }}>
-        <Wallet className="size-5 text-primary-foreground" />
-      </div>
-      <div className="font-bold tracking-tight text-lg">Platium</div>
-    </div>
+    <Link to="/dashboard" className="h-16 flex items-center gap-2 px-5 border-b border-[#d9d9d9]">
+      <img src="/brand/platium-logo.png" alt="Platium" className="h-9 w-auto" />
+    </Link>
   );
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar border-r border-sidebar-border">
+    <div className="min-h-screen flex w-full bg-white">
+      <aside className="hidden md:flex w-64 shrink-0 flex-col bg-white border-r border-[#d9d9d9]">
         <Brand />
         <NavList />
-        <div className="p-3 border-t border-sidebar-border">
-          <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/70" onClick={signOut}>
+        <div className="p-3 border-t border-[#d9d9d9] font-plus-jakarta">
+          <Button variant="ghost" className="w-full justify-start text-[13px] text-[#111] hover:text-[#20376b]" onClick={signOut}>
             <LogOut className="size-4 mr-2" />
             Cerrar sesión
           </Button>
@@ -111,27 +101,28 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="md:hidden h-14 flex items-center justify-between px-4 border-b border-border bg-sidebar">
+        <div className="md:hidden h-14 flex items-center justify-between px-4 border-b border-[#d9d9d9] bg-white">
           <div className="flex items-center gap-2">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" aria-label="Abrir menú"><Menu className="size-5" /></Button>
+                <Button variant="ghost" size="sm" aria-label="Abrir menú"><Menu className="size-5 text-[#20376b]" /></Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72 bg-sidebar border-sidebar-border flex flex-col">
+              <SheetContent side="left" className="p-0 w-[317px] bg-white border-[#d9d9d9] flex flex-col">
                 <VisuallyHidden><SheetTitle>Menú</SheetTitle></VisuallyHidden>
                 <Brand />
                 <NavList onNavigate={() => setMobileOpen(false)} />
-                <div className="p-3 border-t border-sidebar-border">
-                  <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/70" onClick={signOut}>
+                <div className="p-3 border-t border-[#d9d9d9] font-plus-jakarta">
+                  <Button variant="ghost" className="w-full justify-start text-[13px] text-[#111] hover:text-[#20376b]" onClick={signOut}>
                     <LogOut className="size-4 mr-2" /> Cerrar sesión
                   </Button>
                 </div>
               </SheetContent>
             </Sheet>
-            <div className="size-7 rounded-lg" style={{ background: "var(--gradient-primary)" }} />
-            <span className="font-bold">Platium</span>
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <img src="/brand/platium-logo.png" alt="Platium" className="h-7 w-auto" />
+            </Link>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="size-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="size-4 text-[#20376b]" /></Button>
         </div>
         <div className="p-4 pb-36 md:p-8 max-w-7xl mx-auto space-y-4">
           {FLUJO_TABS.some(t => t.to === pathname) && <SubTabs tabs={FLUJO_TABS} />}
