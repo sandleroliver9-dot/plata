@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { formatMoney, currentFinancialMonth, todayISO } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DecimalInput, IntegerInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseIntegerInput, parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE } from "@/components/app/platium-ui";
 
 const TASA_TIPOS: { value: string; label: string; short: string }[] = [
   { value: "anual", label: "Anual (TNA)", short: "anual" },
@@ -136,34 +136,34 @@ function PrestamoPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Préstamos</h1>
-          <p className="text-sm text-muted-foreground mt-1">Llevá el control de cuotas y saldo restante.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Préstamos</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Llevá el control de cuotas y saldo restante.</p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
+        <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
       </header>
 
       {!items?.length ? (
-        <Card className="p-10 text-center text-muted-foreground">Sin préstamos activos.</Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center text-[#70706a] text-[13px]`}>Sin préstamos activos.</div>
       ) : (
         <div className="space-y-4">
           {items.map(p => {
             const pct = p.cuotas_totales > 0 ? (p.cuotas_pagadas / p.cuotas_totales) * 100 : 0;
             const restante = (p.cuotas_totales - p.cuotas_pagadas) * Number(p.cuota_mensual);
             return (
-              <Card key={p.id} className="p-5">
+              <div key={p.id} className={`${PLATIUM_CARD} p-5`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <div className="font-semibold">{p.descripcion}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-semibold text-[13px] text-[#20376b]">{p.descripcion}</div>
+                    <div className="text-xs text-[#70706a]">
                       {p.cuotas_pagadas}/{p.cuotas_totales} cuotas · {formatMoney(Number(p.cuota_mensual), currency)}/mes
                       {p.tasa ? ` · ${Number(p.tasa)}% ${TASA_TIPOS.find(t => t.value === (p as any).tasa_tipo)?.short ?? "anual"}` : ""}
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => pagarCuota.mutate(p)} disabled={pagarCuota.isPending}>
+                    <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => pagarCuota.mutate(p)} disabled={pagarCuota.isPending}>
                       <CheckCircle2 className="size-4 mr-1" />Pagar cuota
                     </Button>
                     <ConfirmDeleteButton
@@ -175,10 +175,10 @@ function PrestamoPage() {
                 </div>
                 <Progress value={pct} className="mt-4 h-2" />
                 <div className="flex justify-between text-xs mt-2">
-                  <span className="text-muted-foreground">{pct.toFixed(0)}% pagado</span>
-                  <span className="num font-medium">Restante: {formatMoney(restante, currency)}</span>
+                  <span className="text-[#70706a]">{pct.toFixed(0)}% pagado</span>
+                  <span className="num font-medium text-[#111]">Restante: {formatMoney(restante, currency)}</span>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
