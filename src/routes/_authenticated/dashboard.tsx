@@ -382,7 +382,7 @@ function Dashboard() {
           <div className="text-2xl font-bold text-[#20376b]">
             {score.score}<span className="text-sm text-[#8e8e88] font-normal"> / 100</span>
           </div>
-          <Progress value={score.score} className="mt-2 h-1.5" />
+          <Progress value={score.score} className="mt-2 h-1.5 bg-[#d9d9d9]" indicatorClassName="bg-[#20376b]" />
           <p className={`text-xs mt-2 flex items-start gap-1.5 ${score.tone === "success" ? "text-success" : score.tone === "warning" ? "text-warning" : "text-destructive"}`}>
             <Sparkles className="size-3.5 mt-0.5 shrink-0" />
             <span>{score.label}</span>

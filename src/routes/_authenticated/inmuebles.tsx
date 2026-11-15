@@ -6,7 +6,6 @@ import { Plus, Building2, Home } from "lucide-react";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/number-input";
@@ -14,11 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatMoney, resolveTC } from "@/lib/finance";
 import { getDolares } from "@/lib/quotes.functions";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/inmuebles")({
   head: () => ({ meta: [{ title: "Inmuebles · Platium" }] }),
@@ -36,6 +36,7 @@ function Inmuebles() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const fetchDolares = useServerFn(getDolares);
+  const [newOpen, setNewOpen] = useState(false);
 
   const { data: list } = useQuery({
     queryKey: ["inmuebles", user?.id],
@@ -76,41 +77,41 @@ function Inmuebles() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inmuebles</h1>
-          <p className="text-muted-foreground text-sm">Cargá cualquier propiedad que tengas: donde vivís, una que alquiles, una casa de fin de semana. Todas suman a tu patrimonio, no hace falta que generen renta.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Inmuebles</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Cargá cualquier propiedad que tengas: donde vivís, una que alquiles, una casa de fin de semana. Todas suman a tu patrimonio, no hace falta que generen renta.</p>
           {tcIsFallback && (
             <p className="text-xs text-warning mt-1">
               No se pudo obtener la cotización del dólar del día: los totales en USD usan un tipo de cambio de referencia y pueden no ser exactos.
             </p>
           )}
         </div>
-        <NewI userId={user?.id} onCreated={() => qc.invalidateQueries({ queryKey: ["inmuebles"] })} />
+        <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => setNewOpen(true)}><Plus className="size-4 mr-2" />Nuevo</Button>
       </header>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Valor total</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.valor, "USD")}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Deuda</div><div className="num text-2xl font-bold mt-2 text-destructive">{formatMoney(totals.deuda, "USD")}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Equity</div><div className="num text-2xl font-bold mt-2 text-success">{formatMoney(totals.neto, "USD")}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Renta mensual</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.renta, "USD")}</div></Card>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Valor total</div><div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totals.valor, "USD")}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Deuda</div><div className="num text-2xl font-bold mt-2 text-[#c7272b]">{formatMoney(totals.deuda, "USD")}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Equity</div><div className="num text-2xl font-bold mt-2 text-[#31a538]">{formatMoney(totals.neto, "USD")}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Renta mensual</div><div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totals.renta, "USD")}</div></div>
       </div>
 
       {(list ?? []).length === 0 ? (
-        <Card className="p-10 text-center">
-          <Building2 className="size-12 mx-auto text-muted-foreground mb-3" />
-          <p className="font-medium">Todavía no cargaste ninguna propiedad</p>
-          <p className="text-sm text-muted-foreground mt-1">No tiene que ser una inversión: tu casa, un depto, lo que tengas — todo cuenta para tu patrimonio.</p>
-        </Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center`}>
+          <Building2 className="size-12 mx-auto text-[#8e8e88] mb-3" />
+          <p className="font-medium text-[13px] text-[#111]">Todavía no cargaste ninguna propiedad</p>
+          <p className="text-sm text-[#70706a] mt-1">No tiene que ser una inversión: tu casa, un depto, lo que tengas — todo cuenta para tu patrimonio.</p>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {(list ?? []).map((i) => (
-            <Card key={i.id} className="p-5">
+            <div key={i.id} className={`${PLATIUM_CARD} p-5`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="min-w-0">
-                  <h3 className="font-semibold flex items-center gap-2"><Home className="size-4 text-primary" />{i.propiedad}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <h3 className="font-semibold text-[13px] text-[#20376b] flex items-center gap-2"><Home className="size-4" />{i.propiedad}</h3>
+                  <p className="text-xs text-[#70706a] mt-1">
                     {[i.tipo, i.ciudad, i.pais].filter(Boolean).join(" · ") || "Sin datos"}
                   </p>
                 </div>
@@ -122,28 +123,28 @@ function Inmuebles() {
                 />
               </div>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Valor</span><span className="num font-medium">{formatMoney(Number(i.valor_estimado), i.moneda)}</span></div>
+                <div className="flex justify-between"><span className="text-[#70706a]">Valor</span><span className="num font-medium text-[#111]">{formatMoney(Number(i.valor_estimado), i.moneda)}</span></div>
                 {Number(i.deuda_asociada) > 0 && (
-                  <div className="flex justify-between"><span className="text-muted-foreground">Deuda</span><span className="num text-destructive">{formatMoney(Number(i.deuda_asociada), i.moneda)}</span></div>
+                  <div className="flex justify-between"><span className="text-[#70706a]">Deuda</span><span className="num text-[#c7272b]">{formatMoney(Number(i.deuda_asociada), i.moneda)}</span></div>
                 )}
-                <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground">Equity</span><span className="num font-semibold text-success">{formatMoney(Number(i.valor_estimado) - Number(i.deuda_asociada), i.moneda)}</span></div>
+                <div className="flex justify-between border-t border-[#d9d9d9] pt-2"><span className="text-[#70706a]">Equity</span><span className="num font-semibold text-[#31a538]">{formatMoney(Number(i.valor_estimado) - Number(i.deuda_asociada), i.moneda)}</span></div>
                 {i.alquilado && (
                   <div className="flex items-center justify-between pt-1">
                     <Badge variant="secondary">Alquilado</Badge>
-                    <span className="num text-sm">{formatMoney(Number(i.renta_mensual || 0), i.moneda)}/mes</span>
+                    <span className="num text-sm text-[#111]">{formatMoney(Number(i.renta_mensual || 0), i.moneda)}/mes</span>
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
+      <NewI userId={user?.id} open={newOpen} onOpenChange={setNewOpen} onCreated={() => qc.invalidateQueries({ queryKey: ["inmuebles"] })} />
     </div>
   );
 }
 
-function NewI({ userId, onCreated }: { userId?: string; onCreated: () => void }) {
-  const [open, setOpen] = useState(false);
+function NewI({ userId, open, onOpenChange, onCreated }: { userId?: string; open: boolean; onOpenChange: (open: boolean) => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     propiedad: "", tipo: "Departamento", pais: "Argentina", ciudad: "",
     moneda: "USD", valor_estimado: "", deuda_asociada: "0",
@@ -177,13 +178,12 @@ function NewI({ userId, onCreated }: { userId?: string; onCreated: () => void })
     });
     if (error) { toast.error(error.message); return; }
     toast.success("Inmueble agregado");
-    setOpen(false);
+    onOpenChange(false);
     onCreated();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm"><Plus className="size-4 mr-2" />Nuevo</Button></DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Nuevo inmueble</DialogTitle></DialogHeader>
         <div className="grid gap-3">

@@ -5,7 +5,6 @@ import { Plus, Target, Plus as PlusIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/number-input";
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 import { appNow, formatMoney } from "@/lib/finance";
 import { parseISODate } from "@/lib/financial-centers";
 import { parseOptionalNumberInput, parsePositiveNumberInput } from "@/lib/number-input";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_BUTTON_PRIMARY } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/metas")({
   head: () => ({ meta: [{ title: "Metas · Platium" }] }),
@@ -70,20 +70,20 @@ function Metas() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Metas de ahorro</h1>
-          <p className="text-muted-foreground text-sm">Definí objetivos y seguí tu progreso.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Metas de ahorro</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Definí objetivos y seguí tu progreso.</p>
         </div>
         <NewMeta userId={user?.id} defaultCurrency={defaultCurrency} onCreated={() => qc.invalidateQueries({ queryKey: ["metas"] })} />
       </header>
 
       {(metas ?? []).length === 0 ? (
-        <Card className="p-10 text-center">
-          <Target className="size-12 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">Aún no tenés metas. Creá la primera para empezar.</p>
-        </Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center`}>
+          <Target className="size-12 mx-auto text-[#8e8e88] mb-3" />
+          <p className="text-[#70706a] text-[13px]">Aún no tenés metas. Creá la primera para empezar.</p>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {(metas ?? []).map((m) => {
@@ -101,12 +101,12 @@ function Metas() {
             // "dias restantes" hasta un dia durante el render en servidor.
             const dias = fechaObjetivo ? Math.ceil((fechaObjetivo.getTime() - appNow().getTime()) / 86400000) : null;
             return (
-              <Card key={m.id} className="p-5">
+              <div key={m.id} className={`${PLATIUM_CARD} p-5`}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg">{m.meta}</h3>
+                    <h3 className="font-semibold text-[16px] text-[#20376b]">{m.meta}</h3>
                     {dias !== null && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-[#70706a]">
                         {dias > 0 ? `${dias} días restantes` : dias === 0 ? "Hoy es el día" : "Fecha vencida"}
                       </p>
                     )}
@@ -120,17 +120,17 @@ function Metas() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="num font-medium">{formatMoney(Number(m.ahorrado), m.moneda)}</span>
-                    <span className="text-muted-foreground num">de {formatMoney(Number(m.objetivo), m.moneda)}</span>
+                    <span className="num font-bold text-[#20376b]">{formatMoney(Number(m.ahorrado), m.moneda)}</span>
+                    <span className="text-[#70706a] num">de {formatMoney(Number(m.objetivo), m.moneda)}</span>
                   </div>
-                  <Progress value={pct} className="h-3" />
+                  <Progress value={pct} className="h-2.5 bg-[#d9d9d9]" indicatorClassName="bg-[#20376b]" />
                   <div className="flex justify-between text-xs">
-                    <span className={pct >= 100 ? "text-success font-semibold" : "text-muted-foreground"}>{pct.toFixed(1)}%</span>
-                    <span className="text-muted-foreground">Falta: <span className="num">{formatMoney(falta, m.moneda)}</span></span>
+                    <span className={pct >= 100 ? "text-success font-semibold" : "text-[#70706a]"}>{pct.toFixed(1)}%</span>
+                    <span className="text-[#70706a]">Falta: <span className="num">{formatMoney(falta, m.moneda)}</span></span>
                   </div>
                 </div>
                 <AddProgressDialog meta={m} onConfirm={(monto) => addProgress(m, monto)} pending={progressPending === m.id} />
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -160,7 +160,7 @@ function AddProgressDialog({ meta, onConfirm, pending }: { meta: Meta; onConfirm
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setMonto(""); }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full mt-4" disabled={pending}>
+        <Button size="sm" className={`w-full mt-4 ${PLATIUM_BUTTON_PRIMARY}`} disabled={pending}>
           <PlusIcon className="size-4 mr-2" /> Sumar ahorro
         </Button>
       </DialogTrigger>
@@ -211,7 +211,7 @@ function NewMeta({ userId, defaultCurrency, onCreated }: { userId?: string; defa
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm"><Plus className="size-4 mr-2" />Nueva meta</Button></DialogTrigger>
+      <DialogTrigger asChild><Button size="sm" className={PLATIUM_BUTTON_PRIMARY}><Plus className="size-4 mr-2" />Nueva meta</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Nueva meta de ahorro</DialogTitle></DialogHeader>
         <div className="grid gap-3">
