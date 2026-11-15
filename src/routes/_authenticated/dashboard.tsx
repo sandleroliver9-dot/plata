@@ -279,7 +279,7 @@ function Dashboard() {
   const pctGastosVisible = monedaVista === "ARS" ? pctGastos : null;
 
   return (
-    <div className="bg-white -m-4 p-4 pb-36 md:-m-8 md:p-8 min-h-full space-y-4 font-plus-jakarta">
+    <div className="bg-white -m-4 p-4 pb-36 md:-m-8 md:p-8 min-h-full space-y-4 font-plus-jakarta text-[#111]">
       <header>
         <p className="text-[16px] text-[#20376b]">Hola{profile?.display_name ? `, ${profile.display_name}` : ""} 👋</p>
         <h1 className="text-[18px] font-bold text-[#20376b] mt-1">Tu resumen de {headerMes}</h1>

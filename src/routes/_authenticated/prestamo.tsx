@@ -136,7 +136,7 @@ function PrestamoPage() {
   });
 
   return (
-    <div className="space-y-6 font-plus-jakarta">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header className="flex items-center justify-between gap-3">
         <div>
           <h1 className={PLATIUM_PAGE_TITLE}>Préstamos</h1>

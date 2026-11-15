@@ -6,7 +6,6 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cart
 import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -16,6 +15,7 @@ import { updateSavingTarget } from "@/lib/profile.functions";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { computeProjectionRows } from "@/lib/projection";
 import { TrendingUp } from "lucide-react";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/proyecciones")({
   head: () => ({ meta: [{ title: "Proyecciones · Platium" }] }),
@@ -112,19 +112,19 @@ function ProyeccionesPage() {
   const extrasProyectadosUSD = extras3mUSD.length ? extras3mUSD.reduce((s: number, i: any) => s + Number(i.monto ?? 0), 0) / 3 : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Proyecciones</h1>
-        <p className="text-sm text-muted-foreground mt-1">Mira como evolucionan tus proximos 12 meses segun fechas de cobro, vencimientos, gastos recurrentes y cuotas.</p>
+        <h1 className={PLATIUM_PAGE_TITLE}>Proyecciones</h1>
+        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Mira como evolucionan tus proximos 12 meses segun fechas de cobro, vencimientos, gastos recurrentes y cuotas.</p>
       </header>
 
-      <Card className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className={`${PLATIUM_CARD} p-5 grid grid-cols-1 md:grid-cols-2 gap-5`}>
         <div>
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Objetivo de ahorro: {ahorroPct}%</Label>
+          <Label className={PLATIUM_LABEL}>Objetivo de ahorro: {ahorroPct}%</Label>
           <Slider value={[ahorroPct]} onValueChange={(v) => setAhorroPct(v[0])} min={0} max={60} step={5} className="mt-3" />
         </div>
         <div>
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Label className={`${PLATIUM_LABEL} flex items-center gap-2`}>
             Inflación mensual estimada: {inflacionPct}%
             {infl?.ultimoMes && (
               <span className="inline-flex items-center gap-1 text-success normal-case tracking-normal">
@@ -134,73 +134,73 @@ function ProyeccionesPage() {
           </Label>
           <Slider value={[inflacionPct]} onValueChange={(v) => { setInflacionPct(v[0]); setInflacionTouched(true); }} min={0} max={15} step={0.1} className="mt-3" />
           {infl?.promedio3m ? (
-            <p className="text-[11px] text-muted-foreground mt-2">Auto: promedio 3 meses INDEC ({infl.promedio3m.toFixed(1)}%). Movelo si querés.</p>
+            <p className="text-[11px] text-[#70706a] mt-2">Auto: promedio 3 meses INDEC ({infl.promedio3m.toFixed(1)}%). Movelo si querés.</p>
           ) : null}
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-5 grid gap-4 md:grid-cols-3">
+      <div className={`${PLATIUM_CARD} p-5 grid gap-4 md:grid-cols-3`}>
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado</div>
+          <div className={PLATIUM_LABEL}>Sueldo mensual proyectado</div>
           <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(sueldoProyectado, currency)}</div>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio</div>
-          <div className="num text-2xl font-bold mt-1">{formatMoney(extrasProyectados, currency)}</div>
+          <div className={PLATIUM_LABEL}>Extras promedio</div>
+          <div className="num text-2xl font-bold mt-1 text-[#20376b]">{formatMoney(extrasProyectados, currency)}</div>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Ahorro proyectado 12 meses</div>
+          <div className={PLATIUM_LABEL}>Ahorro proyectado 12 meses</div>
           <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(sumAhorro, currency)}</div>
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-5 grid gap-4 md:grid-cols-2">
+      <div className={`${PLATIUM_CARD} p-5 grid gap-4 md:grid-cols-2`}>
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Sueldo mensual proyectado (USD)</div>
+          <div className={PLATIUM_LABEL}>Sueldo mensual proyectado (USD)</div>
           <div className="num text-2xl font-bold mt-1 text-success">{formatMoney(sueldoProyectadoUSD, "USD")}</div>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Extras promedio (USD)</div>
-          <div className="num text-2xl font-bold mt-1">{formatMoney(extrasProyectadosUSD, "USD")}</div>
+          <div className={PLATIUM_LABEL}>Extras promedio (USD)</div>
+          <div className="num text-2xl font-bold mt-1 text-[#20376b]">{formatMoney(extrasProyectadosUSD, "USD")}</div>
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-4">
+      <div className={`${PLATIUM_CARD} p-4`}>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
-              <Tooltip formatter={(v: number) => formatMoney(v, currency)} contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#70706a" }} />
+              <YAxis tick={{ fontSize: 11, fill: "#70706a" }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
+              <Tooltip formatter={(v: number) => formatMoney(v, currency)} contentStyle={{ background: "#fff", border: "1px solid #d9d9d9", borderRadius: 8, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Ingresos" fill="var(--success)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="Gastos" fill="var(--destructive)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Ahorro" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Ahorro" fill="#20376b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </Card>
+      </div>
 
-      <Card>
-        <div className="divide-y divide-border">
+      <div className={PLATIUM_CARD}>
+        <div className="divide-y divide-[#d9d9d9]">
           {rows.map((r) => (
             <div key={r.mes} className="p-4 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[140px]">
-                <div className="font-medium capitalize">{r.mes}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{r.mensaje}</div>
+                <div className="font-medium capitalize text-[13px] text-[#20376b]">{r.mes}</div>
+                <div className="text-xs text-[#70706a] mt-0.5">{r.mensaje}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Ingresos</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#70706a]">Ingresos</div>
                 <div className="num text-sm font-semibold text-success">{formatMoney(r.ingresos, currency)}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gastos</div>
-                <div className="num text-sm font-semibold">{formatMoney(r.total, currency)}</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#70706a]">Gastos</div>
+                <div className="num text-sm font-semibold text-[#111]">{formatMoney(r.total, currency)}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Disponible</div>
-                <div className={`num text-sm font-semibold ${r.disponible < 0 ? "text-destructive" : ""}`}>{formatMoney(r.disponible, currency)}</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#70706a]">Disponible</div>
+                <div className={`num text-sm font-semibold ${r.disponible < 0 ? "text-destructive" : "text-[#111]"}`}>{formatMoney(r.disponible, currency)}</div>
               </div>
               <Badge variant={r.estado === "ok" ? "default" : r.estado === "ajustado" ? "secondary" : "destructive"}>
                 {r.estado === "ok" ? "Podés ahorrar" : r.estado === "ajustado" ? "Mes ajustado" : "Sobregirado"}
@@ -208,7 +208,7 @@ function ProyeccionesPage() {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

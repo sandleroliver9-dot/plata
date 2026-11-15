@@ -6,7 +6,6 @@ import { Plus, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/number-input";
@@ -14,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE, PLATIUM_INPUT } from "@/components/app/platium-ui";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -165,11 +165,11 @@ function Inversiones() {
   }, [activos?.length, user?.id]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inversiones</h1>
-          <p className="text-muted-foreground text-sm">Portfolio con compras, ventas y dividendos.</p>
+          <h1 className={PLATIUM_PAGE_TITLE}>Inversiones</h1>
+          <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Portfolio con compras, ventas y dividendos.</p>
           {tcIsFallback && (
             <p className="text-xs text-warning mt-1">
               No se pudo obtener la cotización del dólar del día: los montos en ARS usan un tipo de cambio de referencia y pueden no ser exactos.
@@ -177,7 +177,7 @@ function Inversiones() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => refreshPrices()}><RefreshCw className="size-4 mr-2" />Actualizar precios</Button>
+          <Button className={PLATIUM_BUTTON_OUTLINE} size="sm" onClick={() => refreshPrices()}><RefreshCw className="size-4 mr-2" />Actualizar precios</Button>
           <NuevoActivoDialog userId={user?.id} onCreated={invalidate} />
         </div>
       </header>
@@ -219,22 +219,22 @@ function Inversiones() {
 }
 
 function KPI({ label, usd, tc, signed }: { label: string; usd: number; tc: number; signed?: boolean }) {
-  const cls = signed ? (usd >= 0 ? "text-success" : "text-destructive") : "";
+  const cls = signed ? (usd >= 0 ? "text-success" : "text-destructive") : "text-[#20376b]";
   return (
-    <Card className="p-4">
-      <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
+    <div className={`${PLATIUM_CARD} p-4 font-plus-jakarta`}>
+      <div className={PLATIUM_LABEL}>{label}</div>
       <div className={`num text-xl font-bold mt-1 ${cls}`}>{formatMoney(usd, "USD")}</div>
-      <div className={`num text-xs text-muted-foreground mt-0.5 ${cls}`}>{formatMoney(usd * tc, "ARS")}</div>
-    </Card>
+      <div className={`num text-xs text-[#70706a] mt-0.5 ${cls}`}>{formatMoney(usd * tc, "ARS")}</div>
+    </div>
   );
 }
 
 function BalanceTable({ rows }: { rows: BalanceRow[] }) {
   if (rows.length === 0) {
-    return <Card className="p-10 text-center text-muted-foreground">Cargá una compra para empezar.</Card>;
+    return <div className={`${PLATIUM_CARD} p-10 text-center text-[#70706a] text-[13px]`}>Cargá una compra para empezar.</div>;
   }
   return (
-    <Card className="p-0 overflow-hidden">
+    <div className={`${PLATIUM_CARD} p-0 overflow-hidden`}>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -259,16 +259,16 @@ function BalanceTable({ rows }: { rows: BalanceRow[] }) {
               <TableRow key={r.activo.id}>
                 <TableCell>
                   <div className="font-medium">{r.activo.nombre}</div>
-                  {r.activo.ticker && <div className="text-xs text-muted-foreground">{r.activo.ticker}</div>}
+                  {r.activo.ticker && <div className="text-xs text-[#70706a]">{r.activo.ticker}</div>}
                 </TableCell>
                 <TableCell><Badge variant="secondary">{r.activo.tipo}</Badge></TableCell>
                 <TableCell className="text-right num">{r.cantidad.toLocaleString("es-AR", { maximumFractionDigits: 4 })}</TableCell>
                 <TableCell className="text-right num">{formatMoney(r.pMedioUSD, "USD")}</TableCell>
                 <TableCell className="text-right num">{formatMoney(r.pActualUSD, "USD")}</TableCell>
                 <TableCell className={`text-right num ${r.deltaPct >= 0 ? "text-success" : "text-destructive"}`}>{formatPct(r.deltaPct)}</TableCell>
-                <TableCell className={`text-right num ${!isFinite(r.tAnual) ? "text-muted-foreground" : r.tAnual >= 0 ? "text-success" : "text-destructive"}`}>{formatPct(r.tAnual)}</TableCell>
+                <TableCell className={`text-right num ${!isFinite(r.tAnual) ? "text-[#70706a]" : r.tAnual >= 0 ? "text-success" : "text-destructive"}`}>{formatPct(r.tAnual)}</TableCell>
                 <TableCell className="text-right num font-medium">{formatMoney(r.valorUSD, "USD")}</TableCell>
-                <TableCell className="text-right num text-muted-foreground">{formatMoney(r.valorARS, "ARS")}</TableCell>
+                <TableCell className="text-right num text-[#70706a]">{formatMoney(r.valorARS, "ARS")}</TableCell>
                 <TableCell className="text-right num">{formatPct(r.pctPortfolio, 1)}</TableCell>
                 <TableCell className="text-right num">{r.dias}</TableCell>
                 <TableCell className="text-right num">{formatMoney(r.divUSDTotal, "USD")}</TableCell>
@@ -278,7 +278,7 @@ function BalanceTable({ rows }: { rows: BalanceRow[] }) {
           </TableBody>
         </Table>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -302,7 +302,7 @@ function NuevoActivoDialog({ userId, onCreated }: { userId?: string; onCreated: 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="secondary"><Plus className="size-4 mr-2" />Nuevo activo</Button></DialogTrigger>
+      <DialogTrigger asChild><Button size="sm" className={PLATIUM_BUTTON_OUTLINE}><Plus className="size-4 mr-2" />Nuevo activo</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Nuevo activo</DialogTitle></DialogHeader>
         <div className="grid gap-3">
@@ -336,7 +336,7 @@ function CompraSection({ activos, compras, userId, tc, onChange }: { activos: Ac
   return (
     <div className="space-y-3">
       <div className="flex justify-end"><MovDialog kind="compra" activos={activos} userId={userId} tc={tc} onCreated={onChange} /></div>
-      <Card className="p-0 overflow-hidden">
+      <div className={`${PLATIUM_CARD} p-0 overflow-hidden`}>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
@@ -349,7 +349,7 @@ function CompraSection({ activos, compras, userId, tc, onChange }: { activos: Ac
               <TableHead>Broker</TableHead><TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {compras.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Sin compras.</TableCell></TableRow>}
+              {compras.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-[#70706a] py-8">Sin compras.</TableCell></TableRow>}
               {compras.map((c) => {
                 const a = activoById.get(c.activo_id);
                 const totalUSD = Number(c.cantidad) * Number(c.precio_usd);
@@ -357,12 +357,12 @@ function CompraSection({ activos, compras, userId, tc, onChange }: { activos: Ac
                 return (
                   <TableRow key={c.id}>
                     <TableCell className="text-xs">{c.fecha}</TableCell>
-                    <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-muted-foreground">({a.ticker})</span>}</TableCell>
+                    <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-[#70706a]">({a.ticker})</span>}</TableCell>
                     <TableCell className="text-right num">{Number(c.cantidad)}</TableCell>
                     <TableCell className="text-right num">{formatMoney(Number(c.precio_usd), "USD")}</TableCell>
-                    <TableCell className="text-right num text-muted-foreground">{c.tc ? Number(c.tc).toFixed(0) : "—"}</TableCell>
+                    <TableCell className="text-right num text-[#70706a]">{c.tc ? Number(c.tc).toFixed(0) : "—"}</TableCell>
                     <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
-                    <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
+                    <TableCell className="text-right num text-[#70706a]">{formatMoney(totalARS, "ARS")}</TableCell>
                     <TableCell className="text-xs">{c.broker ?? "—"}</TableCell>
                     <TableCell>
                       <ConfirmDeleteButton
@@ -378,7 +378,7 @@ function CompraSection({ activos, compras, userId, tc, onChange }: { activos: Ac
             </TableBody>
           </Table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -395,7 +395,7 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
   return (
     <div className="space-y-3">
       <div className="flex justify-end"><MovDialog kind="venta" activos={activos} userId={userId} tc={tc} rows={rows} onCreated={onChange} /></div>
-      <Card className="p-0 overflow-hidden">
+      <div className={`${PLATIUM_CARD} p-0 overflow-hidden`}>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
@@ -409,7 +409,7 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
               <TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {ventas.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Sin ventas.</TableCell></TableRow>}
+              {ventas.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-[#70706a] py-8">Sin ventas.</TableCell></TableRow>}
               {ventas.map((v) => {
                 const a = activoById.get(v.activo_id);
                 const r = rowById.get(v.activo_id);
@@ -420,13 +420,13 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
                 return (
                   <TableRow key={v.id}>
                     <TableCell className="text-xs">{v.fecha}</TableCell>
-                    <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-muted-foreground">({a.ticker})</span>}</TableCell>
+                    <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-[#70706a]">({a.ticker})</span>}</TableCell>
                     <TableCell className="text-right num">{Number(v.cantidad)}</TableCell>
                     <TableCell className="text-right num">{formatMoney(Number(v.precio_usd), "USD")}</TableCell>
-                    <TableCell className="text-right num text-muted-foreground">{formatMoney(pMed, "USD")}</TableCell>
+                    <TableCell className="text-right num text-[#70706a]">{formatMoney(pMed, "USD")}</TableCell>
                     <TableCell className={`text-right num ${gp >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(gp, "USD")}</TableCell>
                     <TableCell className="text-right num">{formatMoney(totalUSD, "USD")}</TableCell>
-                    <TableCell className="text-right num text-muted-foreground">{formatMoney(totalARS, "ARS")}</TableCell>
+                    <TableCell className="text-right num text-[#70706a]">{formatMoney(totalARS, "ARS")}</TableCell>
                     <TableCell>
                       <ConfirmDeleteButton
                         size="sm"
@@ -441,7 +441,7 @@ function VentaSection({ activos, rows, ventas, userId, tc, onChange }: { activos
             </TableBody>
           </Table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -457,7 +457,7 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
   return (
     <div className="space-y-3">
       <div className="flex justify-end"><MovDialog kind="dividendo" activos={activos} userId={userId} tc={tc} onCreated={onChange} /></div>
-      <Card className="p-0 overflow-hidden">
+      <div className={`${PLATIUM_CARD} p-0 overflow-hidden`}>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
@@ -467,15 +467,15 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
               <TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {divs.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sin dividendos cobrados.</TableCell></TableRow>}
+              {divs.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-[#70706a] py-8">Sin dividendos cobrados.</TableCell></TableRow>}
               {divs.map((d) => {
                 const a = activoById.get(d.activo_id);
                 return (
                   <TableRow key={d.id}>
                     <TableCell className="text-xs">{d.fecha}</TableCell>
-                    <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-muted-foreground">({a.ticker})</span>}</TableCell>
+                    <TableCell>{a?.nombre ?? "—"} {a?.ticker && <span className="text-xs text-[#70706a]">({a.ticker})</span>}</TableCell>
                     <TableCell className="text-right num">{formatMoney(Number(d.monto_usd), "USD")}</TableCell>
-                    <TableCell className="text-right num text-muted-foreground">{formatMoney(Number(d.monto_usd) * Number(d.tc || tc), "ARS")}</TableCell>
+                    <TableCell className="text-right num text-[#70706a]">{formatMoney(Number(d.monto_usd) * Number(d.tc || tc), "ARS")}</TableCell>
                     <TableCell>
                       <ConfirmDeleteButton
                         size="sm"
@@ -490,7 +490,7 @@ function DivSection({ activos, divs, userId, tc, onChange }: { activos: Activo[]
             </TableBody>
           </Table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -587,7 +587,7 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm"><Plus className="size-4 mr-2" />{kind === "compra" ? "Nueva compra" : kind === "venta" ? "Nueva venta" : "Nuevo dividendo"}</Button>
+        <Button size="sm" className={PLATIUM_BUTTON_PRIMARY}><Plus className="size-4 mr-2" />{kind === "compra" ? "Nueva compra" : kind === "venta" ? "Nueva venta" : "Nuevo dividendo"}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>{titles[kind]}</DialogTitle></DialogHeader>
@@ -601,10 +601,10 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
                 {kind !== "venta" && <SelectItem value={NUEVO_ACTIVO_SENTINEL}>+ Crear activo nuevo</SelectItem>}
               </SelectContent>
             </Select>
-            {qDisponible != null && selected && <div className="text-xs text-muted-foreground mt-1">Disponible: {qDisponible}</div>}
+            {qDisponible != null && selected && <div className="text-xs text-[#70706a] mt-1">Disponible: {qDisponible}</div>}
           </div>
           {creandoActivoNuevo && (
-            <div className="grid grid-cols-2 gap-3 rounded-md border border-border/70 p-3">
+            <div className="grid grid-cols-2 gap-3 rounded-md border border-[#d9d9d9] p-3">
               <div className="col-span-2"><Label>Nombre del activo *</Label><Input value={nuevoActivo.nombre} onChange={(e) => setNuevoActivo({ ...nuevoActivo, nombre: e.target.value })} placeholder="Apple, Bitcoin, SPY..." /></div>
               <div className="col-span-2"><Label>Ticker</Label><Input value={nuevoActivo.ticker} onChange={(e) => setNuevoActivo({ ...nuevoActivo, ticker: e.target.value.toUpperCase() })} placeholder="AAPL, BTC, SPY" /></div>
             </div>

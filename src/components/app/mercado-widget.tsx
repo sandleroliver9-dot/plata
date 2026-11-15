@@ -2,11 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Activity, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getStockQuotes, getCryptoQuotes } from "@/lib/quotes.functions";
+import { PLATIUM_CARD, PLATIUM_BUTTON_OUTLINE, PLATIUM_INPUT } from "@/components/app/platium-ui";
 
 const DEFAULT_STOCKS = ["SPY", "QQQ", "DIA", "^GSPC", "^IXIC", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "KO", "JPM"];
 const DEFAULT_CRYPTOS = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "LINK", "DOT"];
@@ -47,13 +47,13 @@ export function MercadoWidget() {
   }
 
   return (
-    <Card className="p-5">
+    <div className={`${PLATIUM_CARD} p-5 font-plus-jakarta`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Activity className="size-5 text-primary" />
-          <h3 className="font-semibold">Mercado en vivo</h3>
+          <Activity className="size-5 text-[#20376b]" />
+          <h3 className="font-semibold text-[13px] text-[#20376b]">Mercado en vivo</h3>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => { stocks.refetch(); cryptos.refetch(); }} disabled={stocks.isFetching || cryptos.isFetching}>
+        <Button className={PLATIUM_BUTTON_OUTLINE} size="sm" onClick={() => { stocks.refetch(); cryptos.refetch(); }} disabled={stocks.isFetching || cryptos.isFetching}>
           <RefreshCw className={`size-4 ${(stocks.isFetching || cryptos.isFetching) ? "animate-spin" : ""}`} />
         </Button>
       </div>
@@ -66,22 +66,22 @@ export function MercadoWidget() {
 
         <TabsContent value="acciones" className="mt-3 space-y-3">
           <form onSubmit={addStock} className="flex gap-2">
-            <Input value={customStock} onChange={(e) => setCustomStock(e.target.value)} placeholder="Agregar ticker (ej: AMD)" className="h-8 min-w-0 flex-1" />
-            <Button type="submit" size="sm" variant="secondary">Agregar</Button>
+            <Input value={customStock} onChange={(e) => setCustomStock(e.target.value)} placeholder="Agregar ticker (ej: AMD)" className={`h-8 min-w-0 flex-1 ${PLATIUM_INPUT}`} />
+            <Button type="submit" size="sm" className={PLATIUM_BUTTON_OUTLINE}>Agregar</Button>
           </form>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {stockTickers.map((t) => {
               const q = stocks.data?.find((x) => x.symbol === t);
               const up = (q?.change ?? 0) >= 0;
               return (
-                <div key={t} className="p-3 rounded-lg border border-border bg-card/40">
+                <div key={t} className="p-3 rounded-lg border border-[#d9d9d9]">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold truncate">{LABELS[t] ?? t}</div>
+                    <div className="text-xs font-semibold truncate text-[#111]">{LABELS[t] ?? t}</div>
                     {q?.change != null && (
                       up ? <TrendingUp className="size-3 text-success" /> : <TrendingDown className="size-3 text-destructive" />
                     )}
                   </div>
-                  <div className="num text-sm font-bold mt-1">{fmtUSD(q?.usd)}</div>
+                  <div className="num text-sm font-bold mt-1 text-[#20376b]">{fmtUSD(q?.usd)}</div>
                   {q?.change != null && (
                     <div className={`num text-xs ${up ? "text-success" : "text-destructive"}`}>
                       {up ? "+" : ""}{q.change.toFixed(2)}%
@@ -99,14 +99,14 @@ export function MercadoWidget() {
               const q = cryptos.data?.find((x) => x.symbol === t);
               const up = (q?.change24h ?? 0) >= 0;
               return (
-                <div key={t} className="p-3 rounded-lg border border-border bg-card/40">
+                <div key={t} className="p-3 rounded-lg border border-[#d9d9d9]">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold">{t}</div>
+                    <div className="text-xs font-semibold text-[#111]">{t}</div>
                     {q?.change24h != null && (
                       up ? <TrendingUp className="size-3 text-success" /> : <TrendingDown className="size-3 text-destructive" />
                     )}
                   </div>
-                  <div className="num text-sm font-bold mt-1">{fmtUSD(q?.usd)}</div>
+                  <div className="num text-sm font-bold mt-1 text-[#20376b]">{fmtUSD(q?.usd)}</div>
                   {q?.change24h != null && (
                     <div className={`num text-xs ${up ? "text-success" : "text-destructive"}`}>
                       {up ? "+" : ""}{q.change24h.toFixed(2)}%
@@ -119,9 +119,9 @@ export function MercadoWidget() {
         </TabsContent>
       </Tabs>
 
-      <p className="text-xs text-muted-foreground mt-3">
+      <p className="text-xs text-[#70706a] mt-3">
         Actualiza cada 60s. Cripto: CoinGecko · Acciones: Yahoo Finance.
       </p>
-    </Card>
+    </div>
   );
 }

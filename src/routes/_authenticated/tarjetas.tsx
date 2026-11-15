@@ -177,7 +177,7 @@ function TarjetasPage() {
   const totalMes = (items ?? []).filter(i => i.cuota_actual <= i.cuotas_totales).reduce((s, i) => s + Number(i.valor_cuota), 0);
 
   return (
-    <div className="space-y-6 font-plus-jakarta">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header className="flex items-center justify-between gap-3">
         <div>
           <h1 className={PLATIUM_PAGE_TITLE}>Tarjetas y cuotas</h1>

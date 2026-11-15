@@ -117,7 +117,7 @@ function Vencimientos() {
   }
 
   return (
-    <div className="space-y-6 font-plus-jakarta">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header>
         <h1 className={PLATIUM_PAGE_TITLE}>Vencimientos</h1>
         <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Lo que anotás a mano (ABL, seguro, expensas...) más cuotas, préstamos, gastos fijos y próximos cobros, todo junto.</p>

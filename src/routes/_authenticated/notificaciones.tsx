@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatMoney, todayISO } from "@/lib/finance";
@@ -14,6 +13,7 @@ import { buildUpcomingEvents, computeSuggestedSalary, daysUntil, detectUnusualSp
 import { riskProfileSettings, useFinancialPreferences } from "@/lib/financial-preferences";
 import { getInflacion } from "@/lib/quotes.functions";
 import { financialDataQuery, useDolarTC } from "@/lib/supabase-queries";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL, PLATIUM_BUTTON_PRIMARY, PLATIUM_BUTTON_OUTLINE } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/notificaciones")({
   head: () => ({ meta: [{ title: "Notificaciones · Platium" }] }),
@@ -205,14 +205,14 @@ function NotificacionesPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Notificaciones</h1>
-        <p className="text-sm text-muted-foreground mt-1">Advertencias financieras simples según tus datos actuales.</p>
+        <h1 className={PLATIUM_PAGE_TITLE}>Notificaciones</h1>
+        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Advertencias financieras simples según tus datos actuales.</p>
       </header>
 
-      <Card className="p-5">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">Estado del mes</div>
+      <div className={`${PLATIUM_CARD} p-5`}>
+        <div className={PLATIUM_LABEL}>Estado del mes</div>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Metric label="Ingresos" value={formatMoney(cash.ingresos, currency)} />
           <Metric label="Gastos estimados" value={formatMoney(cash.gastos, currency)} />
@@ -223,64 +223,64 @@ function NotificacionesPage() {
           <Metric label="Gastos estimados (USD)" value={formatMoney(gastosUSD, "USD")} />
           <Metric label="Disponible (USD)" value={formatMoney(disponibleUSD, "USD")} tone={disponibleUSD < 0 ? "text-destructive" : "text-success"} />
         </div>
-        <p className="text-xs text-muted-foreground mt-3">
+        <p className="text-xs text-[#70706a] mt-3">
           "Gastos estimados" suma lo que ya registraste más las cuotas y gastos fijos pendientes de pago este mes: puede diferir del total de Movimientos, que solo cuenta lo ya registrado.
         </p>
-      </Card>
+      </div>
 
       {isLoading ? (
-        <Card className="p-10 text-center text-muted-foreground">Cargando alertas...</Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center text-[#70706a] text-[13px]`}>Cargando alertas...</div>
       ) : !ingresoFaltante && alerts.length === 0 ? (
-        <Card className="p-10 text-center">
+        <div className={`${PLATIUM_CARD} p-10 text-center`}>
           <CircleCheck className="size-10 mx-auto text-success mb-3" />
-          <p className="font-medium">Todavía no hay alertas</p>
-          <p className="text-sm text-muted-foreground mt-1">Cuando detectemos vencimientos, gastos inusuales o liquidez baja, van a aparecer acá.</p>
-        </Card>
+          <p className="font-medium text-[13px] text-[#111]">Todavía no hay alertas</p>
+          <p className="text-sm text-[#70706a] mt-1">Cuando detectemos vencimientos, gastos inusuales o liquidez baja, van a aparecer acá.</p>
+        </div>
       ) : (
         <div className="grid gap-3">
           {ingresoFaltante && (
-            <Card className="p-4 border-warning/40 bg-warning/5">
+            <div className={`${PLATIUM_CARD} p-4 border-warning/40 bg-warning/5`}>
               <div className="flex items-start gap-3">
                 <div className="mt-1 text-warning"><Wallet className="size-5" /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-semibold">Todavía no cargaste el sueldo de {cash.mes}</h2>
+                    <h2 className="font-semibold text-[13px] text-[#20376b]">Todavía no cargaste el sueldo de {cash.mes}</h2>
                     <Badge variant="secondary">Atención</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-[#70706a] mt-1">
                     {sugerido
                       ? `Te sugerimos ${formatMoney(sugerido.monto, sugerido.moneda)} según tu último sueldo. Confirmalo o editalo en Ingresos.`
                       : "Cargalo en Ingresos para que el resto de la app calcule bien tu mes."}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <Button asChild size="sm">
+                    <Button asChild size="sm" className={PLATIUM_BUTTON_PRIMARY}>
                       <Link to="/ingresos">Cargar sueldo</Link>
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => dismissMutation.mutate()} disabled={dismissMutation.isPending}>
+                    <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => dismissMutation.mutate()} disabled={dismissMutation.isPending}>
                       Todavía no cobré
                     </Button>
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
           {alerts.map((alert, index) => {
             const Icon = alert.icon;
             return (
-              <Card key={`${alert.title}-${index}`} className={`p-4 ${alert.tone === "destructive" ? "border-destructive/40 bg-destructive/5" : alert.tone === "warning" ? "border-warning/40 bg-warning/5" : ""}`}>
+              <div key={`${alert.title}-${index}`} className={`${PLATIUM_CARD} p-4 ${alert.tone === "destructive" ? "border-destructive/40 bg-destructive/5" : alert.tone === "warning" ? "border-warning/40 bg-warning/5" : ""}`}>
                 <div className="flex items-start gap-3">
-                  <div className={`mt-1 ${alert.tone === "destructive" ? "text-destructive" : alert.tone === "warning" ? "text-warning" : "text-primary"}`}>
+                  <div className={`mt-1 ${alert.tone === "destructive" ? "text-destructive" : alert.tone === "warning" ? "text-warning" : "text-[#20376b]"}`}>
                     <Icon className="size-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-semibold">{alert.title}</h2>
+                      <h2 className="font-semibold text-[13px] text-[#20376b]">{alert.title}</h2>
                       <Badge variant={alert.tone === "destructive" ? "destructive" : "secondary"}>{alert.tone === "destructive" ? "Urgente" : "Atención"}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
+                    <p className="text-sm text-[#70706a] mt-1">{alert.message}</p>
                   </div>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -292,8 +292,8 @@ function NotificacionesPage() {
 function Metric({ label, value, tone = "" }: { label: string; value: string; tone?: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`num text-xl font-bold mt-1 ${tone}`}>{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-[#70706a]">{label}</div>
+      <div className={`num text-xl font-bold mt-1 ${tone || "text-[#20376b]"}`}>{value}</div>
     </div>
   );
 }

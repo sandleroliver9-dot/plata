@@ -163,7 +163,7 @@ function AuthPage() {
   const providerButtonClass = "w-full h-[45px] rounded-[11px] bg-[#20376b] text-[13px] font-normal text-white shadow-none hover:bg-[#20376b]/90 font-plus-jakarta";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 text-[#111]">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
           <img src="/brand/platium-logo.png" alt="Platium" className="w-[100px] h-[107px]" />
