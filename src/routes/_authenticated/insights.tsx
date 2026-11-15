@@ -3,12 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Lightbulb, TrendingUp, Wallet, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/finance";
 import { buildUpcomingEvents, daysUntil, estimateNetWorth, getEmergencyFundSummary, getMonthlyCashflow, getSavingTargetPercent } from "@/lib/financial-centers";
 import { useFinancialPreferences } from "@/lib/financial-preferences";
 import { financialDataQuery, usePortfolioValue } from "@/lib/supabase-queries";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights · Platium" }] }),
@@ -158,10 +158,10 @@ function InsightsPage() {
   ));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Insights</h1>
-        <p className="text-sm text-muted-foreground mt-1">Mensajes automáticos simples generados con tus datos actuales.</p>
+        <h1 className={PLATIUM_PAGE_TITLE}>Insights</h1>
+        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Mensajes automáticos simples generados con tus datos actuales.</p>
         {portfolioWarnings.length > 0 && (
           <p className="text-xs text-warning mt-1">
             {portfolioWarnings.length === 1 ? "Hay una venta" : `Hay ${portfolioWarnings.length} ventas`} de inversiones sin compra que la respalde — el valor de Inversiones puede estar desactualizado.
@@ -170,34 +170,33 @@ function InsightsPage() {
       </header>
 
       {isLoading ? (
-        <Card className="p-10 text-center text-muted-foreground">Calculando insights...</Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center text-[#70706a] text-[13px]`}>Calculando insights...</div>
       ) : !hasAnyData ? (
-        <Card className="p-10 text-center">
-          <Lightbulb className="size-10 mx-auto text-muted-foreground mb-3" />
-          <p className="font-medium">Todavía no hay insights</p>
-          <p className="text-sm text-muted-foreground mt-1">Cargá ingresos, gastos o vencimientos para empezar a ver lecturas automáticas.</p>
-        </Card>
+        <div className={`${PLATIUM_CARD} p-10 text-center`}>
+          <p className="font-bold text-[13px] text-[#70706a]">Todavía no hay insights</p>
+          <p className="text-sm text-[#70706a] mt-1">Cargá ingresos, gastos o vencimientos para empezar a ver lecturas automáticas.</p>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {insights.map((insight) => {
             const Icon = insight.icon;
             const toneClass = insight.tone === "destructive" ? "text-destructive" : insight.tone === "warning" ? "text-warning" : "text-success";
             return (
-              <Card key={insight.title} className="p-5">
+              <div key={insight.title} className={`${PLATIUM_CARD} p-5`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">{insight.title}</div>
+                    <div className={PLATIUM_LABEL}>{insight.title}</div>
                     <div className={`num text-2xl font-bold mt-2 ${toneClass}`}>{insight.value}</div>
                   </div>
                   <Icon className={`size-5 ${toneClass}`} />
                 </div>
-                <p className="text-sm text-muted-foreground mt-3">{insight.message}</p>
+                <p className="text-sm text-[#70706a] mt-3">{insight.message}</p>
                 {insight.tone && (
                   <Badge className="mt-4" variant={insight.tone === "destructive" ? "destructive" : "secondary"}>
                     {insight.tone === "success" ? "Bien" : insight.tone === "warning" ? "Atención" : "Riesgo"}
                   </Badge>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>
