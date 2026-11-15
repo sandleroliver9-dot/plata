@@ -173,7 +173,7 @@ function PrestamoPage() {
                     />
                   </div>
                 </div>
-                <Progress value={pct} className="mt-4 h-2" />
+                <Progress value={pct} className="mt-4 h-2 bg-[#d9d9d9]" indicatorClassName="bg-[#20376b]" />
                 <div className="flex justify-between text-xs mt-2">
                   <span className="text-[#70706a]">{pct.toFixed(0)}% pagado</span>
                   <span className="num font-medium text-[#111]">Restante: {formatMoney(restante, currency)}</span>
