@@ -4,11 +4,11 @@
 
 export function TerminosContent() {
   return (
-    <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
+    <div className="space-y-6 text-sm leading-relaxed text-[#70706a] font-plus-jakarta">
       <p className="text-xs">Última actualización: septiembre 2026</p>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">1. Quiénes somos y qué es Platium</h2>
+        <h2 className="font-semibold text-[#20376b]">1. Quiénes somos y qué es Platium</h2>
         <p>
           Platium es un servicio ofrecido por Oliver Sandler, persona física domiciliada en la Provincia
           de Buenos Aires, Argentina ("Platium", "nosotros"). Estos Términos y Condiciones (los "Términos")
@@ -27,7 +27,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">2. Aceptación de los términos</h2>
+        <h2 className="font-semibold text-[#20376b]">2. Aceptación de los términos</h2>
         <p>
           Al crear una cuenta o usar Platium de cualquier forma, aceptás estos Términos y nuestra
           Política de Privacidad. Si no estás de acuerdo, no debés usar la App. Para usar Platium tenés
@@ -36,7 +36,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">3. Etapa beta</h2>
+        <h2 className="font-semibold text-[#20376b]">3. Etapa beta</h2>
         <p>
           Platium está en fase de pruebas. Puede tener errores, cambios de funcionalidad sin aviso
           previo, e interrupciones del servicio. No se garantiza disponibilidad continua ni la
@@ -46,7 +46,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">4. Registro y tu cuenta</h2>
+        <h2 className="font-semibold text-[#20376b]">4. Registro y tu cuenta</h2>
         <p>
           Para usar Platium necesitás crear una cuenta con tu email y contraseña, o mediante tu cuenta de
           Google. Sos responsable de mantener la confidencialidad de tus credenciales y de toda la
@@ -57,7 +57,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">5. Planes, precios y medios de pago</h2>
+        <h2 className="font-semibold text-[#20376b]">5. Planes, precios y medios de pago</h2>
         <p>
           Al crear tu cuenta accedés a un período de prueba gratuito de 7 (siete) días con acceso
           completo a la App. Vencido ese plazo, seguir usando las funciones financieras de Platium
@@ -84,13 +84,13 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">6. Derecho de arrepentimiento y reembolsos</h2>
+        <h2 className="font-semibold text-[#20376b]">6. Derecho de arrepentimiento y reembolsos</h2>
         <p>
           De acuerdo con el artículo 34 de la Ley 24.240 de Defensa del Consumidor, si compraste el
           acceso a Platium a distancia (por ejemplo, desde la web), tenés derecho a revocar la aceptación
           dentro de los 10 (diez) días corridos contados desde la fecha del pago, sin costo ni
           responsabilidad alguna, escribiendo a{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
           . En ese caso te reintegramos el monto pagado por el medio de pago original.
@@ -103,7 +103,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">7. Uso aceptable</h2>
+        <h2 className="font-semibold text-[#20376b]">7. Uso aceptable</h2>
         <p>
           No está permitido usar Platium para actividades ilegales, intentar acceder a cuentas de otros
           usuarios, interferir con el funcionamiento de la App, ni realizar ingeniería inversa,
@@ -112,7 +112,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">8. Propiedad intelectual</h2>
+        <h2 className="font-semibold text-[#20376b]">8. Propiedad intelectual</h2>
         <p>
           "Platium", su logotipo y su diseño son marcas y creaciones cuya titularidad corresponde a
           Oliver Sandler, actualmente en trámite de registro ante el Instituto Nacional de la Propiedad
@@ -124,7 +124,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">9. Uso de inteligencia artificial</h2>
+        <h2 className="font-semibold text-[#20376b]">9. Uso de inteligencia artificial</h2>
         <p>
           Algunas funciones opcionales de Platium (como la carga rápida de movimientos) utilizan modelos
           de inteligencia artificial de terceros para asistirte a completar información. Estas funciones
@@ -137,7 +137,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">10. Sin garantías y limitación de responsabilidad</h2>
+        <h2 className="font-semibold text-[#20376b]">10. Sin garantías y limitación de responsabilidad</h2>
         <p>
           Platium se ofrece "tal cual", sin garantías de ningún tipo, especialmente durante esta etapa de
           pruebas. No nos responsabilizamos por decisiones financieras que tomes en base a la información
@@ -148,11 +148,11 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">11. Eliminación de cuenta</h2>
+        <h2 className="font-semibold text-[#20376b]">11. Eliminación de cuenta</h2>
         <p>
           Podés pedir la eliminación de tu cuenta y de todos tus datos en cualquier momento, escribiendo
           a{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
           . Al eliminar la cuenta se borra en cascada toda la información asociada (movimientos,
@@ -162,7 +162,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">12. Modificaciones a estos Términos</h2>
+        <h2 className="font-semibold text-[#20376b]">12. Modificaciones a estos Términos</h2>
         <p>
           Podemos actualizar estos Términos en cualquier momento, especialmente mientras Platium esté en
           etapa de pruebas. Si el cambio es significativo, te vamos a avisar por email o dentro de la
@@ -171,7 +171,7 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">13. Ley aplicable y jurisdicción</h2>
+        <h2 className="font-semibold text-[#20376b]">13. Ley aplicable y jurisdicción</h2>
         <p>
           Estos Términos se rigen por las leyes de la República Argentina. Para cualquier controversia,
           en tu carácter de consumidor podés optar, a tu elección, por la justicia correspondiente a tu
@@ -181,10 +181,10 @@ export function TerminosContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">14. Contacto</h2>
+        <h2 className="font-semibold text-[#20376b]">14. Contacto</h2>
         <p>
           Consultas sobre estos términos:{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
         </p>
@@ -195,16 +195,16 @@ export function TerminosContent() {
 
 export function PrivacidadContent() {
   return (
-    <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
+    <div className="space-y-6 text-sm leading-relaxed text-[#70706a] font-plus-jakarta">
       <p className="text-xs">Última actualización: septiembre 2026</p>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">1. Responsable del tratamiento</h2>
+        <h2 className="font-semibold text-[#20376b]">1. Responsable del tratamiento</h2>
         <p>
           El responsable del tratamiento de tus datos personales es Oliver Sandler, persona física
           domiciliada en la Provincia de Buenos Aires, Argentina, en su carácter de titular de Platium.
           Podés contactarnos por cualquier tema relacionado a tus datos escribiendo a{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
           .
@@ -212,7 +212,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">2. Qué datos guardamos</h2>
+        <h2 className="font-semibold text-[#20376b]">2. Qué datos guardamos</h2>
         <p>Al usar Platium guardamos:</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Datos de cuenta: nombre y email (o los datos básicos que comparte Google si entrás con ese método).</li>
@@ -241,7 +241,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">3. Para qué usamos tus datos</h2>
+        <h2 className="font-semibold text-[#20376b]">3. Para qué usamos tus datos</h2>
         <p>Usamos tus datos únicamente para:</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Mostrarte tu propia información dentro de la app (dashboard, gráficos, proyecciones).</li>
@@ -256,7 +256,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">4. Con quién compartimos datos</h2>
+        <h2 className="font-semibold text-[#20376b]">4. Con quién compartimos datos</h2>
         <p>
           Para poder ofrecerte Platium, algunos datos pasan por proveedores que actúan como encargados
           del tratamiento, únicamente para prestar el servicio que les corresponde:
@@ -275,7 +275,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">5. Transferencia internacional de datos</h2>
+        <h2 className="font-semibold text-[#20376b]">5. Transferencia internacional de datos</h2>
         <p>
           Algunos de los proveedores mencionados en la Sección 4 procesan datos en servidores ubicados
           fuera de Argentina (por ejemplo, en Estados Unidos). Al usar Platium, aceptás esta
@@ -286,7 +286,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">6. Dónde y cómo se almacenan</h2>
+        <h2 className="font-semibold text-[#20376b]">6. Dónde y cómo se almacenan</h2>
         <p>
           Los datos se almacenan en Supabase (infraestructura en la nube con cifrado en tránsito y en
           reposo), con controles de acceso a nivel de base de datos (Row Level Security) que aseguran que
@@ -296,7 +296,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">7. Cuánto tiempo conservamos tus datos</h2>
+        <h2 className="font-semibold text-[#20376b]">7. Cuánto tiempo conservamos tus datos</h2>
         <p>
           Conservamos tus datos mientras tu cuenta esté activa. Si pedís la eliminación de tu cuenta (ver
           Sección 9), los borramos de forma permanente dentro de un plazo razonable, salvo la información
@@ -306,12 +306,12 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">8. Tus derechos</h2>
+        <h2 className="font-semibold text-[#20376b]">8. Tus derechos</h2>
         <p>
           De acuerdo a la Ley 25.326 de Protección de Datos Personales de Argentina, tenés derecho a
           acceder, rectificar, actualizar y eliminar tus datos personales (derechos ARCO). Podés ejercer
           estos derechos escribiendo a{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
           . La Agencia de Acceso a la Información Pública, en su carácter de Órgano de Control de la
@@ -321,10 +321,10 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">9. Eliminación de cuenta</h2>
+        <h2 className="font-semibold text-[#20376b]">9. Eliminación de cuenta</h2>
         <p>
           Podés pedir la baja de tu cuenta en cualquier momento, escribiendo a{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
           . Al hacerlo, se elimina de forma permanente toda tu información financiera asociada
@@ -333,7 +333,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">10. Cookies y almacenamiento local</h2>
+        <h2 className="font-semibold text-[#20376b]">10. Cookies y almacenamiento local</h2>
         <p>
           Platium usa el almacenamiento local de tu navegador (localStorage) para mantener tu sesión
           iniciada y recordar algunas preferencias de uso. No usamos cookies de seguimiento publicitario
@@ -342,7 +342,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">11. Menores de edad</h2>
+        <h2 className="font-semibold text-[#20376b]">11. Menores de edad</h2>
         <p>
           Platium no está dirigido a menores de 18 años y no recopilamos a sabiendas datos de menores. Si
           creés que un menor nos proporcionó datos personales, escribinos y lo vamos a eliminar.
@@ -350,7 +350,7 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">12. Cambios a esta política</h2>
+        <h2 className="font-semibold text-[#20376b]">12. Cambios a esta política</h2>
         <p>
           Como Platium está en etapa de pruebas, esta política puede actualizarse. Si hay cambios
           importantes, te vamos a avisar por email o dentro de la app.
@@ -358,10 +358,10 @@ export function PrivacidadContent() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold text-foreground">13. Contacto</h2>
+        <h2 className="font-semibold text-[#20376b]">13. Contacto</h2>
         <p>
           Consultas sobre privacidad:{" "}
-          <a href="mailto:sandleroliver9@gmail.com" className="text-primary hover:underline">
+          <a href="mailto:sandleroliver9@gmail.com" className="text-[#20376b] hover:underline">
             sandleroliver9@gmail.com
           </a>
         </p>

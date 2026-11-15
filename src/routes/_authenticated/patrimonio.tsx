@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
-import { Card } from "@/components/ui/card";
 import { formatMoney } from "@/lib/finance";
 import { financialDataQuery, usePortfolioValue } from "@/lib/supabase-queries";
+import { PLATIUM_CARD, PLATIUM_PAGE_TITLE, PLATIUM_PAGE_SUBTITLE, PLATIUM_LABEL } from "@/components/app/platium-ui";
 
 export const Route = createFileRoute("/_authenticated/patrimonio")({
   head: () => ({ meta: [{ title: "Patrimonio · Platium" }] }),
@@ -49,15 +49,15 @@ function Patrimonio() {
   }, [data, inversionesValor, inversionesValorUSD, tc]);
 
   const pieData = [
-    { name: "Inversiones", value: totals.inversiones, color: "var(--primary)" },
-    { name: "Inmuebles", value: totals.inmuebles, color: "var(--success)" },
+    { name: "Inversiones", value: totals.inversiones, color: "#20376b" },
+    { name: "Inmuebles", value: totals.inmuebles, color: "#31a538" },
   ].filter(x => x.value > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Patrimonio neto</h1>
-        <p className="text-muted-foreground text-sm">Activos menos pasivos.</p>
+        <h1 className={PLATIUM_PAGE_TITLE}>Patrimonio neto</h1>
+        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Activos menos pasivos.</p>
         {tcIsFallback && (
           <p className="text-xs text-warning mt-1">
             No se pudo obtener la cotización del dólar del día: los montos en inversiones usan un tipo de cambio de referencia y pueden no ser exactos.
@@ -71,34 +71,34 @@ function Patrimonio() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inversiones</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inversiones, displayCurrency)}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inmuebles</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inmuebles, displayCurrency)}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Deudas</div><div className="num text-2xl font-bold mt-2 text-destructive">{formatMoney(totals.deudas, displayCurrency)}</div></Card>
-        <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto</div><div className={`num text-2xl font-bold mt-2 ${totals.neto >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.neto, displayCurrency)}</div></Card>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Inversiones</div><div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totals.inversiones, displayCurrency)}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Inmuebles</div><div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totals.inmuebles, displayCurrency)}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Deudas</div><div className="num text-2xl font-bold mt-2 text-[#c7272b]">{formatMoney(totals.deudas, displayCurrency)}</div></div>
+        <div className={`${PLATIUM_CARD} p-5 border-[#20376b]`}><div className={PLATIUM_LABEL}>Patrimonio neto</div><div className={`num text-2xl font-bold mt-2 ${totals.neto >= 0 ? "text-[#31a538]" : "text-[#c7272b]"}`}>{formatMoney(totals.neto, displayCurrency)}</div></div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inversiones (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inversionesUSD, "USD")}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Inmuebles (USD)</div><div className="num text-2xl font-bold mt-2">{formatMoney(totals.inmueblesUSD, "USD")}</div></Card>
-        <Card className="p-5"><div className="text-xs text-muted-foreground uppercase">Deudas (USD)</div><div className="num text-2xl font-bold mt-2 text-destructive">{formatMoney(totals.deudasUSD, "USD")}</div></Card>
-        <Card className="p-5 border-primary/40"><div className="text-xs text-muted-foreground uppercase">Patrimonio neto (USD)</div><div className={`num text-2xl font-bold mt-2 ${totals.netoUSD >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(totals.netoUSD, "USD")}</div></Card>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Inversiones (USD)</div><div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totals.inversionesUSD, "USD")}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Inmuebles (USD)</div><div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totals.inmueblesUSD, "USD")}</div></div>
+        <div className={`${PLATIUM_CARD} p-5`}><div className={PLATIUM_LABEL}>Deudas (USD)</div><div className="num text-2xl font-bold mt-2 text-[#c7272b]">{formatMoney(totals.deudasUSD, "USD")}</div></div>
+        <div className={`${PLATIUM_CARD} p-5 border-[#20376b]`}><div className={PLATIUM_LABEL}>Patrimonio neto (USD)</div><div className={`num text-2xl font-bold mt-2 ${totals.netoUSD >= 0 ? "text-[#31a538]" : "text-[#c7272b]"}`}>{formatMoney(totals.netoUSD, "USD")}</div></div>
       </div>
 
       {pieData.length > 0 && (
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">Distribución de activos</h3>
+        <div className={`${PLATIUM_CARD} p-5`}>
+          <h3 className="font-semibold text-[13px] text-[#20376b] mb-4">Distribución de activos</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
                   {pieData.map((e, i) => <Cell key={i} fill={e.color} />)}
                 </Pie>
-                <Tooltip formatter={(v: any) => formatMoney(Number(v), displayCurrency)} contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                <Tooltip formatter={(v: any) => formatMoney(Number(v), displayCurrency)} contentStyle={{ background: "#fff", border: "1px solid #d9d9d9", borderRadius: 8 }} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );

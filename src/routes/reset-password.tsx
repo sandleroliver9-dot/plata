@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -108,33 +106,32 @@ function ResetPasswordPage() {
     navigate({ to: "/auth", replace: true });
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      <div className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse at top, oklch(0.30 0.18 280 / 0.35), transparent 60%)" }} />
+  const inputClass = "h-[45px] rounded-[11px] border-0 bg-[#d9d9d9] px-4 text-[13px] text-[#111] placeholder:text-[#70706a] focus-visible:ring-2 focus-visible:ring-[#20376b] font-plus-jakarta";
+  const labelClass = "text-[13px] font-normal text-[#111] font-plus-jakarta";
 
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 text-[#111]">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <div className="size-14 rounded-2xl grid place-items-center mb-4" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-            <Wallet className="size-7 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">Restablecer contraseña</h1>
-          <p className="text-sm text-muted-foreground mt-1">Definí una nueva contraseña para tu cuenta</p>
+        <div className="flex flex-col items-center mb-6">
+          <img src="/brand/platium-logo.png" alt="Platium" className="w-[100px] h-[107px]" />
+          <h1 className="text-[18px] font-bold text-[#20376b] mt-1 font-plus-jakarta">Restablecer contraseña</h1>
+          <p className="text-[13px] text-[#70706a] mt-1 font-plus-jakarta">Definí una nueva contraseña para tu cuenta</p>
         </div>
 
-        <Card className="p-6 bg-card border-border" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="border border-[#20376b] rounded-[23px] bg-white p-[30px]">
           {checkingSession ? (
-            <p className="text-sm text-muted-foreground text-center">Validando enlace de recuperación...</p>
+            <p className="text-sm text-[#70706a] text-center font-plus-jakarta">Validando enlace de recuperación...</p>
           ) : !sessionValid ? (
             <div className="space-y-4">
-              <p className="text-sm text-center text-destructive">{errorMessage ?? "No hay una sesión de recuperación válida."}</p>
-              <Button className="w-full" onClick={() => navigate({ to: "/auth", replace: true })}>
+              <p className="text-sm text-center text-destructive font-plus-jakarta">{errorMessage ?? "No hay una sesión de recuperación válida."}</p>
+              <Button className="w-full h-[34px] rounded-[11px] bg-[#c7dbf1] text-[13px] font-normal text-[#111] shadow-none hover:bg-[#c7dbf1]/80 font-plus-jakarta" onClick={() => navigate({ to: "/auth", replace: true })}>
                 Volver a login
               </Button>
             </div>
           ) : (
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="pw-new">Nueva contraseña</Label>
+                <Label htmlFor="pw-new" className={labelClass}>Nueva contraseña</Label>
                 <PasswordInput
                   id="pw-new"
                   value={password}
@@ -142,11 +139,12 @@ function ResetPasswordPage() {
                   required
                   minLength={8}
                   autoComplete="new-password"
+                  className={inputClass}
                 />
-                <p className="text-xs text-muted-foreground">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
+                <p className="text-xs text-[#70706a] font-plus-jakarta">Usá 8+ caracteres con mayúscula, número y símbolo. Ej: Platium2026!</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pw-confirm">Repetir contraseña</Label>
+                <Label htmlFor="pw-confirm" className={labelClass}>Repetir contraseña</Label>
                 <PasswordInput
                   id="pw-confirm"
                   value={confirmPassword}
@@ -154,15 +152,16 @@ function ResetPasswordPage() {
                   required
                   minLength={8}
                   autoComplete="new-password"
+                  className={inputClass}
                 />
               </div>
-              {errorMessage && <p className="text-xs text-destructive">{errorMessage}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
+              {errorMessage && <p className="text-xs text-destructive font-plus-jakarta">{errorMessage}</p>}
+              <Button type="submit" className="w-full h-[34px] rounded-[11px] bg-[#c7dbf1] text-[13px] font-normal text-[#111] shadow-none hover:bg-[#c7dbf1]/80 font-plus-jakarta" disabled={loading}>
                 {loading ? "Actualizando..." : "Guardar nueva contraseña"}
               </Button>
             </form>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );
