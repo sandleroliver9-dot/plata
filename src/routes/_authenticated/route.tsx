@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { Loader2, Wallet } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app/app-shell";
 import { FeedbackWidget } from "@/components/app/feedback-widget";
@@ -13,11 +13,9 @@ import { PaywallScreen } from "@/components/app/paywall-screen";
 // que la app esta cargando (el primer vistazo de cualquier tester nuevo).
 function AuthPending() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
-      <div className="size-14 rounded-2xl grid place-items-center" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-        <Wallet className="size-7 text-primary-foreground" />
-      </div>
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white">
+      <img src="/brand/platium-logo.png" alt="Platium" className="w-[72px] h-[77px]" />
+      <Loader2 className="size-6 animate-spin text-[#20376b]" />
     </div>
   );
 }
