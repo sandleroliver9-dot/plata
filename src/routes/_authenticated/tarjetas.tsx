@@ -11,6 +11,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { formatMoney, currentFinancialMonth, financialMonth, todayISO } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { DecimalInput, IntegerInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -242,7 +243,7 @@ function TarjetasPage() {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="min-w-0"><Label>Tarjeta</Label><TarjetaCombo value={form.tarjeta} onChange={(v) => setForm({ ...form, tarjeta: v })} placeholder="Visa, Mastercard..." /></div>
-              <div className="min-w-0"><Label>Inicio</Label><Input type="date" value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Inicio</Label><DateField value={form.inicio} onChange={(v) => setForm({ ...form, inicio: v })} /></div>
             </div>
             <div><Label>Compra</Label><Input value={form.compra} maxLength={100} onChange={(e) => setForm({ ...form, compra: e.target.value })} placeholder="Heladera, viaje..." /></div>
             <div className="grid grid-cols-3 gap-3">
