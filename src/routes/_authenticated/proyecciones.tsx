@@ -202,7 +202,10 @@ function ProyeccionesPage() {
                 <div className="text-[10px] uppercase tracking-wider text-[#70706a]">Disponible</div>
                 <div className={`num text-sm font-semibold ${r.disponible < 0 ? "text-destructive" : "text-[#111]"}`}>{formatMoney(r.disponible, currency)}</div>
               </div>
-              <Badge variant={r.estado === "ok" ? "default" : r.estado === "ajustado" ? "secondary" : "destructive"}>
+              <Badge
+                variant={r.estado === "ok" || r.estado === "ajustado" ? "secondary" : "destructive"}
+                className={r.estado === "ok" ? "bg-[#c7dbf1] text-[#20376b] hover:bg-[#c7dbf1]/80" : undefined}
+              >
                 {r.estado === "ok" ? "Podés ahorrar" : r.estado === "ajustado" ? "Mes ajustado" : "Sobregirado"}
               </Badge>
             </div>

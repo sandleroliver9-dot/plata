@@ -75,7 +75,7 @@ function InsightsPage() {
   const fixedRatio = cash.ingresos > 0 ? (cash.gastosFijos / cash.ingresos) * 100 : 0;
   const savings = cash.ingresos - cash.gastos;
   const liquidityRatio = cash.ingresos > 0 ? cash.disponible / cash.ingresos : 0;
-  const liquidityLabel = cash.disponible < 0 ? "riesgo" : liquidityRatio < 0.1 ? "atención" : "bueno";
+  const liquidityLabel = cash.disponible < 0 ? "Riesgo" : liquidityRatio < 0.1 ? "Atención" : "Bueno";
 
   const savingTarget = getSavingTargetPercent(profile);
   const emergency = getEmergencyFundSummary(cash, preferences);
@@ -149,7 +149,7 @@ function InsightsPage() {
       value: liquidityLabel,
       message: `Esto es lo que te queda libre para gastar en ${cash.mes}: ${formatMoney(cash.disponible, currency)}.`,
       icon: Lightbulb,
-      tone: liquidityLabel === "riesgo" ? "destructive" : liquidityLabel === "atención" ? "warning" : "success",
+      tone: liquidityLabel === "Riesgo" ? "destructive" : liquidityLabel === "Atención" ? "warning" : "success",
     },
   ];
 
