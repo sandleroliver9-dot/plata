@@ -241,14 +241,14 @@ function TarjetasPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Tarjeta</Label><TarjetaCombo value={form.tarjeta} onChange={(v) => setForm({ ...form, tarjeta: v })} placeholder="Visa, Mastercard..." /></div>
-              <div><Label>Inicio</Label><Input type="date" value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Tarjeta</Label><TarjetaCombo value={form.tarjeta} onChange={(v) => setForm({ ...form, tarjeta: v })} placeholder="Visa, Mastercard..." /></div>
+              <div className="min-w-0"><Label>Inicio</Label><Input type="date" value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })} /></div>
             </div>
             <div><Label>Compra</Label><Input value={form.compra} maxLength={100} onChange={(e) => setForm({ ...form, compra: e.target.value })} placeholder="Heladera, viaje..." /></div>
             <div className="grid grid-cols-3 gap-3">
-              <div><Label>Valor cuota</Label><DecimalInput value={form.valor_cuota} onChange={(e) => setForm({ ...form, valor_cuota: e.target.value })} placeholder="Ej: 12500,50" /></div>
-              <div><Label>Cuota actual</Label><IntegerInput value={form.cuota_actual} onChange={(e) => setForm({ ...form, cuota_actual: e.target.value })} /></div>
-              <div><Label>Cuotas totales</Label><IntegerInput value={form.cuotas_totales} onChange={(e) => setForm({ ...form, cuotas_totales: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Valor cuota</Label><DecimalInput value={form.valor_cuota} onChange={(e) => setForm({ ...form, valor_cuota: e.target.value })} placeholder="Ej: 12500,50" /></div>
+              <div className="min-w-0"><Label>Cuota actual</Label><IntegerInput value={form.cuota_actual} onChange={(e) => setForm({ ...form, cuota_actual: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Cuotas totales</Label><IntegerInput value={form.cuotas_totales} onChange={(e) => setForm({ ...form, cuotas_totales: e.target.value })} /></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>

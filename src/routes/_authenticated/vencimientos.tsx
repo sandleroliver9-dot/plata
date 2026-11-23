@@ -360,8 +360,8 @@ function NewV({ userId, open, onOpenChange, onCreated }: { userId?: string; open
         <div className="grid gap-3">
           <div><Label>Concepto *</Label><Input value={form.concepto} onChange={(e) => setForm({ ...form, concepto: e.target.value })} placeholder="ABL, expensas, seguro..." /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Monto *</Label><DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 25000" /></div>
-            <div><Label>Fecha *</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Monto *</Label><DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 25000" /></div>
+            <div className="min-w-0"><Label>Fecha *</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="rec">Recurrente mensual</Label>

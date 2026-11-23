@@ -53,17 +53,16 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* MIDNIGHT INDIGO — dark by default */
 :root {
   --radius: 0.75rem;
 
-  --background: oklch(0.10 0.03 270);
-  --foreground: oklch(0.97 0.01 270);
+  --background: #ffffff;
+  --foreground: #111111;
 
   --card: oklch(0.16 0.04 270);
   --card-foreground: oklch(0.97 0.01 270);
-  --popover: oklch(0.16 0.04 270);
-  --popover-foreground: oklch(0.97 0.01 270);
+  --popover: #ffffff;
+  --popover-foreground: #111111;
 
   --primary: #20376b;
   --primary-foreground: #ffffff;

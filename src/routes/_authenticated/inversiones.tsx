@@ -308,8 +308,8 @@ function NuevoActivoDialog({ userId, onCreated }: { userId?: string; onCreated: 
         <div className="grid gap-3">
           <div><Label>Nombre *</Label><Input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Apple, Bitcoin, SPY..." /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Ticker</Label><Input value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value.toUpperCase() })} placeholder="AAPL, BTC, SPY" /></div>
-            <div>
+            <div className="min-w-0"><Label>Ticker</Label><Input value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value.toUpperCase() })} placeholder="AAPL, BTC, SPY" /></div>
+            <div className="min-w-0">
               <Label>Tipo</Label>
               <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -605,20 +605,20 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
           </div>
           {creandoActivoNuevo && (
             <div className="grid grid-cols-2 gap-3 rounded-md border border-[#d9d9d9] p-3">
-              <div className="col-span-2"><Label>Nombre del activo *</Label><Input value={nuevoActivo.nombre} onChange={(e) => setNuevoActivo({ ...nuevoActivo, nombre: e.target.value })} placeholder="Apple, Bitcoin, SPY..." /></div>
-              <div className="col-span-2"><Label>Ticker</Label><Input value={nuevoActivo.ticker} onChange={(e) => setNuevoActivo({ ...nuevoActivo, ticker: e.target.value.toUpperCase() })} placeholder="AAPL, BTC, SPY" /></div>
+              <div className="col-span-2 min-w-0"><Label>Nombre del activo *</Label><Input value={nuevoActivo.nombre} onChange={(e) => setNuevoActivo({ ...nuevoActivo, nombre: e.target.value })} placeholder="Apple, Bitcoin, SPY..." /></div>
+              <div className="col-span-2 min-w-0"><Label>Ticker</Label><Input value={nuevoActivo.ticker} onChange={(e) => setNuevoActivo({ ...nuevoActivo, ticker: e.target.value.toUpperCase() })} placeholder="AAPL, BTC, SPY" /></div>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Fecha</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
-            <div><Label>TC ARS/USD</Label><DecimalInput value={form.tc} onChange={(e) => setForm({ ...form, tc: e.target.value })} placeholder="MEP del día" /></div>
+            <div className="min-w-0"><Label>Fecha</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
+            <div className="min-w-0"><Label>TC ARS/USD</Label><DecimalInput value={form.tc} onChange={(e) => setForm({ ...form, tc: e.target.value })} placeholder="MEP del día" /></div>
           </div>
           {kind === "dividendo" ? (
             <div><Label>Monto USD *</Label><DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 25,50" /></div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Cantidad *</Label><DecimalInput value={form.cantidad} onChange={(e) => setForm({ ...form, cantidad: e.target.value })} placeholder="Ej: 2,5" /></div>
-              <div><Label>Precio USD *</Label><DecimalInput value={form.precio} onChange={(e) => setForm({ ...form, precio: e.target.value })} placeholder="Ej: 180,25" /></div>
+              <div className="min-w-0"><Label>Cantidad *</Label><DecimalInput value={form.cantidad} onChange={(e) => setForm({ ...form, cantidad: e.target.value })} placeholder="Ej: 2,5" /></div>
+              <div className="min-w-0"><Label>Precio USD *</Label><DecimalInput value={form.precio} onChange={(e) => setForm({ ...form, precio: e.target.value })} placeholder="Ej: 180,25" /></div>
             </div>
           )}
           {kind === "compra" && <div><Label>Broker</Label><Input value={form.broker} onChange={(e) => setForm({ ...form, broker: e.target.value })} /></div>}

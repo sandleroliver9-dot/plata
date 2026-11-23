@@ -345,8 +345,8 @@ function IngresosPage() {
           <div className="space-y-3">
             <div><Label>Concepto</Label><ConceptCombo kind="Ingreso" value={form.concepto} onChange={(v) => setForm({ ...form, concepto: v })} placeholder="Sueldo, bono, freelance..." /></div>
             <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2"><Label>Monto</Label><DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 500000" /></div>
-              <div>
+              <div className="col-span-2 min-w-0"><Label>Monto</Label><DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 500000" /></div>
+              <div className="min-w-0">
                 <Label>Moneda</Label>
                 <Select value={form.moneda} onValueChange={(v) => setForm({ ...form, moneda: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -358,8 +358,8 @@ function IngresosPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Fecha de cobro</Label><Input type="date" value={form.fecha_cobro} onChange={(e) => setForm({ ...form, fecha_cobro: e.target.value })} /></div>
-              <div>
+              <div className="min-w-0"><Label>Fecha de cobro</Label><Input type="date" value={form.fecha_cobro} onChange={(e) => setForm({ ...form, fecha_cobro: e.target.value })} /></div>
+              <div className="min-w-0">
                 <Label>Tipo</Label>
                 <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>

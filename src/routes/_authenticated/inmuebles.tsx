@@ -189,14 +189,14 @@ function NewI({ userId, open, onOpenChange, onCreated }: { userId?: string; open
         <div className="grid gap-3">
           <div><Label>Propiedad *</Label><Input value={form.propiedad} onChange={(e) => setForm({ ...form, propiedad: e.target.value })} placeholder="Depto Palermo, Casa Tigre..." /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <Label>Tipo</Label>
               <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="min-w-0">
               <Label>Moneda</Label>
               <Select value={form.moneda} onValueChange={(v) => setForm({ ...form, moneda: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -205,12 +205,12 @@ function NewI({ userId, open, onOpenChange, onCreated }: { userId?: string; open
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>País</Label><Input value={form.pais} onChange={(e) => setForm({ ...form, pais: e.target.value })} /></div>
-            <div><Label>Ciudad</Label><Input value={form.ciudad} onChange={(e) => setForm({ ...form, ciudad: e.target.value })} /></div>
+            <div className="min-w-0"><Label>País</Label><Input value={form.pais} onChange={(e) => setForm({ ...form, pais: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Ciudad</Label><Input value={form.ciudad} onChange={(e) => setForm({ ...form, ciudad: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Valor estimado *</Label><DecimalInput value={form.valor_estimado} onChange={(e) => setForm({ ...form, valor_estimado: e.target.value })} placeholder="Ej: 120000" /></div>
-            <div><Label>Deuda asociada</Label><DecimalInput value={form.deuda_asociada} onChange={(e) => setForm({ ...form, deuda_asociada: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Valor estimado *</Label><DecimalInput value={form.valor_estimado} onChange={(e) => setForm({ ...form, valor_estimado: e.target.value })} placeholder="Ej: 120000" /></div>
+            <div className="min-w-0"><Label>Deuda asociada</Label><DecimalInput value={form.deuda_asociada} onChange={(e) => setForm({ ...form, deuda_asociada: e.target.value })} /></div>
           </div>
           <div className="flex items-center justify-between border-t pt-3">
             <Label htmlFor="alq">¿Está alquilado?</Label>
