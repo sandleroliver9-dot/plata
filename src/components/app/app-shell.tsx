@@ -1,8 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -39,17 +37,7 @@ const navGroups: Array<{ label: string; items: Array<{ to: string; label: string
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    // supabase-js limpia la sesión local antes de intentar el llamado al
-    // servidor, así que igual navegamos a /auth si falla la red — pero
-    // avisamos, en vez de fallar en silencio.
-    if (error) toast.error("No se pudo cerrar sesión en el servidor, pero se cerró localmente.");
-    navigate({ to: "/auth", replace: true });
-  }
 
   const NavList = ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav className="flex-1 overflow-y-auto p-3 space-y-1 font-plus-jakarta">
@@ -82,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   const Brand = () => (
-    <Link to="/dashboard" className="h-16 flex items-center gap-2 px-5 border-b border-[#d9d9d9]">
+    <Link to="/dashboard" className="h-16 flex items-center justify-center">
       <img src="/brand/platium-logo.png" alt="Platium" className="h-9 w-auto" />
     </Link>
   );
@@ -92,37 +80,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden md:flex w-64 shrink-0 flex-col bg-white border-r border-[#d9d9d9]">
         <Brand />
         <NavList />
-        <div className="p-3 border-t border-[#d9d9d9] font-plus-jakarta">
-          <Button variant="ghost" className="w-full justify-start text-[13px] text-[#111] hover:text-[#20376b]" onClick={signOut}>
-            <LogOut className="size-4 mr-2" />
-            Cerrar sesión
-          </Button>
-        </div>
       </aside>
 
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="md:hidden h-14 flex items-center justify-between px-4 border-b border-[#d9d9d9] bg-white">
-          <div className="flex items-center gap-2">
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" aria-label="Abrir menú"><Menu className="size-5 text-[#20376b]" /></Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-[317px] bg-white border-[#d9d9d9] flex flex-col">
-                <VisuallyHidden><SheetTitle>Menú</SheetTitle></VisuallyHidden>
-                <Brand />
-                <NavList onNavigate={() => setMobileOpen(false)} />
-                <div className="p-3 border-t border-[#d9d9d9] font-plus-jakarta">
-                  <Button variant="ghost" className="w-full justify-start text-[13px] text-[#111] hover:text-[#20376b]" onClick={signOut}>
-                    <LogOut className="size-4 mr-2" /> Cerrar sesión
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <img src="/brand/platium-logo.png" alt="Platium" className="h-7 w-auto" />
-            </Link>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="size-4 text-[#20376b]" /></Button>
+        <div className="md:hidden h-14 relative flex items-center px-4 bg-white">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" aria-label="Abrir menú"><Menu className="size-5 text-[#20376b]" /></Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-[317px] bg-white border-[#d9d9d9] flex flex-col">
+              <VisuallyHidden><SheetTitle>Menú</SheetTitle></VisuallyHidden>
+              <Brand />
+              <NavList onNavigate={() => setMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+          <Link to="/dashboard" className="absolute left-1/2 -translate-x-1/2 flex items-center">
+            <img src="/brand/platium-logo.png" alt="Platium" className="h-7 w-auto" />
+          </Link>
         </div>
         <div className="p-4 pb-36 md:p-8 max-w-7xl mx-auto space-y-4">
           {FLUJO_TABS.some(t => t.to === pathname) && <SubTabs tabs={FLUJO_TABS} />}
