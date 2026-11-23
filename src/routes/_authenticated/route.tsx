@@ -13,7 +13,7 @@ import { PaywallScreen } from "@/components/app/paywall-screen";
 function AuthPending() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white">
-      <img src="/brand/platium-logo.png" alt="Platium" className="h-[77px] w-auto" />
+      <img src="/brand/platium-logo-v2.png" alt="Platium" className="h-[77px] w-auto" />
       <Loader2 className="size-6 animate-spin text-[#20376b]" />
     </div>
   );
