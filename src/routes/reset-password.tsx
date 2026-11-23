@@ -113,7 +113,7 @@ function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-white p-4 text-[#111]">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
-          <img src="/brand/platium-logo.png" alt="Platium" className="w-[100px] h-[107px]" />
+          <img src="/brand/platium-logo.png" alt="Platium" className="h-[107px] w-auto" />
           <h1 className="text-[18px] font-bold text-[#20376b] mt-1 font-plus-jakarta">Restablecer contraseña</h1>
           <p className="text-[13px] text-[#70706a] mt-1 font-plus-jakarta">Definí una nueva contraseña para tu cuenta</p>
         </div>
