@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Plus, Check, AlertTriangle, CalendarDays, CircleDollarSign, List, LayoutGrid } from "lucide-react";
+import { Plus, Check, AlertTriangle, CalendarDays, CircleDollarSign, List, LayoutGrid, ChevronRight } from "lucide-react";
 import { ConfirmDeleteButton } from "@/components/app/confirm-delete-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -67,6 +67,8 @@ function Vencimientos() {
     tc,
   });
 
+  const upcoming = useMemo(() => events.filter((event) => event.type !== "cobro"), [events]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const event of events) {
@@ -120,7 +122,7 @@ function Vencimientos() {
     <div className="space-y-6 font-plus-jakarta text-[#111]">
       <header>
         <h1 className={PLATIUM_PAGE_TITLE}>Vencimientos</h1>
-        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Lo que anotás a mano (ABL, seguro, expensas...) más cuotas, préstamos, gastos fijos y próximos cobros, todo junto.</p>
+        <p className={`${PLATIUM_PAGE_SUBTITLE} mt-1`}>Organizá tus próximos pagos y cobros.</p>
       </header>
 
       <div className={`${PLATIUM_CARD} p-5 grid grid-cols-3 divide-x divide-[#d9d9d9]`}>
@@ -162,35 +164,72 @@ function Vencimientos() {
       </div>
 
       {view === "calendario" ? (
-        <div className={`${PLATIUM_CARD} p-5`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold capitalize text-[13px] text-[#20376b]">{monthName}</h3>
-            <div className="flex gap-1">
-              <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(c => { const m = c.m - 1; return m < 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m }; })}>‹</Button>
-              <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(() => { const d = appNow(); return { y: d.getFullYear(), m: d.getMonth() }; })}>Hoy</Button>
-              <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(c => { const m = c.m + 1; return m > 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m }; })}>›</Button>
+        <>
+          <div className={`${PLATIUM_CARD} p-5`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold capitalize text-[13px] text-[#20376b]">{monthName}</h3>
+              <div className="flex gap-1">
+                <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(c => { const m = c.m - 1; return m < 0 ? { y: c.y - 1, m: 11 } : { y: c.y, m }; })}>‹</Button>
+                <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(() => { const d = appNow(); return { y: d.getFullYear(), m: d.getMonth() }; })}>Hoy</Button>
+                <Button size="sm" className={PLATIUM_BUTTON_OUTLINE} onClick={() => setCursor(c => { const m = c.m + 1; return m > 11 ? { y: c.y + 1, m: 0 } : { y: c.y, m }; })}>›</Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-xs text-[#70706a] mb-1">
+              {["D", "L", "M", "X", "J", "V", "S"].map(d => <div key={d} className="text-center font-medium">{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {monthGrid.map((cell, i) => {
+                const iso = cell.date ? isoLocal(cell.date) : undefined;
+                const isToday = iso === today;
+                return (
+                  <div key={i} className={`min-h-16 rounded-md border p-1 text-xs ${cell.date ? "bg-white" : "opacity-30"} ${isToday ? "border-[#20376b] bg-[#eaf2fa]" : "border-[#d9d9d9]"}`}>
+                    {cell.date && <div className="font-semibold text-[#111]">{cell.date.getDate()}</div>}
+                    {cell.events.slice(0, 2).map(ev => {
+                      const color = ev.type === "cobro" ? "bg-success/20 text-success" : "bg-[#20376b]/10 text-[#20376b]";
+                      return <div key={ev.id} className={`truncate mt-0.5 rounded px-1 ${color}`}>{ev.title}</div>;
+                    })}
+                    {cell.events.length > 2 && <div className="text-[#70706a] mt-0.5">+{cell.events.length - 2}</div>}
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-xs text-[#70706a] mb-1">
-            {["D", "L", "M", "X", "J", "V", "S"].map(d => <div key={d} className="text-center font-medium">{d}</div>)}
+
+          <div className={`${PLATIUM_CARD} p-5`}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-[13px] text-[#20376b]">Próximos vencimientos</h3>
+              {upcoming.length > 0 && (
+                <button onClick={() => setView("lista")} className="text-xs text-[#20376b] flex items-center gap-0.5">
+                  Ver todos <ChevronRight className="size-3" />
+                </button>
+              )}
+            </div>
+            {upcoming.length === 0 ? (
+              <p className="text-sm text-[#70706a] text-center py-4">No tenés nada próximo para mostrar.</p>
+            ) : (
+              <div className="divide-y divide-[#d9d9d9]">
+                {upcoming.slice(0, 3).map((event) => (
+                  <div key={event.id} className="flex items-center gap-3 py-3">
+                    <div className="w-11 shrink-0 rounded-md bg-[#f5f5f4] text-center py-1">
+                      <div className="text-sm font-bold text-[#111] leading-none">{dayOfMonth(event.date)}</div>
+                      <div className="text-[9px] uppercase text-[#70706a] mt-0.5">{monthAbbrev(event.date)}</div>
+                    </div>
+                    <div className={`size-9 rounded-md grid place-items-center shrink-0 ${event.type === "cobro" ? "bg-success/15 text-success" : "bg-[#20376b]/10 text-[#20376b]"}`}>
+                      {event.type === "cobro" ? <CircleDollarSign className="size-5" /> : <CalendarDays className="size-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate text-[13px] text-[#111]">{event.title}</div>
+                      <div className="text-xs text-[#70706a]">• {event.detail ?? eventLabel(event.type)}</div>
+                    </div>
+                    <div className="num font-semibold whitespace-nowrap text-[#111]">
+                      -{formatMoney(event.amount, currency)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-7 gap-1">
-            {monthGrid.map((cell, i) => {
-              const iso = cell.date ? isoLocal(cell.date) : undefined;
-              const isToday = iso === today;
-              return (
-                <div key={i} className={`min-h-16 rounded-md border p-1 text-xs ${cell.date ? "bg-white" : "opacity-30"} ${isToday ? "border-[#20376b] bg-[#eaf2fa]" : "border-[#d9d9d9]"}`}>
-                  {cell.date && <div className="font-semibold text-[#111]">{cell.date.getDate()}</div>}
-                  {cell.events.slice(0, 2).map(ev => {
-                    const color = ev.type === "cobro" ? "bg-success/20 text-success" : "bg-[#20376b]/10 text-[#20376b]";
-                    return <div key={ev.id} className={`truncate mt-0.5 rounded px-1 ${color}`}>{ev.title}</div>;
-                  })}
-                  {cell.events.length > 2 && <div className="text-[#70706a] mt-0.5">+{cell.events.length - 2}</div>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        </>
       ) : (
         <div className={PLATIUM_CARD}>
           {groupedDates.length === 0 ? (
@@ -262,6 +301,14 @@ function formatDate(dateISO: string) {
     day: "numeric",
     month: "long",
   });
+}
+
+function dayOfMonth(dateISO: string) {
+  return new Date(`${dateISO}T00:00:00`).getDate();
+}
+
+function monthAbbrev(dateISO: string) {
+  return new Date(`${dateISO}T00:00:00`).toLocaleDateString("es-AR", { month: "short" }).replace(".", "").toUpperCase();
 }
 
 function relativeDate(dateISO: string) {
