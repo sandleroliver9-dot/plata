@@ -190,10 +190,10 @@ function PrestamoPage() {
           <div className="space-y-3">
             <div><Label>Descripción</Label><Input value={form.descripcion} maxLength={100} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Cuota mensual</Label><DecimalInput value={form.cuota_mensual} onChange={(e) => setForm({ ...form, cuota_mensual: e.target.value })} placeholder="Ej: 45000" /></div>
-              <div><Label>Tasa %</Label><DecimalInput value={form.tasa} onChange={(e) => setForm({ ...form, tasa: e.target.value })} placeholder="Ej: 12,5" /></div>
+              <div className="min-w-0"><Label>Cuota mensual</Label><DecimalInput value={form.cuota_mensual} onChange={(e) => setForm({ ...form, cuota_mensual: e.target.value })} placeholder="Ej: 45000" /></div>
+              <div className="min-w-0"><Label>Tasa %</Label><DecimalInput value={form.tasa} onChange={(e) => setForm({ ...form, tasa: e.target.value })} placeholder="Ej: 12,5" /></div>
             </div>
-            <div>
+            <div className="min-w-0">
               <Label>Tipo de tasa</Label>
               <Select value={form.tasa_tipo} onValueChange={(v) => setForm({ ...form, tasa_tipo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -203,8 +203,8 @@ function PrestamoPage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Cuotas totales</Label><IntegerInput value={form.cuotas_totales} onChange={(e) => setForm({ ...form, cuotas_totales: e.target.value })} /></div>
-              <div><Label>Cuotas pagadas</Label><IntegerInput value={form.cuotas_pagadas} onChange={(e) => setForm({ ...form, cuotas_pagadas: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Cuotas totales</Label><IntegerInput value={form.cuotas_totales} onChange={(e) => setForm({ ...form, cuotas_totales: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Cuotas pagadas</Label><IntegerInput value={form.cuotas_pagadas} onChange={(e) => setForm({ ...form, cuotas_pagadas: e.target.value })} /></div>
             </div>
             <div>
               <Label>Día de pago mensual (opcional)</Label>

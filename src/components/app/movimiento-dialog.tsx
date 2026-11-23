@@ -80,11 +80,11 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
             </TabsList>
           </Tabs>
           <div className="grid grid-cols-[1fr_auto] gap-3">
-            <div>
+            <div className="min-w-0">
               <Label>Monto</Label>
               <DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 12500,50" />
             </div>
-            <div>
+            <div className="min-w-0">
               <Label>Moneda</Label>
               <Select value={form.moneda} onValueChange={(v) => setForm({ ...form, moneda: v })}>
                 <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
@@ -104,7 +104,7 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
             <ConceptCombo kind={form.tipo === "Ingreso" ? "Ingreso" : "Gasto"} value={form.descripcion} onChange={(v) => setForm({ ...form, descripcion: v })} maxLength={200} placeholder="Super, Uber, sueldo..." />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <Label>Categoría</Label>
               <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
                 <SelectTrigger><SelectValue placeholder="Sin categoría" /></SelectTrigger>
@@ -113,7 +113,7 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="min-w-0">
               <Label>Medio</Label>
               <Select value={form.medio} onValueChange={(v) => setForm({ ...form, medio: v })}>
                 <SelectTrigger><SelectValue placeholder="Cualquiera" /></SelectTrigger>

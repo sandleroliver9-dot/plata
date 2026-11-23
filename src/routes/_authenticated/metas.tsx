@@ -217,18 +217,18 @@ function NewMeta({ userId, defaultCurrency, onCreated }: { userId?: string; defa
         <div className="grid gap-3">
           <div><Label>Nombre *</Label><Input value={form.meta} onChange={(e) => setForm({ ...form, meta: e.target.value })} placeholder="Viaje, Auto, Casa..." /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <Label>Moneda</Label>
               <Select value={form.moneda} onValueChange={(v) => setForm({ ...form, moneda: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="ARS">ARS</SelectItem><SelectItem value="USD">USD</SelectItem></SelectContent>
               </Select>
             </div>
-            <div><Label>Objetivo *</Label><DecimalInput value={form.objetivo} onChange={(e) => setForm({ ...form, objetivo: e.target.value })} placeholder="Ej: 1000000" /></div>
+            <div className="min-w-0"><Label>Objetivo *</Label><DecimalInput value={form.objetivo} onChange={(e) => setForm({ ...form, objetivo: e.target.value })} placeholder="Ej: 1000000" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Ya ahorrado</Label><DecimalInput value={form.ahorrado} onChange={(e) => setForm({ ...form, ahorrado: e.target.value })} /></div>
-            <div><Label>Fecha objetivo</Label><Input type="date" value={form.fecha_objetivo} onChange={(e) => setForm({ ...form, fecha_objetivo: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Ya ahorrado</Label><DecimalInput value={form.ahorrado} onChange={(e) => setForm({ ...form, ahorrado: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Fecha objetivo</Label><Input type="date" value={form.fecha_objetivo} onChange={(e) => setForm({ ...form, fecha_objetivo: e.target.value })} /></div>
           </div>
         </div>
         <DialogFooter><Button onClick={save}>Crear meta</Button></DialogFooter>
