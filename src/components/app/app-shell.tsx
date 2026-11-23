@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const Brand = () => (
     <Link to="/dashboard" className="h-16 flex items-center justify-center">
-      <img src="/brand/platium-logo.png" alt="Platium" className="h-9 w-auto" />
+      <img src="/brand/platium-icon.png" alt="Platium" className="h-12 w-auto" />
     </Link>
   );
 
@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           <Link to="/dashboard" className="absolute left-1/2 -translate-x-1/2 flex items-center">
-            <img src="/brand/platium-logo.png" alt="Platium" className="h-7 w-auto" />
+            <img src="/brand/platium-icon.png" alt="Platium" className="h-10 w-auto" />
           </Link>
         </div>
         <div className="p-4 pb-36 md:p-8 max-w-7xl mx-auto space-y-4">
