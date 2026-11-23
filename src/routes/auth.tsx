@@ -198,7 +198,7 @@ function AuthPage() {
                   <PasswordInput id="pw-in" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" className={inputClass} />
                 </div>
                 <Button type="submit" className="w-full h-[34px] rounded-[11px] bg-[#c7dbf1] text-[13px] font-normal text-[#111] shadow-none hover:bg-[#c7dbf1]/80 font-plus-jakarta" disabled={formLoading}>Ingresar</Button>
-                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="w-full h-[34px] rounded-[11px] border border-[#d9d9d9] bg-white text-[13px] font-normal text-[#111] font-plus-jakarta hover:bg-[#f5f5f4]">
+                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="w-full h-[34px] rounded-[11px] text-[13px] font-semibold text-[#20376b] font-plus-jakarta hover:bg-[#c7dbf1]/20">
                   {resetLoading ? "Enviando..." : "Olvidé mi contraseña"}
                 </button>
                 {resetEmailSent && (
