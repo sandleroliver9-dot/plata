@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -361,7 +362,7 @@ function NewV({ userId, open, onOpenChange, onCreated }: { userId?: string; open
           <div><Label>Concepto *</Label><Input value={form.concepto} onChange={(e) => setForm({ ...form, concepto: e.target.value })} placeholder="ABL, expensas, seguro..." /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0"><Label>Monto *</Label><DecimalInput value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="Ej: 25000" /></div>
-            <div className="min-w-0"><Label>Fecha *</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Fecha *</Label><DateField value={form.fecha} onChange={(v) => setForm({ ...form, fecha: v })} /></div>
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="rec">Recurrente mensual</Label>

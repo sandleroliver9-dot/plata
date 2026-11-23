@@ -10,7 +10,7 @@ import { financialMonth, todayISO } from "@/lib/finance";
 import { parseISODate } from "@/lib/financial-centers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,7 +97,7 @@ export function MovimientoDialog({ open, onOpenChange, defaults }: { open: boole
           </div>
           <div>
             <Label>Fecha</Label>
-            <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
+            <DateField value={form.fecha} onChange={(v) => setForm({ ...form, fecha: v })} />
           </div>
           <div>
             <Label>Descripción</Label>

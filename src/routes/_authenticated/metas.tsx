@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -228,7 +229,7 @@ function NewMeta({ userId, defaultCurrency, onCreated }: { userId?: string; defa
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0"><Label>Ya ahorrado</Label><DecimalInput value={form.ahorrado} onChange={(e) => setForm({ ...form, ahorrado: e.target.value })} /></div>
-            <div className="min-w-0"><Label>Fecha objetivo</Label><Input type="date" value={form.fecha_objetivo} onChange={(e) => setForm({ ...form, fecha_objetivo: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Fecha objetivo</Label><DateField value={form.fecha_objetivo} onChange={(v) => setForm({ ...form, fecha_objetivo: v })} /></div>
           </div>
         </div>
         <DialogFooter><Button onClick={save}>Crear meta</Button></DialogFooter>

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -610,7 +611,7 @@ function MovDialog({ kind, activos, userId, tc, rows, onCreated }: { kind: "comp
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div className="min-w-0"><Label>Fecha</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
+            <div className="min-w-0"><Label>Fecha</Label><DateField value={form.fecha} onChange={(v) => setForm({ ...form, fecha: v })} /></div>
             <div className="min-w-0"><Label>TC ARS/USD</Label><DecimalInput value={form.tc} onChange={(e) => setForm({ ...form, tc: e.target.value })} placeholder="MEP del día" /></div>
           </div>
           {kind === "dividendo" ? (

@@ -14,7 +14,7 @@ import { useDefaultFinancialMonth } from "@/lib/financial-preferences";
 import { useDolarTC } from "@/lib/supabase-queries";
 import { getInflacion } from "@/lib/quotes.functions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/ui/date-field";
 import { DecimalInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -358,7 +358,7 @@ function IngresosPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="min-w-0"><Label>Fecha de cobro</Label><Input type="date" value={form.fecha_cobro} onChange={(e) => setForm({ ...form, fecha_cobro: e.target.value })} /></div>
+              <div className="min-w-0"><Label>Fecha de cobro</Label><DateField value={form.fecha_cobro} onChange={(v) => setForm({ ...form, fecha_cobro: v })} /></div>
               <div className="min-w-0">
                 <Label>Tipo</Label>
                 <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
