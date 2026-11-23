@@ -124,15 +124,15 @@ function Vencimientos() {
       </header>
 
       <div className={`${PLATIUM_CARD} p-5 grid grid-cols-3 divide-x divide-[#d9d9d9]`}>
-        <div className="text-center">
+        <div className="text-center px-2">
           <div className={PLATIUM_LABEL}>Pendientes</div>
           <div className="num text-2xl font-bold mt-2 text-[#20376b]">{pendientes.length}</div>
         </div>
-        <div className="text-center">
+        <div className="text-center px-2">
           <div className={PLATIUM_LABEL}>Monto pendiente</div>
           <div className="num text-2xl font-bold mt-2 text-[#20376b]">{formatMoney(totalPendiente, currency)}</div>
         </div>
-        <div className="text-center">
+        <div className="text-center px-2">
           <div className="flex items-center justify-center gap-1">
             {vencidos.length > 0 && <AlertTriangle className="size-3.5 text-[#c7272b]" />}
             <span className={PLATIUM_LABEL}>Vencidos</span>

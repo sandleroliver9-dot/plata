@@ -6,7 +6,7 @@ type Tab = { to: string; label: string };
 export function SubTabs({ tabs }: { tabs: Tab[] }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <div className="flex gap-6 border-b border-[#d9d9d9] overflow-x-auto font-plus-jakarta">
+    <div className="flex gap-6 justify-center border-b border-[#d9d9d9] overflow-x-auto font-plus-jakarta">
       {tabs.map((t) => {
         const active = pathname === t.to;
         return (
