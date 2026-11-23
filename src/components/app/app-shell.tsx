@@ -47,23 +47,25 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-[#70706a]">
             {group.label}
           </div>
-          {group.items.map((item) => {
-            const matches = item.match ?? [item.to];
-            const active = matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
-            return (
-              <Link
-                key={item.to}
-                to={item.to as any}
-                onClick={onNavigate}
-                className={cn(
-                  "block px-3 py-2 rounded-lg text-[13px] transition-colors",
-                  active ? "text-[#20376b] font-semibold" : "text-[#111] hover:text-[#20376b]",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          <div className="space-y-0.5">
+            {group.items.map((item) => {
+              const matches = item.match ?? [item.to];
+              const active = matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to as any}
+                  onClick={onNavigate}
+                  className={cn(
+                    "block px-3 py-2.5 rounded-lg text-[14px] transition-colors",
+                    active ? "text-[#20376b] font-semibold" : "text-[#111] hover:text-[#20376b]",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       ))}
     </nav>
