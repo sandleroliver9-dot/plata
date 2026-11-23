@@ -32,16 +32,16 @@ function GastosRecurrentesConfigPage() {
         subtitle="Ubicamos alquiler, servicios y suscripciones en la fecha en que suelen debitarse."
       />
 
-      <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
+      <div className={`${PLATIUM_CARD} p-5`}>
         {(data?.fijos?.length ?? 0) === 0 ? (
           <p className="text-sm text-[#70706a]">Primero cargá gastos fijos como alquiler, internet o gimnasio. Después los vas a poder ordenar por fecha.</p>
         ) : (
-          <div className="grid gap-3">
+          <div className="divide-y divide-[#d9d9d9]">
             {data?.fijos.map((expense: any) => {
               const item = preferences.recurringSettings[expense.id] ?? {};
               const frequency = item.frequency ?? "mensual";
               return (
-                <div key={expense.id} className="grid gap-3 rounded-md border border-[#d9d9d9] p-3 md:grid-cols-[1fr_130px_160px]">
+                <div key={expense.id} className="grid gap-3 py-4 first:pt-0 last:pb-0 md:grid-cols-[1fr_130px_160px]">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{expense.gasto}</div>
                     <div className="text-xs text-[#70706a] mt-0.5">
