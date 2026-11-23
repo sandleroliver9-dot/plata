@@ -166,7 +166,7 @@ function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-white p-4 text-[#111]">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
-          <img src="/brand/platium-logo.png" alt="Platium" className="h-[107px] w-auto" />
+          <img src="/brand/platium-logo-v2.png" alt="Platium" className="h-[107px] w-auto" />
           <p className="text-[16px] text-[#20376b] mt-1 font-plus-jakarta">Tu copiloto financiero</p>
         </div>
 
