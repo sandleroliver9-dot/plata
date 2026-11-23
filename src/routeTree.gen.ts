@@ -16,7 +16,6 @@ import { Route as CronNotificacionesRouteImport } from './routes/cron-notificaci
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TerminosRouteImport } from './routes/terminos'
-import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGastosFijosRouteImport } from './routes/_authenticated/gastos-fijos'
 import { Route as AuthenticatedIngresosRouteImport } from './routes/_authenticated/ingresos'
@@ -33,6 +32,15 @@ import { Route as AuthenticatedTarjetasRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedVencimientosRouteImport } from './routes/_authenticated/vencimientos'
 import { Route as WebhooksLemonsqueezyRouteImport } from './routes/webhooks/lemonsqueezy'
 import { Route as WebhooksRevenuecatRouteImport } from './routes/webhooks/revenuecat'
+import { Route as AuthenticatedConfiguracionIndexRouteImport } from './routes/_authenticated/configuracion/index'
+import { Route as AuthenticatedConfiguracionFondoEmergenciaRouteImport } from './routes/_authenticated/configuracion/fondo-emergencia'
+import { Route as AuthenticatedConfiguracionGastosRecurrentesRouteImport } from './routes/_authenticated/configuracion/gastos-recurrentes'
+import { Route as AuthenticatedConfiguracionHerramientasRouteImport } from './routes/_authenticated/configuracion/herramientas'
+import { Route as AuthenticatedConfiguracionIngresosRouteImport } from './routes/_authenticated/configuracion/ingresos'
+import { Route as AuthenticatedConfiguracionNotificacionesRouteImport } from './routes/_authenticated/configuracion/notificaciones'
+import { Route as AuthenticatedConfiguracionObjetivoAhorroRouteImport } from './routes/_authenticated/configuracion/objetivo-ahorro'
+import { Route as AuthenticatedConfiguracionPerfilFinancieroRouteImport } from './routes/_authenticated/configuracion/perfil-financiero'
+import { Route as AuthenticatedConfiguracionTarjetasRouteImport } from './routes/_authenticated/configuracion/tarjetas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -68,12 +76,6 @@ const TerminosRoute = TerminosRouteImport.update({
   path: '/terminos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedConfiguracionRoute =
-  AuthenticatedConfiguracionRouteImport.update({
-    id: '/configuracion',
-    path: '/configuracion',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -160,6 +162,60 @@ const WebhooksRevenuecatRoute = WebhooksRevenuecatRouteImport.update({
   path: '/webhooks/revenuecat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedConfiguracionIndexRoute =
+  AuthenticatedConfiguracionIndexRouteImport.update({
+    id: '/configuracion/',
+    path: '/configuracion/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionFondoEmergenciaRoute =
+  AuthenticatedConfiguracionFondoEmergenciaRouteImport.update({
+    id: '/configuracion/fondo-emergencia',
+    path: '/configuracion/fondo-emergencia',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionGastosRecurrentesRoute =
+  AuthenticatedConfiguracionGastosRecurrentesRouteImport.update({
+    id: '/configuracion/gastos-recurrentes',
+    path: '/configuracion/gastos-recurrentes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionHerramientasRoute =
+  AuthenticatedConfiguracionHerramientasRouteImport.update({
+    id: '/configuracion/herramientas',
+    path: '/configuracion/herramientas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionIngresosRoute =
+  AuthenticatedConfiguracionIngresosRouteImport.update({
+    id: '/configuracion/ingresos',
+    path: '/configuracion/ingresos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionNotificacionesRoute =
+  AuthenticatedConfiguracionNotificacionesRouteImport.update({
+    id: '/configuracion/notificaciones',
+    path: '/configuracion/notificaciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionObjetivoAhorroRoute =
+  AuthenticatedConfiguracionObjetivoAhorroRouteImport.update({
+    id: '/configuracion/objetivo-ahorro',
+    path: '/configuracion/objetivo-ahorro',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionPerfilFinancieroRoute =
+  AuthenticatedConfiguracionPerfilFinancieroRouteImport.update({
+    id: '/configuracion/perfil-financiero',
+    path: '/configuracion/perfil-financiero',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConfiguracionTarjetasRoute =
+  AuthenticatedConfiguracionTarjetasRouteImport.update({
+    id: '/configuracion/tarjetas',
+    path: '/configuracion/tarjetas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -168,7 +224,6 @@ export interface FileRoutesByFullPath {
   '/privacidad': typeof PrivacidadRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminos': typeof TerminosRoute
-  '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/gastos-fijos': typeof AuthenticatedGastosFijosRoute
   '/ingresos': typeof AuthenticatedIngresosRoute
@@ -185,6 +240,15 @@ export interface FileRoutesByFullPath {
   '/vencimientos': typeof AuthenticatedVencimientosRoute
   '/webhooks/lemonsqueezy': typeof WebhooksLemonsqueezyRoute
   '/webhooks/revenuecat': typeof WebhooksRevenuecatRoute
+  '/configuracion/fondo-emergencia': typeof AuthenticatedConfiguracionFondoEmergenciaRoute
+  '/configuracion/gastos-recurrentes': typeof AuthenticatedConfiguracionGastosRecurrentesRoute
+  '/configuracion/herramientas': typeof AuthenticatedConfiguracionHerramientasRoute
+  '/configuracion/ingresos': typeof AuthenticatedConfiguracionIngresosRoute
+  '/configuracion/notificaciones': typeof AuthenticatedConfiguracionNotificacionesRoute
+  '/configuracion/objetivo-ahorro': typeof AuthenticatedConfiguracionObjetivoAhorroRoute
+  '/configuracion/perfil-financiero': typeof AuthenticatedConfiguracionPerfilFinancieroRoute
+  '/configuracion/tarjetas': typeof AuthenticatedConfiguracionTarjetasRoute
+  '/configuracion/': typeof AuthenticatedConfiguracionIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -193,7 +257,6 @@ export interface FileRoutesByTo {
   '/privacidad': typeof PrivacidadRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminos': typeof TerminosRoute
-  '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/gastos-fijos': typeof AuthenticatedGastosFijosRoute
   '/ingresos': typeof AuthenticatedIngresosRoute
@@ -210,6 +273,15 @@ export interface FileRoutesByTo {
   '/vencimientos': typeof AuthenticatedVencimientosRoute
   '/webhooks/lemonsqueezy': typeof WebhooksLemonsqueezyRoute
   '/webhooks/revenuecat': typeof WebhooksRevenuecatRoute
+  '/configuracion/fondo-emergencia': typeof AuthenticatedConfiguracionFondoEmergenciaRoute
+  '/configuracion/gastos-recurrentes': typeof AuthenticatedConfiguracionGastosRecurrentesRoute
+  '/configuracion/herramientas': typeof AuthenticatedConfiguracionHerramientasRoute
+  '/configuracion/ingresos': typeof AuthenticatedConfiguracionIngresosRoute
+  '/configuracion/notificaciones': typeof AuthenticatedConfiguracionNotificacionesRoute
+  '/configuracion/objetivo-ahorro': typeof AuthenticatedConfiguracionObjetivoAhorroRoute
+  '/configuracion/perfil-financiero': typeof AuthenticatedConfiguracionPerfilFinancieroRoute
+  '/configuracion/tarjetas': typeof AuthenticatedConfiguracionTarjetasRoute
+  '/configuracion': typeof AuthenticatedConfiguracionIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -220,7 +292,6 @@ export interface FileRoutesById {
   '/privacidad': typeof PrivacidadRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminos': typeof TerminosRoute
-  '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/gastos-fijos': typeof AuthenticatedGastosFijosRoute
   '/_authenticated/ingresos': typeof AuthenticatedIngresosRoute
@@ -237,6 +308,15 @@ export interface FileRoutesById {
   '/_authenticated/vencimientos': typeof AuthenticatedVencimientosRoute
   '/webhooks/lemonsqueezy': typeof WebhooksLemonsqueezyRoute
   '/webhooks/revenuecat': typeof WebhooksRevenuecatRoute
+  '/_authenticated/configuracion/fondo-emergencia': typeof AuthenticatedConfiguracionFondoEmergenciaRoute
+  '/_authenticated/configuracion/gastos-recurrentes': typeof AuthenticatedConfiguracionGastosRecurrentesRoute
+  '/_authenticated/configuracion/herramientas': typeof AuthenticatedConfiguracionHerramientasRoute
+  '/_authenticated/configuracion/ingresos': typeof AuthenticatedConfiguracionIngresosRoute
+  '/_authenticated/configuracion/notificaciones': typeof AuthenticatedConfiguracionNotificacionesRoute
+  '/_authenticated/configuracion/objetivo-ahorro': typeof AuthenticatedConfiguracionObjetivoAhorroRoute
+  '/_authenticated/configuracion/perfil-financiero': typeof AuthenticatedConfiguracionPerfilFinancieroRoute
+  '/_authenticated/configuracion/tarjetas': typeof AuthenticatedConfiguracionTarjetasRoute
+  '/_authenticated/configuracion/': typeof AuthenticatedConfiguracionIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -247,7 +327,6 @@ export interface FileRouteTypes {
     | '/privacidad'
     | '/reset-password'
     | '/terminos'
-    | '/configuracion'
     | '/dashboard'
     | '/gastos-fijos'
     | '/ingresos'
@@ -264,6 +343,15 @@ export interface FileRouteTypes {
     | '/vencimientos'
     | '/webhooks/lemonsqueezy'
     | '/webhooks/revenuecat'
+    | '/configuracion/fondo-emergencia'
+    | '/configuracion/gastos-recurrentes'
+    | '/configuracion/herramientas'
+    | '/configuracion/ingresos'
+    | '/configuracion/notificaciones'
+    | '/configuracion/objetivo-ahorro'
+    | '/configuracion/perfil-financiero'
+    | '/configuracion/tarjetas'
+    | '/configuracion/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,7 +360,6 @@ export interface FileRouteTypes {
     | '/privacidad'
     | '/reset-password'
     | '/terminos'
-    | '/configuracion'
     | '/dashboard'
     | '/gastos-fijos'
     | '/ingresos'
@@ -289,6 +376,15 @@ export interface FileRouteTypes {
     | '/vencimientos'
     | '/webhooks/lemonsqueezy'
     | '/webhooks/revenuecat'
+    | '/configuracion/fondo-emergencia'
+    | '/configuracion/gastos-recurrentes'
+    | '/configuracion/herramientas'
+    | '/configuracion/ingresos'
+    | '/configuracion/notificaciones'
+    | '/configuracion/objetivo-ahorro'
+    | '/configuracion/perfil-financiero'
+    | '/configuracion/tarjetas'
+    | '/configuracion'
   id:
     | '__root__'
     | '/'
@@ -298,7 +394,6 @@ export interface FileRouteTypes {
     | '/privacidad'
     | '/reset-password'
     | '/terminos'
-    | '/_authenticated/configuracion'
     | '/_authenticated/dashboard'
     | '/_authenticated/gastos-fijos'
     | '/_authenticated/ingresos'
@@ -315,6 +410,15 @@ export interface FileRouteTypes {
     | '/_authenticated/vencimientos'
     | '/webhooks/lemonsqueezy'
     | '/webhooks/revenuecat'
+    | '/_authenticated/configuracion/fondo-emergencia'
+    | '/_authenticated/configuracion/gastos-recurrentes'
+    | '/_authenticated/configuracion/herramientas'
+    | '/_authenticated/configuracion/ingresos'
+    | '/_authenticated/configuracion/notificaciones'
+    | '/_authenticated/configuracion/objetivo-ahorro'
+    | '/_authenticated/configuracion/perfil-financiero'
+    | '/_authenticated/configuracion/tarjetas'
+    | '/_authenticated/configuracion/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -379,13 +483,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/terminos'
       preLoaderRoute: typeof TerminosRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/configuracion': {
-      id: '/_authenticated/configuracion'
-      path: '/configuracion'
-      fullPath: '/configuracion'
-      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -499,11 +596,73 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebhooksRevenuecatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/configuracion/': {
+      id: '/_authenticated/configuracion/'
+      path: '/configuracion'
+      fullPath: '/configuracion/'
+      preLoaderRoute: typeof AuthenticatedConfiguracionIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/fondo-emergencia': {
+      id: '/_authenticated/configuracion/fondo-emergencia'
+      path: '/configuracion/fondo-emergencia'
+      fullPath: '/configuracion/fondo-emergencia'
+      preLoaderRoute: typeof AuthenticatedConfiguracionFondoEmergenciaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/gastos-recurrentes': {
+      id: '/_authenticated/configuracion/gastos-recurrentes'
+      path: '/configuracion/gastos-recurrentes'
+      fullPath: '/configuracion/gastos-recurrentes'
+      preLoaderRoute: typeof AuthenticatedConfiguracionGastosRecurrentesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/herramientas': {
+      id: '/_authenticated/configuracion/herramientas'
+      path: '/configuracion/herramientas'
+      fullPath: '/configuracion/herramientas'
+      preLoaderRoute: typeof AuthenticatedConfiguracionHerramientasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/ingresos': {
+      id: '/_authenticated/configuracion/ingresos'
+      path: '/configuracion/ingresos'
+      fullPath: '/configuracion/ingresos'
+      preLoaderRoute: typeof AuthenticatedConfiguracionIngresosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/notificaciones': {
+      id: '/_authenticated/configuracion/notificaciones'
+      path: '/configuracion/notificaciones'
+      fullPath: '/configuracion/notificaciones'
+      preLoaderRoute: typeof AuthenticatedConfiguracionNotificacionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/objetivo-ahorro': {
+      id: '/_authenticated/configuracion/objetivo-ahorro'
+      path: '/configuracion/objetivo-ahorro'
+      fullPath: '/configuracion/objetivo-ahorro'
+      preLoaderRoute: typeof AuthenticatedConfiguracionObjetivoAhorroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/perfil-financiero': {
+      id: '/_authenticated/configuracion/perfil-financiero'
+      path: '/configuracion/perfil-financiero'
+      fullPath: '/configuracion/perfil-financiero'
+      preLoaderRoute: typeof AuthenticatedConfiguracionPerfilFinancieroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion/tarjetas': {
+      id: '/_authenticated/configuracion/tarjetas'
+      path: '/configuracion/tarjetas'
+      fullPath: '/configuracion/tarjetas'
+      preLoaderRoute: typeof AuthenticatedConfiguracionTarjetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGastosFijosRoute: typeof AuthenticatedGastosFijosRoute
   AuthenticatedIngresosRoute: typeof AuthenticatedIngresosRoute
@@ -518,10 +677,18 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProyeccionesRoute: typeof AuthenticatedProyeccionesRoute
   AuthenticatedTarjetasRoute: typeof AuthenticatedTarjetasRoute
   AuthenticatedVencimientosRoute: typeof AuthenticatedVencimientosRoute
+  AuthenticatedConfiguracionFondoEmergenciaRoute: typeof AuthenticatedConfiguracionFondoEmergenciaRoute
+  AuthenticatedConfiguracionGastosRecurrentesRoute: typeof AuthenticatedConfiguracionGastosRecurrentesRoute
+  AuthenticatedConfiguracionHerramientasRoute: typeof AuthenticatedConfiguracionHerramientasRoute
+  AuthenticatedConfiguracionIngresosRoute: typeof AuthenticatedConfiguracionIngresosRoute
+  AuthenticatedConfiguracionNotificacionesRoute: typeof AuthenticatedConfiguracionNotificacionesRoute
+  AuthenticatedConfiguracionObjetivoAhorroRoute: typeof AuthenticatedConfiguracionObjetivoAhorroRoute
+  AuthenticatedConfiguracionPerfilFinancieroRoute: typeof AuthenticatedConfiguracionPerfilFinancieroRoute
+  AuthenticatedConfiguracionTarjetasRoute: typeof AuthenticatedConfiguracionTarjetasRoute
+  AuthenticatedConfiguracionIndexRoute: typeof AuthenticatedConfiguracionIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGastosFijosRoute: AuthenticatedGastosFijosRoute,
   AuthenticatedIngresosRoute: AuthenticatedIngresosRoute,
@@ -536,6 +703,23 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProyeccionesRoute: AuthenticatedProyeccionesRoute,
   AuthenticatedTarjetasRoute: AuthenticatedTarjetasRoute,
   AuthenticatedVencimientosRoute: AuthenticatedVencimientosRoute,
+  AuthenticatedConfiguracionFondoEmergenciaRoute:
+    AuthenticatedConfiguracionFondoEmergenciaRoute,
+  AuthenticatedConfiguracionGastosRecurrentesRoute:
+    AuthenticatedConfiguracionGastosRecurrentesRoute,
+  AuthenticatedConfiguracionHerramientasRoute:
+    AuthenticatedConfiguracionHerramientasRoute,
+  AuthenticatedConfiguracionIngresosRoute:
+    AuthenticatedConfiguracionIngresosRoute,
+  AuthenticatedConfiguracionNotificacionesRoute:
+    AuthenticatedConfiguracionNotificacionesRoute,
+  AuthenticatedConfiguracionObjetivoAhorroRoute:
+    AuthenticatedConfiguracionObjetivoAhorroRoute,
+  AuthenticatedConfiguracionPerfilFinancieroRoute:
+    AuthenticatedConfiguracionPerfilFinancieroRoute,
+  AuthenticatedConfiguracionTarjetasRoute:
+    AuthenticatedConfiguracionTarjetasRoute,
+  AuthenticatedConfiguracionIndexRoute: AuthenticatedConfiguracionIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
