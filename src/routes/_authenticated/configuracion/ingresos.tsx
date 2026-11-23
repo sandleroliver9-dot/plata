@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { financialDataQuery } from "@/lib/supabase-queries";
 import { useAuth } from "@/hooks/use-auth";
@@ -90,7 +89,6 @@ function IngresosConfigPage() {
 
       <div className="flex justify-end">
         <Button className={PLATIUM_BUTTON_PRIMARY} onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending}>
-          <Save className="size-4" />
           Guardar
         </Button>
       </div>
@@ -146,11 +144,11 @@ function IngresosConfigPage() {
         {(data?.ingresos?.length ?? 0) > 0 ? (
           <div className="space-y-2">
             <div className="text-xs uppercase tracking-wider text-[#70706a]">Ingresos cargados</div>
-            <div className="grid gap-3">
+            <div className="divide-y divide-[#d9d9d9] border-t border-[#d9d9d9]">
               {data?.ingresos.map((income: any) => {
                 const item = preferences.incomeSettings[income.id] ?? {};
                 return (
-                  <div key={income.id} className="grid gap-3 rounded-md border border-[#d9d9d9] p-3 md:grid-cols-[1fr_120px_160px]">
+                  <div key={income.id} className="grid gap-3 py-4 md:grid-cols-[1fr_120px_160px]">
                     <div className="min-w-0">
                       <div className="font-medium truncate">{income.concepto}</div>
                       <div className="text-xs text-[#70706a] mt-0.5">

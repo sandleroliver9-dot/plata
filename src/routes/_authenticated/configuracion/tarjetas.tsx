@@ -38,15 +38,15 @@ function TarjetasConfigPage() {
         subtitle="Esto permite ubicar mejor tus pagos de tarjeta en el calendario financiero."
       />
 
-      <div className={`${PLATIUM_CARD} p-5 space-y-4`}>
+      <div className={`${PLATIUM_CARD} p-5`}>
         {cards.length === 0 ? (
           <p className="text-sm text-[#70706a]">Primero cargá una compra en cuotas o una tarjeta. Cuando exista, vas a poder definir cierre y vencimiento.</p>
         ) : (
-          <div className="grid gap-3">
+          <div className="divide-y divide-[#d9d9d9]">
             {cards.map((card) => {
               const item = preferences.cardSettings[card.tarjeta] ?? {};
               return (
-                <div key={card.tarjeta} className="grid gap-3 rounded-md border border-[#d9d9d9] p-3 md:grid-cols-[1fr_130px_130px]">
+                <div key={card.tarjeta} className="grid gap-3 py-4 first:pt-0 last:pb-0 md:grid-cols-[1fr_130px_130px]">
                   <div>
                     <div className="font-medium">{card.tarjeta}</div>
                     <div className="text-xs text-[#70706a]">Fechas habituales de esta tarjeta.</div>
